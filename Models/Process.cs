@@ -1,21 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KdxDesigner.Models
 {
-    [Table("Company")]
-    public class Company
+    [Table("Process")]
+    public class Process : ObservableObject
     {
         [Key]
         public int Id { get; set; }
-        public string? CompanyName { get; set; }
-        public string? CreatedAt { get; set; }
-    }
-    
-}
+        public string? ProcessName { get; set; }
+        public int? CycleId { get; set; }
 
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+    }
+}

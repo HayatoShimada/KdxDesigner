@@ -1,0 +1,61 @@
+﻿<Window x:Class="KdxDesigner.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:KdxDesigner.ViewModels"
+        Title="MainView" Height="600" Width="800">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="Auto" />
+
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 上部: 複数選択可能なプロセス一覧 -->
+        <GroupBox Header="工程" Grid.Row="0" Margin="0,10,0,0">
+            <DataGrid 
+            x:Name="ProcessGrid"
+            ItemsSource="{Binding Processes}"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="選択"
+                                Binding="{Binding IsSelected, Mode=TwoWay}" />
+                    <DataGridTextColumn Header="工程名" Binding="{Binding ProcessName}" />
+                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <TextBlock Text="{Binding SelectedCount, StringFormat='選択中: {0} 件'}"
+           FontWeight="Bold" Margin="5" />
+            <Button Content="全選択" Command="{Binding SelectAllProcessesCommand}" Width="100" Margin="5"/>
+            <Button Content="全解除" Command="{Binding DeselectAllProcessesCommand}" Width="100" Margin="5"/>
+            <Button Content="反映" Command="{Binding FilterProcessDetailsCommand}" Width="80" Margin="5"/>
+        </StackPanel>
+
+
+        <!-- 下部: 関連する工程詳細 -->
+        <GroupBox Header="工程詳細" Grid.Row="2" Margin="0,10,0,0">
+            <DataGrid ItemsSource="{Binding ProcessDetails}"
+              AutoGenerateColumns="True" />
+
+
+        </GroupBox>
+
+        <!-- 下部ボタン -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="設定" Command="{Binding OpenSettingsCommand}" Width="100" Margin="5"/>
+            <Button Content="グラフ表示" Command="{Binding ShowGraphCommand}" Width="100" Margin="5"/>
+
+        </StackPanel>
+
+    </Grid>
+</Window>

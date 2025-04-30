@@ -8,14 +8,16 @@ using System.Threading.Tasks;
 
 namespace KdxDesigner.Models
 {
-    [Table("Company")]
-    public class Company
+    [Table("PLC")]
+    public class PLC
     {
         [Key]
         public int Id { get; set; }
-        public string? CompanyName { get; set; }
-        public string? CreatedAt { get; set; }
+        public string? PlcName { get; set; }
+        public int? ModelId { get; set; }
+        public string? Maker { get; set; }
+
     }
-    
+
 }
 

@@ -8,14 +8,21 @@ using System.Threading.Tasks;
 
 namespace KdxDesigner.Models
 {
-    [Table("Company")]
-    public class Company
+    [Table("ProcessDetail")]
+    public class ProcessDetail
     {
         [Key]
         public int Id { get; set; }
-        public string? CompanyName { get; set; }
-        public string? CreatedAt { get; set; }
+        public int? ProcessId { get; set; }
+        public int? OperationId { get; set; }
+        public string? DetailName { get; set; }
+        public string? StartIds { get; set; }   // 複数値→カンマ区切り
+        public string? FinishIds { get; set; }  // 複数値→カンマ区切り
+        public string? StartSensor { get; set; }
+        public int? CategoryId { get; set; }
+        public string? FinishSensor { get; set; }
+
     }
-    
+
 }
 

@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace KdxDesigner.Models
 {
-    [Table("Company")]
-    public class Company
+    [Table("Place")]
+    public class Place
     {
         [Key]
         public int Id { get; set; }
-        public string? CompanyName { get; set; }
-        public string? CreatedAt { get; set; }
+        public int? ModelId { get; set; }
+        public string? PlaceName { get; set; }
     }
     
 }
