@@ -1,30 +1,19 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.ViewModels;
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace KdxDesigner.Views
 {
-    /// <summary>
-    /// MainForm.xaml の相互作用ロジック
-    /// </summary>
     public partial class MainView : Window
     {
         public MainView()
         {
             InitializeComponent();
+            DataContext = new MainViewModel(); // ← これがあるか？
         }
 
         private void ProcessGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -32,9 +21,21 @@ namespace KdxDesigner.Views
             if (DataContext is MainViewModel vm)
             {
                 var selected = ProcessGrid.SelectedItems.Cast<Process>().ToList();
+                vm.UpdateSelectedProcesses(selected);
+            }
+        }
+
+
+        private void DetailGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                var selected = (sender as DataGrid)?.SelectedItem as ProcessDetailDto;
+                if (selected != null)
+                {
+                    vm.OnProcessDetailSelected(selected);
+                }
             }
         }
     }
-
-
 }

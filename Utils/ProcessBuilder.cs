@@ -1,22 +1,48 @@
 ﻿using KdxDesigner.Models;
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace KdxDesigner.Utils
 {
     public static class ProcessBuilder
     {
         public static List<LadderCsvRow> GenerateAllLadderCsvRows(
-    List<ProcessDetailDto> details, List<IO> ioList)
+            Cycle selectedCycle,
+            List<Models.Process> processes,
+            List<ProcessDetailDto> details,
+            List<IO> ioList,
+            out List<OutputError> errors)
         {
             var allRows = new List<LadderCsvRow>();
+            errors = new List<OutputError>();
 
-            foreach (var detail in details)
+            // 必要に応じて Cycle のログ出力やフィルタを行う
+            var targetProcessIds = processes
+                .Where(p => p.CycleId == selectedCycle.Id)
+                .Select(p => p.Id)
+                .ToHashSet();
+
+            foreach (var detail in details.Where(d => d.ProcessId.HasValue && targetProcessIds.Contains(d.ProcessId.Value)))
             {
-                var rows = GenerateLadderCsvRows(detail, ioList);
-                allRows.AddRange(rows);
+                try
+                {
+                    var rows = GenerateLadderCsvRows(detail, ioList);
+                    allRows.AddRange(rows);
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(new OutputError
+                    {
+                        DetailName = detail.DetailName,
+                        Message = ex.Message,
+                        ProcessId = detail.ProcessId
+                    });
+                }
             }
 
             return allRows;
         }
+
 
         public static List<LadderCsvRow> GenerateLadderCsvRows(ProcessDetailDto detail, List<IO> ioList)
         {

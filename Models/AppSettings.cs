@@ -11,7 +11,10 @@ namespace KdxDesigner.Models
         public string ResetSignal { get; set; } = "M3002";
 
         [Description("一時停止信号")]
-        public string PauseSignal { get; set; } = "M3301";
+        public string PauseSignal { get; set; } = "M3300";
+
+        [Description("一時停止遅延信号")]
+        public string PauseDelaySignal { get; set; } = "M3301";
 
         [Description("ソフトリセット信号")]
         public string SoftResetSignal { get; set; } = "M1234";

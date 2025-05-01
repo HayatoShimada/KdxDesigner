@@ -13,11 +13,5 @@ namespace KdxDesigner.Models
         public string? ProcessName { get; set; }
         public int? CycleId { get; set; }
 
-        private bool _isSelected;
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set => SetProperty(ref _isSelected, value);
-        }
     }
 }

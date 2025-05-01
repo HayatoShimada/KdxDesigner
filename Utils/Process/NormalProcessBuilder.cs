@@ -17,30 +17,50 @@ namespace KdxDesigner.Utils.Process
             var result = new List<LadderCsvRow>();
             var startIdList = process.GetStartIdList();
             var finishIdList = process.GetFinishIdList();
-            bool firstFlag = true;
 
             // L***0 ~ L***9のDeviceリスト
             List<string> lDevices = ProcessDetailExtensions.ConvertIdToAddressRange(process.Id);
 
-            // 行間ステートメント
-
-            if (startIdList != null)
+            if (process == null)
             {
-
+                return result;
             }
             else
             {
-                foreach (var row in startIdList)
+                // 行間ステートメント
+                if(process.DetailName == null)
                 {
-                    // 初回のみLD
-                    result.Add(firstFlag ? LadderRow.AddLD(row) : LadderRow.AddAND(row));
-                    firstFlag = false;
+                    string id = process.Id.ToString();
+                    result.Add(LadderRow.AddStatement(id));
                 }
-            }
-            firstFlag = true;
-            result.Add(LadderRow.AddOUT(lDevices[0]));
+                else
+                {
+                    string id = process.Id.ToString();
+                    result.Add(LadderRow.AddStatement(id + ":" + process.DetailName));
+                }
 
-            return result;
+                // L0 Condition
+                if (startIdList != null && startIdList.Count > 0)
+                {
+                    foreach (var row in startIdList)
+                    {
+                        result.Add(LadderRow.AddAND(row));
+                    }
+                }
+                result.Add(LadderRow.AddOUT(lDevices[0]));
+
+                // L1 Start
+                // L2 
+                // L3
+                // L4
+                // L5
+                // L6
+                // L7
+                // L8
+                // L9 Finish
+
+                return result;
+            }
         }
     }
 }

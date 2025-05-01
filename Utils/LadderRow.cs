@@ -1,5 +1,7 @@
 ﻿using KdxDesigner.Models;
 
+using System.Net;
+
 namespace KdxDesigner.Utils
 {
     public static class LadderRow
@@ -26,6 +28,20 @@ namespace KdxDesigner.Utils
             {
                 CreateRow(command, source),
                 CreateRow("", destination)
+            };
+        }
+
+        public static LadderCsvRow AddStatement(string statementComment)
+        {
+            return new LadderCsvRow
+            {
+                StepNo = "\"\"",
+                StepComment = statementComment,
+                Command = "\"\"",
+                Address = "\"\"",
+                Blank1 = "\"\"",
+                PiStatement = "\"\"",
+                Note = "\"\""
             };
         }
 
