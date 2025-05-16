@@ -8,7 +8,10 @@ https://www.notion.so/30f7ce7ff0574570900d3bfba87e9d46?v=14111e15871c46fd89ddcb6
 ## 機能
 - Microsoft Accessファイルのインポート
 - CSVニモニックファイルの出力
-
+## WPFについて
+WPFはWindows Formに代わるMicrosoftのUIシステムで、HTML構文に似たマークアップ言語でUIを記述できます。  
+下記リンクでWPFが利用できるコントロールが説明されています。  
+https://learn.microsoft.com/ja-jp/dotnet/desktop/wpf/controls/controls-by-category
 # ディレクトリについて
 ## Data
 AccessRepository.csファイル内にAccessファイルへのクエリが記述されています。  
