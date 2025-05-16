@@ -16,7 +16,7 @@ namespace KdxDesigner.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        private readonly AccessRepository _repository = new("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=KDX_Designer.accdb;");
+        private readonly AccessRepository _repository = new();
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
@@ -31,6 +31,10 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private PLC? selectedPlc;
         [ObservableProperty] private Cycle? selectedCycle;
         [ObservableProperty] private Models.Process? selectedProcess;
+
+        [ObservableProperty] private int? processDeviceStartL;
+        [ObservableProperty] private int? detailDeviceStartL;
+
 
         [ObservableProperty]
         private ObservableCollection<OutputError> outputErrors = new();
@@ -126,39 +130,43 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void ProcessOutput()
         {
-            if (SelectedCycle == null)
+            if (SelectedCycle == null || SelectedPlc == null)
             {
                 MessageBox.Show("Cycleが選択されていません。");
-                return;
-            }
-
-            // 必要に応じてIO一覧を取得
-            var ioList = _repository.GetIoList();
-
-            if (SelectedCycle != null)
-            {
-                var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
-                    SelectedCycle,
-                    Processes.ToList(),
-                    ProcessDetails.ToList(),
-                    ioList,
-                    out var errors
-                );
-
-                // 仮：結果をログ出力（実際にはCSVに保存などを検討）
-                foreach (var row in outputRows)
-                {
-                    Debug.WriteLine($"{row.Command} {row.Address}");
-                }
-
-                OutputErrors = new ObservableCollection<OutputError>(errors);
-
-                MessageBox.Show("出力処理が完了しました。");
             }
             else
             {
-                MessageBox.Show("Cycleが選択されていません。");
+                // IO一覧を取得
+                var ioList = _repository.GetIoList();
+                // 
+                var memoryList = _repository.GetMemories(SelectedPlc.Id);
+
+                if (SelectedCycle != null)
+                {
+                    var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
+                        SelectedCycle,
+                        Processes.ToList(),
+                        ProcessDetails.ToList(),
+                        ioList,
+                        out var errors
+                    );
+
+                    // 仮：結果をログ出力（実際にはCSVに保存などを検討）
+                    foreach (var row in outputRows)
+                    {
+                        Debug.WriteLine($"{row.Command} {row.Address}");
+                    }
+
+                    OutputErrors = new ObservableCollection<OutputError>(errors);
+
+                    MessageBox.Show("出力処理が完了しました。");
+                }
+                else
+                {
+                    MessageBox.Show("Cycleが選択されていません。");
+                }
             }
+            return;
         }
 
         [RelayCommand]

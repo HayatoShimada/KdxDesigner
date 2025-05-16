@@ -17,41 +17,40 @@ namespace KdxDesigner.ViewModels
     public partial class MemoryEditorViewModel : ObservableObject
     {
         private readonly AccessRepository _repository;
-        private readonly int _plcId;
+        public int _plcId;
 
+        // アプリ側でのデバイス一覧変数を一次保存する
         [ObservableProperty]
         private ObservableCollection<Memory> memories = new();
 
-        [ObservableProperty]
-        private ObservableCollection<MemoryCategory> categories = new();
-
+        // メモリカテゴリ（M, L, D...）を格納
         [ObservableProperty]
         private ObservableCollection<MemoryCategory> memoryCategories = new();
 
+        // ドロップダウンで選択されたメモリカテゴリ
         [ObservableProperty]
         private MemoryCategory? selectedMemoryCategory;
 
+        // ステータスメッセージ表示用
         [ObservableProperty]
         private string saveStatusMessage = string.Empty;
 
+        // 初期化メソッド
         public MemoryEditorViewModel(int plcId)
         {
             _plcId = plcId;
-            _repository = new AccessRepository("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=KDX_Designer.accdb;");
+            // データベースの初期化
+            _repository = new AccessRepository();
+
+            // メモリカテゴリドロップダウンのリスト取得
             MemoryCategories = new ObservableCollection<MemoryCategory>(_repository.GetMemoryCategories());
-            LoadData();
+            Memories = new ObservableCollection<Memory>();
+
         }
 
-
-
-        private void LoadData()
-        {
-            Memories = new ObservableCollection<Memory>(_repository.GetMemories(_plcId));
-            Categories = new ObservableCollection<MemoryCategory>(_repository.GetMemoryCategories());
-        }
 
         [RelayCommand]
-        private async Task SaveAsync()
+        private async Task DBSave()
         {
             SaveStatusMessage = "保存中...";
 
@@ -80,7 +79,11 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void ImportCsv()
         {
+            // 最初にDBから読み出されたデータをクリア
+            Memories.Clear();
             var dialog = new OpenFileDialog { Filter = "CSV files (*.csv)|*.csv" };
+
+
             if (dialog.ShowDialog() == true)
             {
                 var lines = File.ReadAllLines(dialog.FileName);
@@ -135,42 +138,29 @@ namespace KdxDesigner.ViewModels
             }
         }
 
+        [RelayCommand]
+        public void DBImport()
+        {
+            // DBからすべてのメモリを取得
+            var allMemories = _repository.GetMemories(_plcId);
+
+            // フィルタされたリストを一時変数に
+            IEnumerable<Memory> filteredMemories = allMemories;
+
+            if (SelectedMemoryCategory != null)
+            {
+                int id = SelectedMemoryCategory.ID;
+                filteredMemories = filteredMemories.Where(m => m.MemoryCategory == id);
+            }
+
+            // ObservableCollection に再代入（ここで UI に変更が通知される）
+            Memories = new ObservableCollection<Memory>(filteredMemories);
+        }
 
 
         private int? TryParseInt(string? input)
         {
             return int.TryParse(input, out var result) ? result : null;
-        }
-
-
-
-        [RelayCommand]
-        private void PasteFromClipboard()
-        {
-            if (!Clipboard.ContainsText()) return;
-            var lines = Clipboard.GetText().Split('\n');
-            foreach (var line in lines)
-            {
-                var cols = line.Split('\t'); // Excel形式を想定
-                if (cols.Length < 2) continue;
-
-                var mem = new Memory
-                {
-                    PlcId = _plcId,
-                    MemoryCategory = int.TryParse(cols[0], out var mc) ? mc : null,
-                    DeviceNumber1 = cols.ElementAtOrDefault(0),
-                    DeviceNumber2 = cols.ElementAtOrDefault(1),
-
-                    Row_1 = cols.ElementAtOrDefault(2),
-                    Row_2 = cols.ElementAtOrDefault(3),
-                    Row_3 = cols.ElementAtOrDefault(4),
-                    Row_4 = cols.ElementAtOrDefault(5),
-                    Direct_Input = cols.ElementAtOrDefault(6),
-                    Confirm = cols.ElementAtOrDefault(7),
-                    Note = cols.ElementAtOrDefault(8)
-                };
-                Memories.Add(mem);
-            }
         }
     }
 }

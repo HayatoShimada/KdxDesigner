@@ -28,18 +28,6 @@ namespace KdxDesigner.Views
             DataContext = new MemoryEditorViewModel(plcId);
         }
 
-        private void MemoryGrid_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control)
-            {
-                if (sender is DataGrid grid && grid.CurrentCell != null)
-                {
-                    var clipboardText = Clipboard.GetText();
-                    // → ここで `clipboardText` を分割して行・列に分けて grid に反映
-                }
-            }
-        }
-
 
     }
 

@@ -8,18 +8,33 @@
 
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10">
+
+            <!--PlcIdの表示-->
+            <!--バインディングされていない不具合がある-->
             <TextBlock Text="PLC ID: " VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,5,0"/>
             <TextBlock Text="{Binding PlcId}" VerticalAlignment="Center"/>
+
+            <!--CsvImportコマンド, Csvファイルをアプリに読み込む-->
             <Button Content="CSV Import" Command="{Binding ImportCsvCommand}" Margin="20,0,0,0"/>
-            <Button Content="Paste from Excel" Command="{Binding PasteFromClipboardCommand}" Margin="10,0,0,0"/>
-            <Button Content="Save" Command="{Binding SaveCommand}" Margin="10,0,0,0"/>
+
+            <!--DBSaveコマンド, Csvファイルをアプリに読み込む-->
+            <Button Content="DB Save" Command="{Binding DBSaveCommand}" Margin="10,0,0,0"/>
+            <Button Content="DB Import" Command="{Binding DBImportCommand}" Margin="10,0,0,0"/>
+
+            
             <Button Content="Cancel" Command="{Binding CancelCommand}" Margin="10,0,0,0"/>
 
+            <!--メモリカテゴリの表示-->
             <TextBlock Text="メモリカテゴリ: " VerticalAlignment="Center" Margin="10,0,5,0"/>
             <ComboBox ItemsSource="{Binding MemoryCategories}"
               SelectedItem="{Binding SelectedMemoryCategory}"
               DisplayMemberPath="CategoryName"
               Width="150" />
+            
+            <!--DB反映進捗-->
+            <TextBlock Text="{Binding SaveStatusMessage}" FontWeight="Bold" Margin="10,0,5,0" />
+
+
         </StackPanel>
 
         <DataGrid x:Name="MemoryGrid"
@@ -50,7 +65,6 @@
                 <DataGridCheckBoxColumn Header="GOT" Binding="{Binding GOT}" />
             </DataGrid.Columns>
         </DataGrid>
-        <TextBlock Text="{Binding SaveStatusMessage}" FontWeight="Bold" Margin="10" />
 
     </DockPanel>
 </Window>

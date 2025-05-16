@@ -25,8 +25,7 @@ namespace KdxDesigner.Models
         public string? System { get; set; }
         public string? StationNumber { get; set; }
         public string? IONameNaked { get; set; }
-
+        public int? PlcId { get; set; }
+        public string? LinkDevice { get; set; }
     }
-
 }
-

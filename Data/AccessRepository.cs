@@ -5,17 +5,19 @@ using System.Reflection.PortableExecutable;
 
 using Dapper;
 
+using DotNetEnv;
 using KdxDesigner.Models;
 
 namespace KdxDesigner.Data
 {
     public class AccessRepository
     {
-        private readonly string _connectionString;
+        private readonly string? _connectionString;
 
-        public AccessRepository(string connectionString)
+        public AccessRepository()
         {
-            _connectionString = connectionString;
+            _connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_Designer.accdb;";
+
         }
 
         public List<Company> GetCompanies()

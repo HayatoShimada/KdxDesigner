@@ -3,8 +3,10 @@ using KdxDesigner.ViewModels;
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace KdxDesigner.Views
 {
@@ -36,6 +38,12 @@ namespace KdxDesigner.Views
                     vm.OnProcessDetailSelected(selected);
                 }
             }
+        }
+
+        private void NumberOnlyTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // 数字（0～9）のみ許可
+            e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
         }
     }
 }
