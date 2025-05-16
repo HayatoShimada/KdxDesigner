@@ -34,3 +34,14 @@ https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0
 - Dapper.SqlBuilder Version 2.1.66
 - CommunityToolkit.Mvvm 8.4.0
 - System.Data.OleDb 9.0.4
+## 進め方
+GitHubのIssueをクリックして、アサインされているIssueの編集を進めてください。  
+![image](https://github.com/user-attachments/assets/2b92ccd4-12e8-45f5-8fd3-79ae6209e592)
+各issueにはBranchが作成されているので、ローカルにコードをクローンしたら、コメントに記載されたコマンドを実行してください。
+
+```
+git fetch origin
+git checkout ブランチ名
+```
+
+修正後はコミットしてプルリクエストを作成してください。
