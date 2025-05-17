@@ -5,10 +5,9 @@ using System.Reflection.PortableExecutable;
 
 using Dapper;
 
-using DotNetEnv;
 using KdxDesigner.Models;
 
-namespace KdxDesigner.Data
+namespace KdxDesigner.Services
 {
     public class AccessRepository
     {

@@ -2,7 +2,7 @@
 
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace KdxDesigner.Utils
+namespace KdxDesigner.Utils.Process
 {
     public static class ProcessBuilder
     {
@@ -51,10 +51,10 @@ namespace KdxDesigner.Utils
             switch (detail.CategoryId)
             {
                 case 1: // 通常工程
-                    mnemonic.AddRange(Process.NormalProcessBuilder.BuildNormalPattern(detail, ioList));
+                    mnemonic.AddRange(NormalProcessBuilder.BuildNormalPattern(detail, ioList));
                     break;
                 case 2: // 工程まとめ
-                    mnemonic.AddRange(Process.NormalProcessBuilder.BuildNormalPattern(detail, ioList));
+                    mnemonic.AddRange(NormalProcessBuilder.BuildNormalPattern(detail, ioList));
                     break;
                 case 3: // センサON確認
                     break;
