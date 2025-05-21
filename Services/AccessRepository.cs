@@ -13,32 +13,33 @@ namespace KdxDesigner.Services
 {
     public class AccessRepository
     {
-        private readonly string? _connectionString;
-
         public AccessRepository()
         {
             // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
-            _connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_Designer.accdb;";
+            ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_Designer.accdb;";
 
         }
 
+        public string ConnectionString { get; }
+
+
         public List<Company> GetCompanies()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, CompanyName, CreatedAt FROM Company";
             return connection.Query<Company>(sql).ToList();
         }
 
         public List<Model> GetModels()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, ModelName, CompanyId FROM Model";
             return connection.Query<Model>(sql).ToList();
         }
 
         public List<PLC> GetPLCs()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, PlcName, ModelId, Maker FROM PLC";
             return connection.Query<PLC>(sql).ToList();
         }
@@ -46,42 +47,42 @@ namespace KdxDesigner.Services
         // Cycle
         public List<Cycle> GetCycles()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, PlcId, CycleName FROM Cycle";
             return connection.Query<Cycle>(sql).ToList();
         }
 
         public List<Models.Process> GetProcesses()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, ProcessName, CycleId, TestStart, TestCondition, AutoCondition, AutoMode, AutoStart, ProcessCategory, FinishId, ILStart FROM Process";
             return connection.Query<Models.Process>(sql).ToList();
         }
 
         public List<Machine> GetMachines()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, MacineName, ShortName FROM Macine";
             return connection.Query<Machine>(sql).ToList();
         }
 
         public List<DriveMain> GetDriveMains()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, DriveMainName FROM DriveMain";
             return connection.Query<DriveMain>(sql).ToList();
         }
 
         public List<DriveSub> GetDriveSubs()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, DriveSubName, DriveMainId FROM DriveSub";
             return connection.Query<DriveSub>(sql).ToList();
         }
 
         public List<CY> GetCYs()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, PlcId, PUCO, CYNum, OilNum, MacineId, DriveSub, PlaceId, CYNameSub, SensorId, FlowType FROM CY";
             return connection.Query<CY>(sql).ToList();
         }
@@ -90,7 +91,7 @@ namespace KdxDesigner.Services
         // Operation
         public List<Operation> GetOperations()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = @"
 SELECT Id, OperationName, CYId, CategoryId, Stay, Start, Finish, Valve1,
        S1, S2, S3, S4, S5, SS1, SS2, SS3, SS4, PIL, SC, FC
@@ -100,14 +101,14 @@ FROM Operation";
 
         public Operation? GetOperationById(int id)
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             return connection.QueryFirstOrDefault<Operation>(
                 "SELECT * FROM Operation WHERE Id = @Id", new { Id = id });
         }
 
         public void UpdateOperation(Operation operation)
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
 
             var sql = @"
 UPDATE Operation SET
@@ -139,7 +140,7 @@ WHERE Id = @Id";
         // ProcessDetail
         public List<ProcessDetail> GetProcessDetails()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = @"
 SELECT Id, ProcessId, OperationId, DetailName,
        StartIds, FinishIds,
@@ -150,7 +151,7 @@ FROM ProcessDetail";
 
         public List<ProcessDetailDto> GetProcessDetailDtos()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = @"
 SELECT 
     pd.Id,
@@ -176,7 +177,7 @@ FROM
 
         public void SaveProcessDetailDtos(List<ProcessDetailDto> details)
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
 
@@ -210,7 +211,7 @@ VALUES
 
         public List<IO> GetIoList()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, IOText, XComment, YComment, FComment, Address, IOName, IOExplanation, IOSpot, UnitName, System, StationNumber, IONameNaked FROM IO";
             return connection.Query<IO>(sql).ToList();
         }
@@ -219,89 +220,27 @@ VALUES
 
         public List<Memory> GetMemories(int plcId)
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT * FROM Memory WHERE PlcId = @PlcId";
             return connection.Query<Memory>(sql, new { PlcId = plcId }).ToList();
         }
 
         public List<MemoryCategory> GetMemoryCategories()
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT * FROM MemoryCategory";
             return connection.Query<MemoryCategory>(sql).ToList();
         }
 
-        public void SaveDeviceListProcess(List<Models.Process> processes, int startNum)
-        {
-            int count = 0;
-            foreach (Models.Process process in processes)
-            {
-                if (process == null) continue;
-
-                // 既にテーブルに存在するか検索
-                var existing = allExisting.FirstOrDefault(m =>
-                m.PlcId == memory.PlcId && m.Device == memory.Device);
-
-                var parameters = new DynamicParameters();
-                parameters.Add("NemonicId", 1, DbType.Int32);
-                parameters.Add("RecordId", process.Id, DbType.Int32);
-                parameters.Add("DeviceLabel", "L", DbType.String);
-                parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);
-                parameters.Add("OutCoilCount", 10, DbType.Int32);
-
-                // 5/21ココマデ
-                if (existing != null)
-                {
-                    parameters.Add("ID", existing.ID, DbType.Int64);
-                    connection.Execute(@"
-UPDATE [Memory] SET
-    [MemoryCategory] = @MemoryCategory,
-    [DeviceNumber] = @DeviceNumber,
-    [DeviceNumber1] = @DeviceNumber1,
-    [DeviceNumber2] = @DeviceNumber2,
-    [Category] = @Category,
-    [Row_1] = @Row_1,
-    [Row_2] = @Row_2,
-    [Row_3] = @Row_3,
-    [Row_4] = @Row_4,
-    [Direct_Input] = @Direct_Input,
-    [Confirm] = @Confirm,
-    [Note] = @Note,
-    [UpdatedAt] = @UpdatedAt,
-    [GOT] = @GOT
-WHERE [ID] = @ID",
-                    parameters, transaction);
-                }
-                else
-                {
-                    connection.Execute(@"
-INSERT INTO [Memory] (
-    [PlcId], [MemoryCategory], [DeviceNumber],
-    [DeviceNumber1], [DeviceNumber2], [Device],
-    [Category], [Row_1], [Row_2], [Row_3], [Row_4],
-    [Direct_Input], [Confirm], [Note],
-    [CreatedAt], [UpdatedAt], [GOT]
-) VALUES (
-    @PlcId, @MemoryCategory, @DeviceNumber,
-    @DeviceNumber1, @DeviceNumber2, @Device,
-    @Category, @Row_1, @Row_2, @Row_3, @Row_4,
-    @Direct_Input, @Confirm, @Note,
-    @CreatedAt, @UpdatedAt, @GOT
-)",
-                    parameters, transaction);
-                }
-
-                count++;
-            }
-
-        }
+        
+        
 
         public void SaveMemories(List<Memory> memories, Action<string>? progressCallback = null)
         {
-            using var connection = new OleDbConnection(_connectionString);
+            using var connection = new OleDbConnection(ConnectionString);
 
             // ✅ 接続先 Access ファイルのパスをログ出力
-            Debug.WriteLine($"[接続文字列] {_connectionString}");
+            Debug.WriteLine($"[接続文字列] {ConnectionString}");
 
             connection.Open();
             using var transaction = connection.BeginTransaction();
@@ -398,4 +337,5 @@ INSERT INTO [Memory] (
 
 
     }
+
 }
