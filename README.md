@@ -31,3 +31,22 @@ https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0
 - Dapper.SqlBuilder Version 2.1.66
 - CommunityToolkit.Mvvm 8.4.0
 - System.Data.OleDb 9.0.4
+### ACCESSファイルの変更を伴う場合
+TEST用のACCESSファイルを準備して、コード内でそのパスを参照させること。  
+該当プログラムは下記。
+```
+namespace KdxDesigner.Services
+{
+    public class AccessRepository
+    {
+        private readonly string? _connectionString;
+
+        public AccessRepository()
+        {
+            // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
+            _connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_Designer.accdb;";
+
+        }
+  }
+}
+```
