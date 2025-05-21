@@ -15,6 +15,7 @@ namespace KdxDesigner.Services
 
         public AccessRepository()
         {
+            // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
             _connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_Designer.accdb;";
 
         }
@@ -51,7 +52,7 @@ namespace KdxDesigner.Services
         public List<Models.Process> GetProcesses()
         {
             using var connection = new OleDbConnection(_connectionString);
-            var sql = "SELECT Id, ProcessName, CycleId FROM Process";
+            var sql = "SELECT Id, ProcessName, CycleId, TestStart, TestCondition, AutoCondition, AutoMode, AutoStart, ProcessCategory, FinishId, ILStart FROM Process";
             return connection.Query<Models.Process>(sql).ToList();
         }
 

@@ -1,6 +1,5 @@
 ﻿using KdxDesigner.Models;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Windows;
 
 namespace KdxDesigner.Utils.Process
 {
@@ -8,6 +7,8 @@ namespace KdxDesigner.Utils.Process
     {
         public static List<LadderCsvRow> GenerateAllLadderCsvRows(
             Cycle selectedCycle,
+            int? processStartDevice,
+            int? detailStartDevice,
             List<Models.Process> processes,
             List<ProcessDetailDto> details,
             List<IO> ioList,
@@ -16,17 +17,53 @@ namespace KdxDesigner.Utils.Process
             var allRows = new List<LadderCsvRow>();
             errors = new List<OutputError>();
 
+            int processNum = 0;
+            int detailNum = 0;
+
+            if (processStartDevice == null)
+            {
+                MessageBox.Show("ProcessStartDeviceが入力されていません。");
+                processNum = processStartDevice!.Value;
+                return allRows;
+            }
+
+            if (detailStartDevice == null)
+            {
+                MessageBox.Show("DetailStartDeviceが入力されていません。");
+                detailNum = detailStartDevice!.Value;
+                return allRows;
+            }
+
+
             // 必要に応じて Cycle のログ出力やフィルタを行う
             var targetProcessIds = processes
                 .Where(p => p.CycleId == selectedCycle.Id)
                 .Select(p => p.Id)
                 .ToHashSet();
 
+            // Processからニモニックを生成
+            foreach (var process in processes)
+            {
+                try
+                {
+                    var rows = GenerateCsvRows(process, processNum, detailNum);
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(new OutputError
+                    {
+
+                    });
+                }
+
+            }
+
+            // ProcessDetailからニモニックを生成
             foreach (var detail in details.Where(d => d.ProcessId.HasValue && targetProcessIds.Contains(d.ProcessId.Value)))
             {
                 try
                 {
-                    var rows = GenerateLadderCsvRows(detail, ioList);
+                    var rows = GenerateCsvRowsDetail(detail, ioList);
                     allRows.AddRange(rows);
                 }
                 catch (Exception ex)
@@ -43,18 +80,43 @@ namespace KdxDesigner.Utils.Process
             return allRows;
         }
 
+        public static List<LadderCsvRow> GenerateCsvRows(
+            Models.Process process, 
+            int processStartNum, 
+            int detailStartNum)
+        {
+            var mnemonic = new List<LadderCsvRow>();
 
-        public static List<LadderCsvRow> GenerateLadderCsvRows(ProcessDetailDto detail, List<IO> ioList)
+            switch (process.ProcessCategory)
+            {
+                case "Normal": // 通常工程
+                    mnemonic.AddRange(BuildProcess.BuildNormal(process, processStartNum, detailStartNum));
+                    break;
+                case "ResetAfter": // 工程まとめ
+                    mnemonic.AddRange(BuildProcess.BuildResetAfter(process, processStartNum, detailStartNum));
+                    break;
+                case "IL": // センサON確認
+                    mnemonic.AddRange(BuildProcess.BuildIL(process, processStartNum, detailStartNum));
+                    break;
+                default:
+                    break;
+            }
+
+            return mnemonic;
+        }
+
+
+        public static List<LadderCsvRow> GenerateCsvRowsDetail(ProcessDetailDto detail, List<IO> ioList)
         {
             var mnemonic = new List<LadderCsvRow>();
 
             switch (detail.CategoryId)
             {
                 case 1: // 通常工程
-                    mnemonic.AddRange(NormalProcessBuilder.BuildNormalPattern(detail, ioList));
+                    mnemonic.AddRange(BuildDetail.BuildNormalPattern(detail, ioList));
                     break;
                 case 2: // 工程まとめ
-                    mnemonic.AddRange(NormalProcessBuilder.BuildNormalPattern(detail, ioList));
+                    mnemonic.AddRange(BuildDetail.BuildNormalPattern(detail, ioList));
                     break;
                 case 3: // センサON確認
                     break;

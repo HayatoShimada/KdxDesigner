@@ -7,9 +7,11 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
+// ProcessDetail（工程プログラム）のニモニック配列を返すコード群
+
 namespace KdxDesigner.Utils.Process
 {
-    internal class NormalProcessBuilder
+    internal class BuildDetail
     {
         // 通常工程を出力するメソッド
         public static List<LadderCsvRow> BuildNormalPattern(ProcessDetailDto process, List<IO> ioList)

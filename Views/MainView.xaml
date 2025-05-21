@@ -183,7 +183,6 @@
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left" />
                         <TextBlock Text="工程詳細Lデバイス番号" Margin="5"/>
-                        <TextBox Text="{Binding DetailDeviceStartL}" Width="100" Margin="5"/>
 
                         <TextBox
                             Text="{Binding DetailDeviceStartL, UpdateSourceTrigger=PropertyChanged}"

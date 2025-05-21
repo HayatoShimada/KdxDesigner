@@ -145,6 +145,8 @@ namespace KdxDesigner.ViewModels
                 {
                     var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
                         SelectedCycle,
+                        ProcessDeviceStartL,
+                        DetailDeviceStartL,
                         Processes.ToList(),
                         ProcessDetails.ToList(),
                         ioList,
