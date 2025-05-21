@@ -10,7 +10,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
-using KdxDesigner.Utils.Process;
+using KdxDesigner.Utils;
 
 namespace KdxDesigner.ViewModels
 {

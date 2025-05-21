@@ -1,7 +1,9 @@
 ﻿using KdxDesigner.Models;
+using KdxDesigner.Utils.Process;
+
 using System.Windows;
 
-namespace KdxDesigner.Utils.Process
+namespace KdxDesigner.Utils
 {
     public static class ProcessBuilder
     {
