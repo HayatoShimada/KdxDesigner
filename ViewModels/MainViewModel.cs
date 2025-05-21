@@ -182,5 +182,6 @@ namespace KdxDesigner.ViewModels
             view.ShowDialog();
         }
 
+
     }
 }
