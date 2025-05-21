@@ -43,12 +43,16 @@ namespace KdxDesigner.Utils
                 .Select(p => p.Id)
                 .ToHashSet();
 
+            
+
             // Processからニモニックを生成
+            int count = 0;
             foreach (var process in processes)
             {
                 try
                 {
-                    var rows = GenerateCsvRows(process, processNum, detailNum);
+                    var rows = GenerateCsvRows(process, processNum, detailNum, count);
+
                 }
                 catch (Exception ex)
                 {

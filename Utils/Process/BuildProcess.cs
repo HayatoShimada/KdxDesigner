@@ -15,7 +15,7 @@ namespace KdxDesigner.Utils.Process
         // process:Processテーブルのレコード
         // processStartNum:ProcessプログラムのLデバイスのスタート番号
         // detailStartNum:ProcessDetailプログラムのLデバイスのスタート番号
-        public static List<LadderCsvRow> BuildNormal(Models.Process process, int processStartNum, int detailStartNum)
+        public static List<LadderCsvRow> BuildNormal(Models.Process process, int processStartNum, int detailStartNum, int count)
         {
             var result = new List<LadderCsvRow>();
 

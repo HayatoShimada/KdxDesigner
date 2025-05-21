@@ -2,10 +2,12 @@
 
 using KdxDesigner.Models;
 
+using System;
 using System.Data;
 using System.Data.OleDb;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
+using System.Transactions;
 
 namespace KdxDesigner.Services
 {
@@ -227,6 +229,71 @@ VALUES
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM MemoryCategory";
             return connection.Query<MemoryCategory>(sql).ToList();
+        }
+
+        public void SaveDeviceListProcess(List<Models.Process> processes, int startNum)
+        {
+            int count = 0;
+            foreach (Models.Process process in processes)
+            {
+                if (process == null) continue;
+
+                // 既にテーブルに存在するか検索
+                var existing = allExisting.FirstOrDefault(m =>
+                m.PlcId == memory.PlcId && m.Device == memory.Device);
+
+                var parameters = new DynamicParameters();
+                parameters.Add("NemonicId", 1, DbType.Int32);
+                parameters.Add("RecordId", process.Id, DbType.Int32);
+                parameters.Add("DeviceLabel", "L", DbType.String);
+                parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);
+                parameters.Add("OutCoilCount", 10, DbType.Int32);
+
+                // 5/21ココマデ
+                if (existing != null)
+                {
+                    parameters.Add("ID", existing.ID, DbType.Int64);
+                    connection.Execute(@"
+UPDATE [Memory] SET
+    [MemoryCategory] = @MemoryCategory,
+    [DeviceNumber] = @DeviceNumber,
+    [DeviceNumber1] = @DeviceNumber1,
+    [DeviceNumber2] = @DeviceNumber2,
+    [Category] = @Category,
+    [Row_1] = @Row_1,
+    [Row_2] = @Row_2,
+    [Row_3] = @Row_3,
+    [Row_4] = @Row_4,
+    [Direct_Input] = @Direct_Input,
+    [Confirm] = @Confirm,
+    [Note] = @Note,
+    [UpdatedAt] = @UpdatedAt,
+    [GOT] = @GOT
+WHERE [ID] = @ID",
+                    parameters, transaction);
+                }
+                else
+                {
+                    connection.Execute(@"
+INSERT INTO [Memory] (
+    [PlcId], [MemoryCategory], [DeviceNumber],
+    [DeviceNumber1], [DeviceNumber2], [Device],
+    [Category], [Row_1], [Row_2], [Row_3], [Row_4],
+    [Direct_Input], [Confirm], [Note],
+    [CreatedAt], [UpdatedAt], [GOT]
+) VALUES (
+    @PlcId, @MemoryCategory, @DeviceNumber,
+    @DeviceNumber1, @DeviceNumber2, @Device,
+    @Category, @Row_1, @Row_2, @Row_3, @Row_4,
+    @Direct_Input, @Confirm, @Note,
+    @CreatedAt, @UpdatedAt, @GOT
+)",
+                    parameters, transaction);
+                }
+
+                count++;
+            }
+
         }
 
         public void SaveMemories(List<Memory> memories, Action<string>? progressCallback = null)
