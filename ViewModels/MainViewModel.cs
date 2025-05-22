@@ -139,7 +139,8 @@ namespace KdxDesigner.ViewModels
                 // IO一覧を取得
                 var ioList = _repository.GetIoList();
                 // 
-                var memoryList = _repository.GetMemories(SelectedPlc.Id);
+                var memoryService = new MemoryService(_repository);
+                var memoryList = memoryService.GetMemories(SelectedPlc.Id);
 
                 if (SelectedCycle != null)
                 {

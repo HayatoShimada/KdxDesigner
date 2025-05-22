@@ -43,7 +43,8 @@ namespace KdxDesigner.ViewModels
             _repository = new AccessRepository();
 
             // メモリカテゴリドロップダウンのリスト取得
-            MemoryCategories = new ObservableCollection<MemoryCategory>(_repository.GetMemoryCategories());
+            var memoryService = new MemoryService(_repository);
+            MemoryCategories = new ObservableCollection<MemoryCategory>(memoryService.GetMemoryCategories());
             Memories = new ObservableCollection<Memory>();
 
         }
@@ -56,7 +57,8 @@ namespace KdxDesigner.ViewModels
 
             await Task.Run(() =>
             {
-                _repository.SaveMemories(Memories.ToList(), msg =>
+                var memoryService = new MemoryService(_repository);
+                memoryService.SaveMemories(Memories.ToList(), msg =>
                 {
                     // UIスレッドに戻してメッセージ更新
                     App.Current.Dispatcher.Invoke(() =>
@@ -142,7 +144,8 @@ namespace KdxDesigner.ViewModels
         public void DBImport()
         {
             // DBからすべてのメモリを取得
-            var allMemories = _repository.GetMemories(_plcId);
+            var memoryService = new MemoryService(_repository);
+            var allMemories = memoryService.GetMemories(_plcId);
 
             // フィルタされたリストを一時変数に
             IEnumerable<Memory> filteredMemories = allMemories;

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace KdxDesigner.Utils.Process
 {
@@ -12,33 +13,47 @@ namespace KdxDesigner.Utils.Process
     {
 
         // ProcessCategoryがNormal
-        // process:Processテーブルのレコード
-        // processStartNum:ProcessプログラムのLデバイスのスタート番号
-        // detailStartNum:ProcessDetailプログラムのLデバイスのスタート番号
-        public static List<LadderCsvRow> BuildNormal(Models.Process process, int processStartNum, int detailStartNum, int count)
+        public static List<LadderCsvRow> BuildNormal(
+            MnemonicDeviceWithProcess process, 
+            List<MnemonicDeviceWithProcessDetail> detail)
         {
             var result = new List<LadderCsvRow>();
 
-            // コードを記述
             if (process == null)
             {
             }
             else
             {
                 // 行間ステートメント
-                if (process.ProcessName == null)
+                if (process.Process.ProcessName == null)
                 {
-                    string id = process.Id.ToString();
+                    string id = process.Process.Id.ToString();
                     result.Add(LadderRow.AddStatement(id));
                 }
                 else
                 {
-                    string id = process.Id.ToString();
-                    result.Add(LadderRow.AddStatement(id + ":" + process.ProcessName));
+                    string id = process.Process.Id.ToString();
+                    result.Add(LadderRow.AddStatement(id + ":" + process.Process.ProcessName));
                 }
 
-                // L0 Condition
+                // L0 開始条件
+                // 開始条件のリストを作る
+                List<string> startCondition = process.Process.Autocondition != null
+                             ? process.Process.Autocondition.Split(";").ToList()
+                             : new List<string>();
 
+                if (startCondition.Count == 0)
+                {
+                    startCondition.Add("L" + process.Process.TestStart);
+                }
+                else
+                {
+                    foreach (var condition in startCondition)
+                    {
+                        var lDevices = "L" + condition ;
+
+                    }
+                }
 
                 // result.Add(LadderRow.AddAND(row));
                 // result.Add(LadderRow.AddOUT(lDevices[0]));
@@ -48,16 +63,11 @@ namespace KdxDesigner.Utils.Process
                 // OUT L3 完了条件
                 // OUT L4 完了
 
-
             }
-
-
             return result;
         }
 
-
         // ProcessCategoryがResetAfter
-
         public static List<LadderCsvRow> BuildResetAfter(Models.Process process, int processStartNum, int detailStartNum)
         {
             var result = new List<LadderCsvRow>();
