@@ -40,7 +40,7 @@ namespace KdxDesigner.Services
                 if (process == null) continue;
 
                 var existing = allExisting.FirstOrDefault(m =>
-                    m.PlcId == plcId && m.RecordId == process.Id);
+                    m.PlcId == plcId && m.RecordId == process.Id && m.MnemonicId == 1);
 
                 var parameters = new DynamicParameters();
                 parameters.Add("MnemonicId", 1, DbType.Int32);
@@ -104,7 +104,7 @@ namespace KdxDesigner.Services
                 if (process == null) continue;
 
                 var existing = allExisting.FirstOrDefault(m =>
-                    m.PlcId == plcId && m.RecordId == process.Id);
+                    m.PlcId == plcId && m.RecordId == process.Id && m.MnemonicId == 2);
 
                 var parameters = new DynamicParameters();
                 parameters.Add("MnemonicId", 2, DbType.Int32);

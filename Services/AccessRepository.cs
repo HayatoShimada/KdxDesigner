@@ -165,7 +165,8 @@ SELECT
     pd.StartSensor,
     pd.CategoryId,
     c.CategoryName,
-    pd.FinishSensor
+    pd.FinishSensor,
+    p.CycleId As CycleId
 FROM 
     (((ProcessDetail AS pd
     LEFT JOIN Process AS p ON pd.ProcessId = p.Id)

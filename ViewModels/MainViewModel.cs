@@ -153,9 +153,14 @@ namespace KdxDesigner.ViewModels
             {
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
 
+                // 明示的にToList()を呼び出して、IEnumerableをListに変換します。
+                List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
+                    .Where(d => d.CycleId == SelectedCycle.Id)
+                    .ToList();
+
                 // プロセスの必要デバイスを保存
                 mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL.Value, SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceProcessDetail(ProcessDetails.ToList(), DetailDeviceStartL.Value, SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceProcessDetail(details, DetailDeviceStartL.Value, SelectedPlc.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -199,9 +204,17 @@ namespace KdxDesigner.ViewModels
             }
             else
             {
-                // IO一覧を取得
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
 
+                // detailsを取得
+                var details = _repository.GetProcessDetailDtos();
+                List<ProcessDetailDto> detailAll = new();
+                foreach (var pros in Processes)
+                {
+                    detailAll.AddRange(details.Where(d => d.ProcessId == pros.Id));
+                }
+
+                // IO一覧を取得
                 var ioList = _repository.GetIoList();
                 var memoryService = new MemoryService(_repository);
                 var memoryList = memoryService.GetMemories(SelectedPlc.Id);
@@ -234,7 +247,7 @@ namespace KdxDesigner.ViewModels
                 // 並び順はProcessDetail.Idで昇順
                 joinedProcessDetailList = devicesD
                         .Join(
-                            ProcessDetails.ToList(),
+                            detailAll.ToList(),
                             m => m.RecordId,
                             d => d.Id,
                             (m, d) => new MnemonicDeviceWithProcessDetail
