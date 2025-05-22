@@ -19,12 +19,12 @@ namespace KdxDesigner.Utils
         {
             var repository = new AccessRepository();                        // ConnectionStringを取得するためのリポジトリ
             var mnemonicService = new MnemonicDeviceService(repository);    // MnemonicDeviceServiceのインスタンス
-            var processDevices = new List<MnemonicDevice>();               // MnemonicDeviceテーブルのレコード
-            var processDetailDevices = new List<MnemonicDevice>();               // MnemonicDeviceテーブルのレコード
-
+            var processDevices = new List<MnemonicDevice>();                // MnemonicDeviceテーブルのレコード
+            var processDetailDevices = new List<MnemonicDevice>();          // MnemonicDeviceテーブルのレコード
             var allRows = new List<LadderCsvRow>();                         // ニモニック配列を格納するリスト
+            var processBuilder = new BuildProcess();                        // BuildProcessのインスタンス
             errors = new List<OutputError>();                               // エラーリストの初期化
-            var processBuilder = new BuildProcess();                               // BuildProcessのインスタンス
+
 
             // プロセスの開始デバイスと詳細の開始デバイスがnullの場合、エラーメッセージを表示
             if (processStartDevice == null)
@@ -38,12 +38,6 @@ namespace KdxDesigner.Utils
                 MessageBox.Show("DetailStartDeviceが入力されていません。");
                 return allRows;
             }
-
-            // 必要に応じて Cycle のログ出力やフィルタを行う
-            var targetProcessIds = processes
-                .Where(p => p.CycleId == selectedCycle.Id)
-                .Select(p => p.Id)
-                .ToHashSet();
 
             // プロセスの必要デバイスを保存
             mnemonicService.SaveMnemonicDeviceProcess(processes, processStartDevice.Value, selectedCycle.PlcId);
@@ -110,7 +104,6 @@ namespace KdxDesigner.Utils
                         break;
                     case "ResetAfter": // 工程まとめ
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, detail));
-
                         break;
                     case "IL": // センサON確認
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, detail));

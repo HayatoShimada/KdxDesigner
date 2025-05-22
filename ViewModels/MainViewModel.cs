@@ -41,6 +41,10 @@ namespace KdxDesigner.ViewModels
 
         private List<ProcessDetailDto> allDetails = new();
         private List<Models.Process> allProcesses = new();
+        private List<MnemonicDevice> processDevices = new();
+        private List<Memory> memory = new();
+        private List<MnemonicDeviceWithProcess> joinedProcessList = new();
+        private List<MnemonicDeviceWithProcessDetail> joinedProcessDetailList = new();
 
         public MainViewModel()
         {
@@ -127,6 +131,65 @@ namespace KdxDesigner.ViewModels
             view.ShowDialog();              // モーダルで表示
         }
 
+
+        // メモリ設定ボタンが押されたときの処理
+        // MemoryテーブルとMnemonicDeviceテーブルにデータを保存する
+        // 処理の流れ：必要事項の入力確認→MnemonicDeviceテーブルにデータを保存→Memoryテーブルにデータを保存
+        [RelayCommand]
+        private void MemorySetting()
+        {
+            if (SelectedCycle == null || SelectedPlc == null || ProcessDeviceStartL == null || DetailDeviceStartL == null)
+            {
+                if (SelectedCycle == null)
+                    MessageBox.Show("Cycleが選択されていません。");
+                if (SelectedPlc == null)
+                    MessageBox.Show("Plcが選択されていません。");
+                if (ProcessDeviceStartL == null)
+                    MessageBox.Show("ProcessDeviceStartLが入力されていません。");
+                if (DetailDeviceStartL == null)
+                    MessageBox.Show("DetailDeviceStartLが入力されていません。");
+            }
+            else
+            {
+                var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
+
+                // プロセスの必要デバイスを保存
+                mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL.Value, SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceProcessDetail(ProcessDetails.ToList(), DetailDeviceStartL.Value, SelectedPlc.Id);
+
+                // MnemonicId = 1 だとProcessニモニックのレコード
+                var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
+                var devicesP = devices
+                    .Where(m => m.MnemonicId == 1)
+                    .ToList();
+                var devicesD = devices
+                    .Where(m => m.MnemonicId == 2)
+                    .ToList();
+
+                // Memoryテーブルにデータを保存
+                var memoryService = new MemoryService(_repository);
+                MessageBox.Show("Memoryテーブルにデータを保存します。");
+                foreach (var device in devicesP)
+                { 
+                    bool result = memoryService.SaveMnemonicMemories(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                }
+                foreach (var device in devicesD)
+                {
+                    bool result = memoryService.SaveMnemonicMemories(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                }
+            }
+        }
+
         [RelayCommand]
         private void ProcessOutput()
         {
@@ -137,10 +200,51 @@ namespace KdxDesigner.ViewModels
             else
             {
                 // IO一覧を取得
+                var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
+
                 var ioList = _repository.GetIoList();
-                // 
                 var memoryService = new MemoryService(_repository);
                 var memoryList = memoryService.GetMemories(SelectedPlc.Id);
+
+                // MnemonicId = 1 だとProcessニモニックのレコード
+                var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
+                var devicesP = devices
+                    .Where(m => m.MnemonicId == 1)
+                    .ToList();
+                var devicesD = devices
+                    .Where(m => m.MnemonicId == 2)
+                    .ToList();
+
+                // MnemonicDeviceとProcessのリストを結合
+                // 並び順はProcess.Idで昇順
+                joinedProcessList = devicesP
+                            .Join(
+                                Processes.ToList(),
+                                m => m.RecordId,
+                                p => p.Id,
+                                (m, p) => new MnemonicDeviceWithProcess
+                                {
+                                    Mnemonic = m,
+                                    Process = p
+                                })
+                            .OrderBy(m => m.Process.Id)
+                            .ToList();
+
+                // MnemonicDeviceとProcessDetailのリストを結合
+                // 並び順はProcessDetail.Idで昇順
+                joinedProcessDetailList = devicesD
+                        .Join(
+                            ProcessDetails.ToList(),
+                            m => m.RecordId,
+                            d => d.Id,
+                            (m, d) => new MnemonicDeviceWithProcessDetail
+                            {
+                                Mnemonic = m,
+                                Detail = d
+                            })
+                        .OrderBy(m => m.Detail.Id)
+                        .ToList();
+
 
                 if (SelectedCycle != null)
                 {
