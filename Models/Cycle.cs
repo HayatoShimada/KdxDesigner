@@ -13,7 +13,7 @@ namespace KdxDesigner.Models
     {
         [Key]
         public int Id { get; set; }
-        public int? PlcId { get; set; }
+        public int PlcId { get; set; }
         public string? CycleName { get; set; }
     }
     

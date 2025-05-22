@@ -44,15 +44,20 @@ namespace KdxDesigner.ViewModels
 
             foreach (var item in SettingItems)
             {
+                if (string.IsNullOrEmpty(item.Key)) // Ensure Key is not null or empty
+                {
+                    MessageBox.Show("設定項目のキーが無効です。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
                 var prop = settingsType.GetProperty(item.Key);
                 if (prop == null || !prop.CanWrite) continue;
 
                 try
                 {
                     object? convertedValue = prop.PropertyType == typeof(int)
-                        ? int.Parse(item.Value)
-                        : item.Value;
-
+                        ? int.Parse(item.Value ?? "0") // Provide a default value to handle null
+                        : item.Value ?? ""; // Provide a default value for other types
                     prop.SetValue(settingsObj, convertedValue);
                 }
                 catch

@@ -27,4 +27,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Utils\ProcessDetail\" />
+  </ItemGroup>
+
 </Project>

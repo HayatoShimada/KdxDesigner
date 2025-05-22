@@ -189,6 +189,9 @@
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left" />
+
+                        <Button Content="メモリ設定" Command="{Binding MemorySettingCommand}" Width="100" Margin="5" HorizontalAlignment="Right"/>
+
                     </StackPanel>
 
                     <!-- 右寄せ：Button -->

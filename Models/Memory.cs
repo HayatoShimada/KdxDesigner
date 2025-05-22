@@ -29,6 +29,8 @@ namespace KdxDesigner.Models
         public string? Note { get; set; }
         public string? CreatedAt { get; set; }
         public string? UpdatedAt { get; set; }
+        public int? MnemonicDeviceId { get; set; }
+        public int? OutcoilNumber { get; set; }
         public bool? GOT { get; set; }
 
     }
