@@ -41,8 +41,6 @@ namespace KdxDesigner.ViewModels
 
         private List<ProcessDetailDto> allDetails = new();
         private List<Models.Process> allProcesses = new();
-        private List<MnemonicDevice> processDevices = new();
-        private List<Memory> memory = new();
         private List<MnemonicDeviceWithProcess> joinedProcessList = new();
         private List<MnemonicDeviceWithProcessDetail> joinedProcessDetailList = new();
 
@@ -173,7 +171,7 @@ namespace KdxDesigner.ViewModels
 
                 // Memoryテーブルにデータを保存
                 var memoryService = new MemoryService(_repository);
-                MessageBox.Show("Memoryテーブルにデータを保存します。");
+                MessageBox.Show("Process情報をMemoryテーブルにデータを保存します。");
                 foreach (var device in devicesP)
                 { 
                     bool result = memoryService.SaveMnemonicMemories(device);
@@ -183,6 +181,7 @@ namespace KdxDesigner.ViewModels
                         return;
                     }
                 }
+                MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
                 foreach (var device in devicesD)
                 {
                     bool result = memoryService.SaveMnemonicMemories(device);
@@ -192,6 +191,8 @@ namespace KdxDesigner.ViewModels
                         return;
                     }
                 }
+
+                MessageBox.Show("完了しました");
             }
         }
 
