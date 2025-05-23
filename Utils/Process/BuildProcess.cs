@@ -1,6 +1,4 @@
-﻿using KdxDesigner.Models;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +6,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using KdxDesigner.Utils.MnemonicCommon;
 using System.Runtime.ExceptionServices;
+using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.Utils.Process
 {

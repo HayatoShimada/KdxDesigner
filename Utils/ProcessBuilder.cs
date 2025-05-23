@@ -4,6 +4,7 @@ using KdxDesigner.Services;
 
 using System.Windows;
 using KdxDesigner.Utils.ProcessDetail;
+using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.Utils
 {

@@ -199,7 +199,7 @@
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left" />
-                        
+
                         <!---->
                         <TextBlock Text="シリンダMデバイス番号" Margin="5"/>
                         <TextBox
@@ -224,13 +224,13 @@
                     ItemsSource="{Binding OutputErrors}"
                     AutoGenerateColumns="False"
                     IsReadOnly="True">
-                    
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="工程名" Binding="{Binding DetailName}" />
                         <DataGridTextColumn Header="プロセスID" Binding="{Binding ProcessId}" />
                         <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*" />
                     </DataGrid.Columns>
-                    
+
                 </DataGrid>
             </GroupBox>
         </Grid>

@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using KdxDesigner.Utils;
+using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.ViewModels
 {
@@ -184,14 +185,19 @@ namespace KdxDesigner.ViewModels
                 mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
 
-
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
                 var devicesP = devices
-                    .Where(m => m.MnemonicId == 1)
+                    .Where(m => m.MnemonicId == (int)MnemonicType.Process)
                     .ToList();
                 var devicesD = devices
-                    .Where(m => m.MnemonicId == 2)
+                    .Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail)
+                    .ToList();
+                var devicesO = devices
+                    .Where(m => m.MnemonicId == (int)MnemonicType.Operation)
+                    .ToList();
+                var devicesC = devices
+                    .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                     .ToList();
 
                 // Memoryテーブルにデータを保存
@@ -208,6 +214,26 @@ namespace KdxDesigner.ViewModels
                 }
                 MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
                 foreach (var device in devicesD)
+                {
+                    bool result = memoryService.SaveMnemonicMemories(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                }
+                MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
+                foreach (var device in devicesO)
+                {
+                    bool result = memoryService.SaveMnemonicMemories(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                }
+                MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
+                foreach (var device in devicesC)
                 {
                     bool result = memoryService.SaveMnemonicMemories(device);
                     if (!result)
