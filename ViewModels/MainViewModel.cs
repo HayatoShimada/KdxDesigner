@@ -34,6 +34,8 @@ namespace KdxDesigner.ViewModels
 
         [ObservableProperty] private int? processDeviceStartL;
         [ObservableProperty] private int? detailDeviceStartL;
+        [ObservableProperty] private int? operationDeviceStartM;
+        [ObservableProperty] private int? cylinderDeviceStartM;
 
 
         [ObservableProperty]
@@ -136,7 +138,12 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void MemorySetting()
         {
-            if (SelectedCycle == null || SelectedPlc == null || ProcessDeviceStartL == null || DetailDeviceStartL == null)
+            if (SelectedCycle == null 
+                || SelectedPlc == null 
+                || ProcessDeviceStartL == null 
+                || DetailDeviceStartL == null 
+                || OperationDeviceStartM == null
+                || CylinderDeviceStartM == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -146,6 +153,10 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("ProcessDeviceStartLが入力されていません。");
                 if (DetailDeviceStartL == null)
                     MessageBox.Show("DetailDeviceStartLが入力されていません。");
+                if (OperationDeviceStartM == null)
+                    MessageBox.Show("OperationDeviceStartMが入力されていません。");
+                if (CylinderDeviceStartM == null)
+                    MessageBox.Show("CylinderDeviceStartMが入力されていません。");
             }
             else
             {
@@ -170,6 +181,9 @@ namespace KdxDesigner.ViewModels
                 // プロセスの必要デバイスを保存
                 mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceProcessDetail(details, DetailDeviceStartL.Value, SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
+
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
