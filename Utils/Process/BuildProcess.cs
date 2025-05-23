@@ -36,8 +36,8 @@ namespace KdxDesigner.Utils.Process
             // L0 開始条件
             // まず開始条件の数値リストを作る
             // process.Process.Autocondition 例) 1;2;3;4;5
-            List<int> startCondition = !string.IsNullOrEmpty(process.Process.Autocondition)
-                                                ? process.Process.Autocondition
+            List<int> startCondition = !string.IsNullOrEmpty(process.Process.AutoCondition)
+                                                ? process.Process.AutoCondition
                                                     .Split(';')
                                                     .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                                                     .Where(n => n.HasValue)
@@ -82,9 +82,31 @@ namespace KdxDesigner.Utils.Process
             int? outcoilNum = process.Mnemonic.StartNum;
             var outcoilLabel = process.Mnemonic.DeviceLabel ?? string.Empty;
             result.Add(LadderRow.AddOUT(outcoilLabel + outcoilNum.ToString()));
-            
+
+
+
             // OUT L1 開始
+            var debugContact = process.Process.TestMode;
+            result.Add(LadderRow.AddLDI(debugContact));
+
+            var debugStartContact = process.Process.TestStart;
+            result.Add(LadderRow.AddLD(debugStartContact));
+
+            var debugCondition = process.Process.TestCondition;
+            result.Add(LadderRow.AddAND(debugCondition));
+
+            result.Add(LadderRow.AddAND(debugContact));
+            result.Add(LadderRow.AddORB());
+
+            result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
+            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddAND("L1000"));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
+
             // OUT L2 実行中
+
+
             // OUT L3 完了条件
             // OUT L4 完了
 

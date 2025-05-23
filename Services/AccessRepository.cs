@@ -55,7 +55,7 @@ namespace KdxDesigner.Services
         public List<Models.Process> GetProcesses()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = "SELECT Id, ProcessName, CycleId, TestStart, TestCondition, AutoCondition, AutoMode, AutoStart, ProcessCategory, FinishId, ILStart FROM Process";
+            var sql = "SELECT Id, ProcessName, CycleId, TestStart, TestCondition, TestMode, AutoCondition, AutoMode, AutoStart, ProcessCategory, FinishId, ILStart FROM Process";
             return connection.Query<Models.Process>(sql).ToList();
         }
 

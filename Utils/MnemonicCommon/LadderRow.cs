@@ -33,9 +33,28 @@ namespace KdxDesigner.Utils.MnemonicCommon
             };
         }
 
+        // ORBを追加する
+        public static LadderCsvRow AddORB()
+        {
+            Console.WriteLine($"[LadderRow] ORB");
+
+            return new LadderCsvRow
+            {
+                StepNo = "\"\"",
+                StepComment = "\"\"",
+                Command = Command.ORB,
+                Address = "\"\"",
+                Blank1 = "\"\"",
+                PiStatement = "\"\"",
+                Note = "\"\""
+            };
+        }
+
         // ステートメントを追加する
         public static LadderCsvRow AddStatement(string statementComment)
         {
+            Console.WriteLine($"[LadderRow] Statement: {statementComment}");
+
             return new LadderCsvRow
             {
                 StepNo = "\"\"",
@@ -51,7 +70,7 @@ namespace KdxDesigner.Utils.MnemonicCommon
         // 共通メソッド
         private static LadderCsvRow CreateRow(string command, string address)
         {
-            return new LadderCsvRow
+            var row = new LadderCsvRow
             {
                 StepNo = "\"\"",
                 StepComment = "\"\"",
@@ -61,6 +80,10 @@ namespace KdxDesigner.Utils.MnemonicCommon
                 PiStatement = "\"\"",
                 Note = "\"\""
             };
+
+            Console.WriteLine($"[LadderRow] Added: Command={command}, Address={address}");
+
+            return row;
         }
     }
 }
