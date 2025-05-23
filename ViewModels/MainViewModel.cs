@@ -151,9 +151,20 @@ namespace KdxDesigner.ViewModels
             {
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
 
-                // 明示的にToList()を呼び出して、IEnumerableをListに変換します。
+                // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
                     .Where(d => d.CycleId == SelectedCycle.Id)
+                    .ToList();
+
+                // CYの一覧を読み出し
+                List<CY> cylinder = _repository.GetCYs()
+                    .Where(o => o.PlcId == SelectedPlc.Id)
+                    .ToList();
+
+                // Operationの一覧を読み出し
+                var cylinderIds = cylinder.Select(c => c.Id).ToHashSet();
+                List<Operation> operations = _repository.GetOperations()
+                    .Where(o => o.CYId.HasValue && cylinderIds.Contains(o.CYId.Value))
                     .ToList();
 
                 // プロセスの必要デバイスを保存
