@@ -2,10 +2,11 @@
 
 using System.Net;
 
-namespace KdxDesigner.Utils
+namespace KdxDesigner.Utils.MnemonicCommon
 {
     public static class LadderRow
     {
+        // アドレスを入力すると、LD命令等を生成する
         public static LadderCsvRow AddLD(string address) => CreateRow(Command.LD, address);
         public static LadderCsvRow AddLDI(string address) => CreateRow(Command.LDI, address);
         public static LadderCsvRow AddAND(string address) => CreateRow(Command.AND, address);
@@ -16,6 +17,7 @@ namespace KdxDesigner.Utils
         public static LadderCsvRow AddOR(string address) => CreateRow(Command.OR, address);
         public static LadderCsvRow AddORI(string address) => CreateRow(Command.ORI, address);
 
+        // ソースとデスティネーションを入力すると、MOV命令等を生成する
         public static List<LadderCsvRow> AddMOVSet(string source, string destination)
             => CreateMOV(Command.MOV, source, destination);
 
@@ -31,6 +33,7 @@ namespace KdxDesigner.Utils
             };
         }
 
+        // ステートメントを追加する
         public static LadderCsvRow AddStatement(string statementComment)
         {
             return new LadderCsvRow
@@ -45,6 +48,7 @@ namespace KdxDesigner.Utils
             };
         }
 
+        // 共通メソッド
         private static LadderCsvRow CreateRow(string command, string address)
         {
             return new LadderCsvRow

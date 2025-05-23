@@ -17,8 +17,9 @@ namespace KdxDesigner.Utils
             List<IO> ioList,
             out List<OutputError> errors)
         {
-            var allRows = new List<LadderCsvRow>();                         // ニモニック配列を格納するリスト
-            errors = new List<OutputError>();                               // エラーリストの初期化
+            LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
+            var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
+            errors = new List<OutputError>();                   // エラーリストの初期化
 
             // プロセスのニモニックを生成
             allRows = GenerateCsvRowsProcess(processes, details);
@@ -36,13 +37,13 @@ namespace KdxDesigner.Utils
             {
                 switch(pros.Process.ProcessCategory)
                 {
-                    case "Normal": // 通常工程
+                    case "Normal":      // 通常工程
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
-                    case "ResetAfter": // 工程まとめ
+                    case "ResetAfter":  // リセット後工程
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
-                    case "IL": // センサON確認
+                    case "IL":          // センサON確認
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     default:
