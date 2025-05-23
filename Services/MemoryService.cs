@@ -74,7 +74,7 @@ namespace KdxDesigner.Services
 
                     if (existing != null)
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int64);
+                        parameters.Add("ID", existing.ID, DbType.Int32);
                         connection.Execute(@"
                             UPDATE [Memory] SET
                                 [MemoryCategory] = @MemoryCategory,
@@ -227,7 +227,7 @@ namespace KdxDesigner.Services
 
                     if (existing != null)
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int64);
+                        parameters.Add("ID", existing.ID, DbType.Int32);
                         connection.Execute(@"
                         UPDATE [Memory] SET
                             [MemoryCategory] = @MemoryCategory,

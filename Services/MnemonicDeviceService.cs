@@ -53,15 +53,15 @@ namespace KdxDesigner.Services
 
                 if (existing != null)
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int64);
+                    parameters.Add("ID", existing.ID, DbType.Int32);
                     connection.Execute(@"
                         UPDATE [MnemonicDevice] SET
-                            [MnemonicId] = @NemonicId,
+                            [MnemonicId] = @MnemonicId,
                             [RecordId] = @RecordId,
                             [DeviceLabel] = @DeviceLabel,
                             [StartNum] = @StartNum,
                             [OutCoilCount] = @OutCoilCount,
-                            [PlcId] = @PlcId
+                            [PlcId] = @PlcId,
                             [Comment] = @Comment
                         WHERE [ID] = @ID",
                         parameters, transaction);
@@ -113,18 +113,21 @@ namespace KdxDesigner.Services
                 parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);
                 parameters.Add("OutCoilCount", 10, DbType.Int32);
                 parameters.Add("PlcId", plcId, DbType.Int32);
+                parameters.Add("Comment", process.DetailName, DbType.String);
+
 
                 if (existing != null)
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int64);
+                    parameters.Add("ID", existing.ID, DbType.Int32);
                     connection.Execute(@"
                         UPDATE [MnemonicDevice] SET
-                            [MnemonicId] = @NemonicId,
+                            [MnemonicId] = @MnemonicId,
                             [RecordId] = @RecordId,
                             [DeviceLabel] = @DeviceLabel,
                             [StartNum] = @StartNum,
                             [OutCoilCount] = @OutCoilCount,
-                            [PlcId] = @PlcId
+                            [PlcId] = @PlcId,
+                            [Comment] = @Comment
                         WHERE [ID] = @ID",
                         parameters, transaction);
                 }
@@ -132,9 +135,9 @@ namespace KdxDesigner.Services
                 {
                     connection.Execute(@"
                         INSERT INTO [MnemonicDevice] (
-                            [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId]
+                            [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment]
                         ) VALUES (
-                            @NemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId
+                            @NemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment
                         )",
                         parameters, transaction);
                 }
