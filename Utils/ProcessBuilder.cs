@@ -3,6 +3,7 @@ using KdxDesigner.Utils.Process;
 using KdxDesigner.Services;
 
 using System.Windows;
+using KdxDesigner.Utils.ProcessDetail;
 
 namespace KdxDesigner.Utils
 {
@@ -41,10 +42,10 @@ namespace KdxDesigner.Utils
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     case "ResetAfter":  // リセット後工程
-                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                        //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     case "IL":          // センサON確認
-                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                        //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     default:
                         break;
@@ -92,11 +93,7 @@ namespace KdxDesigner.Utils
                 default:
                     break;
             }
-
             return mnemonic;
         }
-
-        
-
     }
 }
