@@ -1,4 +1,5 @@
 ﻿using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
 using KdxDesigner.ViewModels;
 
 using System.Collections.Generic;

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace KdxDesigner.Models
+namespace KdxDesigner.Models.Define
 {
     public class AppSettings
     {

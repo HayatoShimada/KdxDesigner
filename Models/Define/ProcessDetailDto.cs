@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KdxDesigner.Models
+namespace KdxDesigner.Models.Define
 {
     public class ProcessDetailDto
     {

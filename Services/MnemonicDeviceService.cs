@@ -109,7 +109,7 @@ namespace KdxDesigner.Services
             var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
 
             int count = 0;
-            foreach (Models.ProcessDetailDto process in processes)
+            foreach (ProcessDetailDto process in processes)
             {
                 if (process == null) continue;
 

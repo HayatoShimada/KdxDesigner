@@ -1,6 +1,7 @@
 ﻿using Dapper;
 
 using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
 
 using System;
 using System.Data;
