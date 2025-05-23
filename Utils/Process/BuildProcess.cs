@@ -86,9 +86,11 @@ namespace KdxDesigner.Utils.Process
 
 
             // OUT L1 開始
+            // 試運転スル
             var debugContact = process.Process.TestMode;
             result.Add(LadderRow.AddLDI(debugContact));
 
+            // 試運転実行処理
             var debugStartContact = process.Process.TestStart;
             result.Add(LadderRow.AddLD(debugStartContact));
 
@@ -98,18 +100,37 @@ namespace KdxDesigner.Utils.Process
             result.Add(LadderRow.AddAND(debugContact));
             result.Add(LadderRow.AddORB());
 
+            // アウトコイルまで
             result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
             result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
             result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddAND("L1000"));
+
+            var startContact = process.Process.AutoStart;
+            result.Add(LadderRow.AddAND(startContact));
             result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
 
+            // CJの実装
+            result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(debugStartContact));
+            result.Add(LadderRow.AddCJ("P0"));          // issue#11
+
             // OUT L2 実行中
+            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
 
-
-            // OUT L3 完了条件
             // OUT L4 完了
+            var completeContact = process.Process.FinishId;
+            var completeDetailRecord = detail.FirstOrDefault(d => d.Mnemonic.RecordId == completeContact);
+            var completeMnemonic = completeDetailRecord.Mnemonic;
+            var completeLabel = completeMnemonic.DeviceLabel ?? string.Empty;
+            var completeNumber = completeMnemonic.StartNum + completeMnemonic.OutCoilCount - 1;
+            var completeDevice = completeNumber.ToString();
+            var completeLabelDevice = completeLabel + completeDevice;
 
+            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(completeLabelDevice));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 4).ToString()));
 
             return result;
         }
