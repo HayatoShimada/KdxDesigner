@@ -34,6 +34,8 @@
         public const string N2 = "\"N2\"";
         public const string NOP = "\"NOPLF\"";
         public const string OUTH = "\"OUTH\"";
+        public const string CJ = "\"CJ\"";
+
         public const string ZR = "\"ZR\"";
         public const string T = "\"T\"";
         public const string D = "\"D\"";

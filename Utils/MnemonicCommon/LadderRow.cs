@@ -2,12 +2,14 @@
 
 using System.Net;
 
-namespace KdxDesigner.Utils
+namespace KdxDesigner.Utils.MnemonicCommon
 {
     public static class LadderRow
     {
+        // アドレスを入力すると、LD命令等を生成する
         public static LadderCsvRow AddLD(string address) => CreateRow(Command.LD, address);
         public static LadderCsvRow AddLDI(string address) => CreateRow(Command.LDI, address);
+        public static LadderCsvRow AddLDP(string address) => CreateRow(Command.LDP, address);
         public static LadderCsvRow AddAND(string address) => CreateRow(Command.AND, address);
         public static LadderCsvRow AddANI(string address) => CreateRow(Command.ANI, address);
         public static LadderCsvRow AddOUT(string address) => CreateRow(Command.OUT, address);
@@ -15,7 +17,11 @@ namespace KdxDesigner.Utils
         public static LadderCsvRow AddRST(string address) => CreateRow(Command.RST, address);
         public static LadderCsvRow AddOR(string address) => CreateRow(Command.OR, address);
         public static LadderCsvRow AddORI(string address) => CreateRow(Command.ORI, address);
+        public static LadderCsvRow AddCJ(string address) => CreateRow(Command.CJ, address);
+        public static LadderCsvRow AddORB() => CreateRow(Command.ORB);
 
+
+        // ソースとデスティネーションを入力すると、MOV命令等を生成する
         public static List<LadderCsvRow> AddMOVSet(string source, string destination)
             => CreateMOV(Command.MOV, source, destination);
 
@@ -31,8 +37,11 @@ namespace KdxDesigner.Utils
             };
         }
 
+        // ステートメントを追加する
         public static LadderCsvRow AddStatement(string statementComment)
         {
+            Console.WriteLine($"[LadderRow] Statement: {statementComment}");
+
             return new LadderCsvRow
             {
                 StepNo = "\"\"",
@@ -45,9 +54,10 @@ namespace KdxDesigner.Utils
             };
         }
 
-        private static LadderCsvRow CreateRow(string command, string address)
+        // 共通メソッド
+        private static LadderCsvRow CreateRow(string command, string address = "")
         {
-            return new LadderCsvRow
+            var row = new LadderCsvRow
             {
                 StepNo = "\"\"",
                 StepComment = "\"\"",
@@ -57,6 +67,10 @@ namespace KdxDesigner.Utils
                 PiStatement = "\"\"",
                 Note = "\"\""
             };
+
+            Console.WriteLine($"[LadderRow] Added: Command={command}, Address={address}");
+            return row;
         }
+
     }
 }

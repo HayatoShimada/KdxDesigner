@@ -14,8 +14,10 @@ namespace KdxDesigner.Models
         public int? CycleId { get; set; }
         public string? TestStart {  get; set; }
         public string? TestCondition { get; set; }
-        public string? Autocondition { get; set; }
+        public string? TestMode { get; set; }
+        public string? AutoCondition { get; set; }
         public string? AutoMode { get; set; }
+        public string? AutoStart { get; set; }
         public string? ProcessCategory { get; set; }
         public int? FinishId { get; set; }
         public string? ILStart { get; set; }
