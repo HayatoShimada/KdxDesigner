@@ -1,6 +1,6 @@
 # 概要
 KdxDesignerはKANAMORI SYSTEM Inc.におけるラダープログラム自動作成の為のWindowsアプリケーションです。  
-https://www.notion.so/30f7ce7ff0574570900d3bfba87e9d46?v=14111e15871c46fd89ddcb6bebf189c0
+https://amethyst-lobster-62f.notion.site/30f7ce7ff0574570900d3bfba87e9d46?v=14111e15871c46fd89ddcb6bebf189c0&pvs=74
 - C#
 - .NET 8.0  
 - WPF  
