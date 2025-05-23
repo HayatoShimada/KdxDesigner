@@ -33,7 +33,8 @@ https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0
 - System.Data.OleDb 9.0.4
 ### ACCESSファイルの変更を伴う場合
 TEST用のACCESSファイルを準備して、コード内でそのパスを参照させること。  
-該当プログラムは下記。
+該当プログラムは下記。  
+\Services\AccessRepository.cs
 ```
 namespace KdxDesigner.Services
 {
