@@ -10,88 +10,25 @@ namespace KdxDesigner.Utils
     {
         public static List<LadderCsvRow> GenerateAllLadderCsvRows(
             Cycle selectedCycle,
-            int? processStartDevice,
-            int? detailStartDevice,
-            List<Models.Process> processes,
-            List<ProcessDetailDto> details,
+            int processStartDevice,
+            int detailStartDevice,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<IO> ioList,
             out List<OutputError> errors)
         {
-            var repository = new AccessRepository();                        // ConnectionStringを取得するためのリポジトリ
-            var mnemonicService = new MnemonicDeviceService(repository);    // MnemonicDeviceServiceのインスタンス
-            var processDevices = new List<MnemonicDevice>();                // MnemonicDeviceテーブルのレコード
-            var processDetailDevices = new List<MnemonicDevice>();          // MnemonicDeviceテーブルのレコード
             var allRows = new List<LadderCsvRow>();                         // ニモニック配列を格納するリスト
-            var processBuilder = new BuildProcess();                        // BuildProcessのインスタンス
             errors = new List<OutputError>();                               // エラーリストの初期化
 
-
-            // プロセスの開始デバイスと詳細の開始デバイスがnullの場合、エラーメッセージを表示
-            if (processStartDevice == null)
-            {
-                MessageBox.Show("ProcessStartDeviceが入力されていません。");
-                return allRows;
-            }
-
-            if (detailStartDevice == null)
-            {
-                MessageBox.Show("DetailStartDeviceが入力されていません。");
-                return allRows;
-            }
-
-            // プロセスの必要デバイスを保存
-            mnemonicService.SaveMnemonicDeviceProcess(processes, processStartDevice.Value, selectedCycle.PlcId);
-            mnemonicService.SaveMnemonicDeviceProcessDetail(details, processStartDevice.Value, selectedCycle.PlcId);
-
-            // MnemonicId = 1 だとProcessニモニックのレコード
-            var devices = mnemonicService.GetMnemonicDevice(selectedCycle.PlcId);
-            processDevices = devices
-                .Where(m => m.MnemonicId == 1)
-                .ToList();
-            processDetailDevices = devices
-                .Where(m => m.MnemonicId == 2)
-                .ToList();
-
-            // MnemonicDeviceとProcessのリストを結合
-            // 並び順はProcess.Idで昇順
-            var joinedProcessList = processDevices
-                    .Join(
-                        processes,
-                        m => m.RecordId,
-                        p => p.Id,
-                        (m, p) => new MnemonicDeviceWithProcess
-                        {
-                            Mnemonic = m,
-                            Process = p
-                        })
-                    .OrderBy(m => m.Process.Id)
-                    .ToList();
-
-            // MnemonicDeviceとProcessDetailのリストを結合
-            // 並び順はProcessDetail.Idで昇順
-            var joinedProcessDetailList = processDetailDevices
-                    .Join(
-                        details,
-                        m => m.RecordId,
-                        d => d.Id,
-                        (m, d) => new MnemonicDeviceWithProcessDetail
-                        {
-                            Mnemonic = m,
-                            Detail = d
-                        })
-                    .OrderBy(m => m.Detail.Id)
-                    .ToList();
-
             // プロセスのニモニックを生成
-            allRows = GenerateCsvRowsProcess(joinedProcessList, joinedProcessDetailList);
-
+            allRows = GenerateCsvRowsProcess(processes, details);
             // プロセス詳細のニモニックを生成
             return allRows;
         }
 
         public static List<LadderCsvRow> GenerateCsvRowsProcess(
             List<MnemonicDeviceWithProcess> list, 
-            List<MnemonicDeviceWithProcessDetail> detail)
+            List<MnemonicDeviceWithProcessDetail> details)
         {
             var mnemonic = new List<LadderCsvRow>();
 
@@ -100,13 +37,13 @@ namespace KdxDesigner.Utils
                 switch(pros.Process.ProcessCategory)
                 {
                     case "Normal": // 通常工程
-                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, detail));
+                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     case "ResetAfter": // 工程まとめ
-                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, detail));
+                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     case "IL": // センサON確認
-                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, detail));
+                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     default:
                         break;

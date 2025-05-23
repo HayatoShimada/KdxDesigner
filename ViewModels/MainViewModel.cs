@@ -173,7 +173,7 @@ namespace KdxDesigner.ViewModels
                 var memoryService = new MemoryService(_repository);
                 MessageBox.Show("Process情報をMemoryテーブルにデータを保存します。");
                 foreach (var device in devicesP)
-                { 
+                {
                     bool result = memoryService.SaveMnemonicMemories(device);
                     if (!result)
                     {
@@ -196,97 +196,110 @@ namespace KdxDesigner.ViewModels
             }
         }
 
+
+        // 出力処理ボタンが押されたときの処理
+        // Cycleが選択されていない場合はエラーメッセージを表示
         [RelayCommand]
         private void ProcessOutput()
         {
-            if (SelectedCycle == null || SelectedPlc == null)
+            if (SelectedCycle == null)
             {
                 MessageBox.Show("Cycleが選択されていません。");
+                return;
             }
-            else
+            if (SelectedPlc == null)
             {
-                var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
+                MessageBox.Show("PLCが選択されていません。");
+                return;
+            }
+            if (ProcessDeviceStartL == null)
+            {
+                MessageBox.Show("ProcessDeviceStartLが入力されていません。");
+                return;
+            }
+            if (DetailDeviceStartL == null)
+            {
+                MessageBox.Show("DetailDeviceStartLが入力されていません。");
+                return;
+            }
+            if (Processes.Count == 0)
+            {
+                MessageBox.Show("Processが選択されていません。");
+                return;
+            }
+            var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
 
-                // detailsを取得
-                var details = _repository.GetProcessDetailDtos();
-                List<ProcessDetailDto> detailAll = new();
-                foreach (var pros in Processes)
-                {
-                    detailAll.AddRange(details.Where(d => d.ProcessId == pros.Id));
-                }
+            // detailsを取得
+            var details = _repository.GetProcessDetailDtos();
+            List<ProcessDetailDto> detailAll = new();
+            foreach (var pros in Processes)
+            {
+                detailAll.AddRange(details.Where(d => d.ProcessId == pros.Id));
+            }
 
-                // IO一覧を取得
-                var ioList = _repository.GetIoList();
-                var memoryService = new MemoryService(_repository);
-                var memoryList = memoryService.GetMemories(SelectedPlc.Id);
+            // IO一覧を取得
+            var ioList = _repository.GetIoList();
+            var memoryService = new MemoryService(_repository);
+            var memoryList = memoryService.GetMemories(SelectedPlc.Id);
 
-                // MnemonicId = 1 だとProcessニモニックのレコード
-                var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
-                var devicesP = devices
-                    .Where(m => m.MnemonicId == 1)
-                    .ToList();
-                var devicesD = devices
-                    .Where(m => m.MnemonicId == 2)
-                    .ToList();
+            // MnemonicId = 1 だとProcessニモニックのレコード
+            var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
+            var devicesP = devices
+                .Where(m => m.MnemonicId == 1)
+                .ToList();
+            var devicesD = devices
+                .Where(m => m.MnemonicId == 2)
+                .ToList();
 
-                // MnemonicDeviceとProcessのリストを結合
-                // 並び順はProcess.Idで昇順
-                joinedProcessList = devicesP
-                            .Join(
-                                Processes.ToList(),
-                                m => m.RecordId,
-                                p => p.Id,
-                                (m, p) => new MnemonicDeviceWithProcess
-                                {
-                                    Mnemonic = m,
-                                    Process = p
-                                })
-                            .OrderBy(m => m.Process.Id)
-                            .ToList();
-
-                // MnemonicDeviceとProcessDetailのリストを結合
-                // 並び順はProcessDetail.Idで昇順
-                joinedProcessDetailList = devicesD
+            // MnemonicDeviceとProcessのリストを結合
+            // 並び順はProcess.Idで昇順
+            joinedProcessList = devicesP
                         .Join(
-                            detailAll.ToList(),
+                            Processes.ToList(),
                             m => m.RecordId,
-                            d => d.Id,
-                            (m, d) => new MnemonicDeviceWithProcessDetail
+                            p => p.Id,
+                            (m, p) => new MnemonicDeviceWithProcess
                             {
                                 Mnemonic = m,
-                                Detail = d
+                                Process = p
                             })
-                        .OrderBy(m => m.Detail.Id)
+                        .OrderBy(m => m.Process.Id)
                         .ToList();
 
+            // MnemonicDeviceとProcessDetailのリストを結合
+            // 並び順はProcessDetail.Idで昇順
+            joinedProcessDetailList = devicesD
+                    .Join(
+                        detailAll.ToList(),
+                        m => m.RecordId,
+                        d => d.Id,
+                        (m, d) => new MnemonicDeviceWithProcessDetail
+                        {
+                            Mnemonic = m,
+                            Detail = d
+                        })
+                    .OrderBy(m => m.Detail.Id)
+                    .ToList();
 
-                if (SelectedCycle != null)
-                {
-                    var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
-                        SelectedCycle,
-                        ProcessDeviceStartL,
-                        DetailDeviceStartL,
-                        Processes.ToList(),
-                        ProcessDetails.ToList(),
-                        ioList,
-                        out var errors
-                    );
+            // CSV出力処理
+            // \Utils\ProcessBuilder.cs
+            var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
+                    SelectedCycle,
+                    ProcessDeviceStartL!.Value,
+                    DetailDeviceStartL!.Value,
+                    joinedProcessList,
+                    joinedProcessDetailList,
+                    ioList,
+                    out var errors
+                );
 
-                    // 仮：結果をログ出力（実際にはCSVに保存などを検討）
-                    foreach (var row in outputRows)
-                    {
-                        Debug.WriteLine($"{row.Command} {row.Address}");
-                    }
-
-                    OutputErrors = new ObservableCollection<OutputError>(errors);
-
-                    MessageBox.Show("出力処理が完了しました。");
-                }
-                else
-                {
-                    MessageBox.Show("Cycleが選択されていません。");
-                }
+            // 仮：結果をログ出力（実際にはCSVに保存などを検討）
+            foreach (var row in outputRows)
+            {
+                Debug.WriteLine($"{row.Command} {row.Address}");
             }
+
+            MessageBox.Show("出力処理が完了しました。");
             return;
         }
 

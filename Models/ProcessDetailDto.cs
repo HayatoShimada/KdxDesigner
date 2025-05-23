@@ -20,7 +20,6 @@ namespace KdxDesigner.Models
         public int? CategoryId { get; set; }
         public string? CategoryName { get; set; }  // ← 追加
         public string? FinishSensor { get; set; }
-
         public int? CycleId { get; set; }
     }
 }
