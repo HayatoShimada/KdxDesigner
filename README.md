@@ -50,3 +50,6 @@ namespace KdxDesigner.Services
   }
 }
 ```
+### GitHubの運用について
+下記Notion頁参照のこと  
+https://www.notion.so/GitHub-1f9e3206de34809ea273c6f36ebdab84
