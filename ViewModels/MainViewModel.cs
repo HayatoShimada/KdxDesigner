@@ -46,6 +46,9 @@ namespace KdxDesigner.ViewModels
         private List<Models.Process> allProcesses = new();
         private List<MnemonicDeviceWithProcess> joinedProcessList = new();
         private List<MnemonicDeviceWithProcessDetail> joinedProcessDetailList = new();
+        private List<MnemonicDeviceWithOperation> joinedOperationList = new();
+        private List<MnemonicDeviceWithCylinder> joinedCylinderList = new();
+
 
         public MainViewModel()
         {
@@ -283,6 +286,9 @@ namespace KdxDesigner.ViewModels
             // detailsを取得
             var details = _repository.GetProcessDetailDtos();
             List<ProcessDetailDto> detailAll = new();
+            var operations = _repository.GetOperations();
+            var cylinders = _repository.GetCYs();
+
             foreach (var pros in Processes)
             {
                 detailAll.AddRange(details.Where(d => d.ProcessId == pros.Id));
@@ -293,13 +299,19 @@ namespace KdxDesigner.ViewModels
             var memoryService = new MemoryService(_repository);
             var memoryList = memoryService.GetMemories(SelectedPlc.Id);
 
-            // MnemonicId = 1 だとProcessニモニックのレコード
+            // MnemonicDeviceの一覧を取得
             var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
             var devicesP = devices
-                .Where(m => m.MnemonicId == 1)
+                .Where(m => m.MnemonicId == (int)MnemonicType.Process)
                 .ToList();
             var devicesD = devices
-                .Where(m => m.MnemonicId == 2)
+                .Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail)
+                .ToList();
+            var devicesO = devices
+                .Where(m => m.MnemonicId == (int)MnemonicType.Operation)
+                .ToList();
+            var devicesC = devices
+                .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                 .ToList();
 
             // MnemonicDeviceとProcessのリストを結合
@@ -332,6 +344,36 @@ namespace KdxDesigner.ViewModels
                     .OrderBy(m => m.Detail.Id)
                     .ToList();
 
+            // MnemonicDeviceとOperationのリストを結合
+            // 並び順はOperation.Idで昇順
+            joinedOperationList = devicesO
+                    .Join(
+                        operations,
+                        m => m.RecordId,
+                        o => o.Id,
+                        (m, d) => new MnemonicDeviceWithOperation
+                        {
+                            Mnemonic = m,
+                            Operation = d
+                        })
+                    .OrderBy(m => m.Operation.Id)
+                    .ToList();
+
+            // MnemonicDeviceとCylinderのリストを結合
+            // 並び順はCylinder.Idで昇順
+            joinedCylinderList = devicesC
+                .Join(
+                    cylinders,
+                    m => m.RecordId,
+                    c => c.Id,
+                    (m, c) => new MnemonicDeviceWithCylinder
+                    {
+                        Mnemonic = m,
+                        Cylinder = c
+                    })
+                .OrderBy(mc => mc.Cylinder.Id)
+                .ToList();
+
             // CSV出力処理
             // \Utils\ProcessBuilder.cs
             var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
@@ -342,6 +384,17 @@ namespace KdxDesigner.ViewModels
                     joinedProcessDetailList,
                     ioList,
                     out var errors
+                );
+
+            // CSV出力処理
+            // \Utils\ProcessDetailBuilder.cs
+            var outputDetailRows = ProcessDetailBuilder.GenerateAllLadderCsvRows(
+                joinedProcessList,
+                joinedProcessDetailList,
+                joinedOperationList,
+                joinedCylinderList,
+                    ioList,
+                    out var errorDetails
                 );
 
             // 仮：結果をログ出力（実際にはCSVに保存などを検討）
