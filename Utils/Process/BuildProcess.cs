@@ -35,6 +35,7 @@ namespace KdxDesigner.Utils.Process
             // L0 開始条件
             // まず開始条件の数値リストを作る
             // process.Process.Autocondition 例) 1;2;3;4;5
+            // -----------------------------------------ココカラ共通コンポーネント化すること #issue14
             List<int> startCondition = !string.IsNullOrEmpty(process.Process.AutoCondition)
                                                 ? process.Process.AutoCondition
                                                     .Split(';')
@@ -87,13 +88,10 @@ namespace KdxDesigner.Utils.Process
                 }
             }
 
-                
-
-            // OUT L0 開始条件
             int? outcoilNum = process.Mnemonic.StartNum;
             var outcoilLabel = process.Mnemonic.DeviceLabel ?? string.Empty;
             result.Add(LadderRow.AddOUT(outcoilLabel + outcoilNum.ToString()));
-
+            // ------------------------------------------ココマデ共通コンポーネント化すること
 
 
             // OUT L1 開始
