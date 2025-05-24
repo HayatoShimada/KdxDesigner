@@ -16,55 +16,37 @@ namespace KdxDesigner.Utils.ProcessDetail
     internal class BuildDetail
     {
         // 通常工程を出力するメソッド
-        public static List<LadderCsvRow> BuildNormalPattern(ProcessDetailDto process, List<IO> ioList)
+        public static List<LadderCsvRow> BuildDetailNormal(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
         {
+            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
-            var startIdList = process.GetStartIdList();
-            var finishIdList = process.GetFinishIdList();
 
-            // L***0 ~ L***9のDeviceリスト
-            List<string> lDevices = ProcessDetailExtensions.ConvertIdToAddressRange(process.Id);
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+            
+        }
 
-            if (process == null)
-            {
-                return result;
-            }
-            else
-            {
-                // 行間ステートメント
-                if(process.DetailName == null)
-                {
-                    string id = process.Id.ToString();
-                    result.Add(LadderRow.AddStatement(id));
-                }
-                else
-                {
-                    string id = process.Id.ToString();
-                    result.Add(LadderRow.AddStatement(id + ":" + process.DetailName));
-                }
+        // 工程まとめを出力するメソッド
+        public static List<LadderCsvRow> BuildDetailSummarize(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
 
-                // L0 Condition
-                if (startIdList != null && startIdList.Count > 0)
-                {
-                    foreach (var row in startIdList)
-                    {
-                        result.Add(LadderRow.AddAND(row));
-                    }
-                }
-                result.Add(LadderRow.AddOUT(lDevices[0]));
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
 
-                // L1 Start
-                // L2 
-                // L3
-                // L4
-                // L5
-                // L6
-                // L7
-                // L8
-                // L9 Finish
-
-                return result;
-            }
         }
     }
 }
