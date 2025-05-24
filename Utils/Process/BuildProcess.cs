@@ -44,38 +44,50 @@ namespace KdxDesigner.Utils.Process
                                                     .ToList()
                                                 : new List<int>();
 
-            // 初回はLD命令
-            var first = true;
-
-            // 開始条件のProcessDetail側の完了接点のアウトコイルを取得する。
-            // 基本ルールとして、ProcessDetail側の完了接点は、[FirstNum + OutCoilCount - 1]の数値になる。
-            foreach (var condition in startCondition)
+            if (startCondition.Count == 0)
             {
-                // 1. Processの開始条件のIDから、ProcessDetailのレコードを取得する。
-                var target = detail.FirstOrDefault(d => d.Mnemonic.RecordId == condition);
+                // 開始条件が無い場合は、ProcessDetailのIDを取得する
+                // AutoStartが無い場合のエラー処理をだれか書いてください
+                result.Add(LadderRow.AddLD(process.Process.AutoStart ?? string.Empty));
 
-                // エラー処理を追加してください   issue#10
-                if (target?.Mnemonic == null)
-                    continue;
-
-                // 2. ProcessDetailのレコードから、完了のアウトコイルの数値を取得する。
-                var mnemonic = target.Mnemonic;
-
-                // 3. ラベルと数値を取得して結合する。
-                var label = mnemonic.DeviceLabel ?? string.Empty;
-                var deviceNumber = mnemonic.StartNum + mnemonic.OutCoilCount - 1;
-                var device = deviceNumber.ToString();
-
-                var labelDevice = label + device;
-
-                // 4. 命令を生成する
-                var row = first
-                    ? LadderRow.AddLD(labelDevice)
-                    : LadderRow.AddAND(labelDevice);
-
-                result.Add(row);
-                first = false;
             }
+            else
+            {
+                // 初回はLD命令
+                var first = true;
+
+                // 開始条件のProcessDetail側の完了接点のアウトコイルを取得する。
+                // 基本ルールとして、ProcessDetail側の完了接点は、[FirstNum + OutCoilCount - 1]の数値になる。
+                foreach (var condition in startCondition)
+                {
+                    // 1. Processの開始条件のIDから、ProcessDetailのレコードを取得する。
+                    var target = detail.FirstOrDefault(d => d.Mnemonic.RecordId == condition);
+
+                    // エラー処理を追加してください   issue#10
+                    if (target?.Mnemonic == null)
+                        continue;
+
+                    // 2. ProcessDetailのレコードから、完了のアウトコイルの数値を取得する。
+                    var mnemonic = target.Mnemonic;
+
+                    // 3. ラベルと数値を取得して結合する。
+                    var label = mnemonic.DeviceLabel ?? string.Empty;
+                    var deviceNumber = mnemonic.StartNum + mnemonic.OutCoilCount - 1;
+                    var device = deviceNumber.ToString();
+
+                    var labelDevice = label + device;
+
+                    // 4. 命令を生成する
+                    var row = first
+                        ? LadderRow.AddLD(labelDevice)
+                        : LadderRow.AddAND(labelDevice);
+
+                    result.Add(row);
+                    first = false;
+                }
+            }
+
+                
 
             // OUT L0 開始条件
             int? outcoilNum = process.Mnemonic.StartNum;
