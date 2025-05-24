@@ -150,7 +150,7 @@ namespace KdxDesigner.Utils.Process
             var result = new List<LadderCsvRow>();
 
             // Normalを参考にコードを記述すること
-            // #issue6
+            // #issue16
 
             return result;
         }
@@ -161,7 +161,7 @@ namespace KdxDesigner.Utils.Process
             var result = new List<LadderCsvRow>();
 
             // Normalを参考にコードを記述すること
-            // #issue7
+            // #issue17
 
             return result;
         }
