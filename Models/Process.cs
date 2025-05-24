@@ -18,7 +18,7 @@ namespace KdxDesigner.Models
         public string? AutoCondition { get; set; }
         public string? AutoMode { get; set; }
         public string? AutoStart { get; set; }
-        public string? ProcessCategory { get; set; }
+        public int? ProcessCategoryId { get; set; }
         public int? FinishId { get; set; }
         public string? ILStart { get; set; }
 

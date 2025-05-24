@@ -37,15 +37,17 @@ namespace KdxDesigner.Utils
 
             foreach (var pros in list)
             {
-                switch(pros.Process.ProcessCategory)
+                switch(pros.Process.ProcessCategoryId)
                 {
-                    case "Normal":      // 通常工程
+                    case 1:     // 通常工程
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
-                    case "ResetAfter":  // リセット後工程
+                    case 2:     // Single
+                        //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                    case 3:     // リセット後工程
                         //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
-                    case "IL":          // センサON確認
+                    case 4:     // センサON確認
                         //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     default:
