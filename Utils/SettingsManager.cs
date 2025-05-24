@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text.Json;
 
-using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.Utils
 {

@@ -176,16 +176,34 @@
 
                     <!-- 左寄せ：TextBox を横並びに -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                        <!---->
                         <TextBlock Text="プロセス開始Lデバイス番号" Margin="5"/>
                         <TextBox
                             Text="{Binding ProcessDeviceStartL, UpdateSourceTrigger=PropertyChanged}"
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left" />
-                        <TextBlock Text="工程詳細Lデバイス番号" Margin="5"/>
 
+                        <!---->
+                        <TextBlock Text="工程詳細Lデバイス番号" Margin="5"/>
                         <TextBox
                             Text="{Binding DetailDeviceStartL, UpdateSourceTrigger=PropertyChanged}"
+                            Width="100" Margin="5"
+                            PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
+                            HorizontalAlignment="Left" />
+
+                        <!---->
+                        <TextBlock Text="オペレーションMデバイス番号" Margin="5"/>
+                        <TextBox
+                            Text="{Binding OperationDeviceStartM, UpdateSourceTrigger=PropertyChanged}"
+                            Width="100" Margin="5"
+                            PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
+                            HorizontalAlignment="Left" />
+
+                        <!---->
+                        <TextBlock Text="シリンダMデバイス番号" Margin="5"/>
+                        <TextBox
+                            Text="{Binding CylinderDeviceStartM, UpdateSourceTrigger=PropertyChanged}"
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left" />
@@ -206,13 +224,13 @@
                     ItemsSource="{Binding OutputErrors}"
                     AutoGenerateColumns="False"
                     IsReadOnly="True">
-                    
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="工程名" Binding="{Binding DetailName}" />
                         <DataGridTextColumn Header="プロセスID" Binding="{Binding ProcessId}" />
                         <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*" />
                     </DataGrid.Columns>
-                    
+
                 </DataGrid>
             </GroupBox>
         </Grid>

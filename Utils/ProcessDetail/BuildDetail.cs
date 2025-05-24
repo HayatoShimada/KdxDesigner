@@ -1,4 +1,5 @@
 ﻿using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
 using KdxDesigner.Utils.MnemonicCommon;
 
 using System;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 // ProcessDetail（工程プログラム）のニモニック配列を返すコード群
 
-namespace KdxDesigner.Utils.Process
+namespace KdxDesigner.Utils.ProcessDetail
 {
     internal class BuildDetail
     {

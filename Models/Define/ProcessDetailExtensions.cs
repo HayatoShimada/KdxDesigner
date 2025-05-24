@@ -3,7 +3,7 @@ using System.Linq;
 
 using KdxDesigner.Utils;
 
-namespace KdxDesigner.Models
+namespace KdxDesigner.Models.Define
 {
     public static class ProcessDetailExtensions
     {
@@ -41,7 +41,7 @@ namespace KdxDesigner.Models
                 return new List<string>();
 
             return ids
-                .Split(',', System.StringSplitOptions.RemoveEmptyEntries)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(id =>
                 {
                     if (int.TryParse(id.Trim(), out var n))

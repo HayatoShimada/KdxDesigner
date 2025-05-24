@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using KdxDesigner.Utils;
+using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.ViewModels
 {
@@ -34,6 +35,8 @@ namespace KdxDesigner.ViewModels
 
         [ObservableProperty] private int? processDeviceStartL;
         [ObservableProperty] private int? detailDeviceStartL;
+        [ObservableProperty] private int? operationDeviceStartM;
+        [ObservableProperty] private int? cylinderDeviceStartM;
 
 
         [ObservableProperty]
@@ -136,7 +139,12 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void MemorySetting()
         {
-            if (SelectedCycle == null || SelectedPlc == null || ProcessDeviceStartL == null || DetailDeviceStartL == null)
+            if (SelectedCycle == null 
+                || SelectedPlc == null 
+                || ProcessDeviceStartL == null 
+                || DetailDeviceStartL == null 
+                || OperationDeviceStartM == null
+                || CylinderDeviceStartM == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -146,27 +154,50 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("ProcessDeviceStartLが入力されていません。");
                 if (DetailDeviceStartL == null)
                     MessageBox.Show("DetailDeviceStartLが入力されていません。");
+                if (OperationDeviceStartM == null)
+                    MessageBox.Show("OperationDeviceStartMが入力されていません。");
+                if (CylinderDeviceStartM == null)
+                    MessageBox.Show("CylinderDeviceStartMが入力されていません。");
             }
             else
             {
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
 
-                // 明示的にToList()を呼び出して、IEnumerableをListに変換します。
+                // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
                     .Where(d => d.CycleId == SelectedCycle.Id)
+                    .ToList();
+
+                // CYの一覧を読み出し
+                List<CY> cylinder = _repository.GetCYs()
+                    .Where(o => o.PlcId == SelectedPlc.Id)
+                    .ToList();
+
+                // Operationの一覧を読み出し
+                var cylinderIds = cylinder.Select(c => c.Id).ToHashSet();
+                List<Operation> operations = _repository.GetOperations()
+                    .Where(o => o.CYId.HasValue && cylinderIds.Contains(o.CYId.Value))
                     .ToList();
 
                 // プロセスの必要デバイスを保存
                 mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceProcessDetail(details, DetailDeviceStartL.Value, SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
                 var devicesP = devices
-                    .Where(m => m.MnemonicId == 1)
+                    .Where(m => m.MnemonicId == (int)MnemonicType.Process)
                     .ToList();
                 var devicesD = devices
-                    .Where(m => m.MnemonicId == 2)
+                    .Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail)
+                    .ToList();
+                var devicesO = devices
+                    .Where(m => m.MnemonicId == (int)MnemonicType.Operation)
+                    .ToList();
+                var devicesC = devices
+                    .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                     .ToList();
 
                 // Memoryテーブルにデータを保存
@@ -183,6 +214,26 @@ namespace KdxDesigner.ViewModels
                 }
                 MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
                 foreach (var device in devicesD)
+                {
+                    bool result = memoryService.SaveMnemonicMemories(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                }
+                MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
+                foreach (var device in devicesO)
+                {
+                    bool result = memoryService.SaveMnemonicMemories(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                }
+                MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
+                foreach (var device in devicesC)
                 {
                     bool result = memoryService.SaveMnemonicMemories(device);
                     if (!result)
