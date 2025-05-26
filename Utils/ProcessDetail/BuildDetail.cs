@@ -1,13 +1,5 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Utils.MnemonicCommon;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 // ProcessDetail（工程プログラム）のニモニック配列を返すコード群
 
@@ -29,7 +21,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L***0 ~ L***9のDeviceリストを取得
             return result;
-            
+
         }
 
         // 工程まとめを出力するメソッド

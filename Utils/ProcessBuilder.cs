@@ -66,10 +66,8 @@ namespace KdxDesigner.Utils
             switch (detail.CategoryId)
             {
                 case 1: // 通常工程
-                    mnemonic.AddRange(BuildDetail.BuildNormalPattern(detail, ioList));
                     break;
                 case 2: // 工程まとめ
-                    mnemonic.AddRange(BuildDetail.BuildNormalPattern(detail, ioList));
                     break;
                 case 3: // センサON確認
                     break;
