@@ -177,9 +177,9 @@ namespace KdxDesigner.ViewModels
                     .ToList();
 
                 // Operationの一覧を読み出し
-                var cylinderIds = cylinder.Select(c => c.Id).ToHashSet();
+                var operationIds = details.Select(c => c.OperationId).ToHashSet();
                 List<Operation> operations = _repository.GetOperations()
-                    .Where(o => o.CYId.HasValue && cylinderIds.Contains(o.CYId.Value))
+                    .Where(o => operationIds.Contains(o.Id))
                     .ToList();
 
                 // プロセスの必要デバイスを保存
