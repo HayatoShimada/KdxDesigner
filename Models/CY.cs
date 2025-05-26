@@ -23,6 +23,7 @@ namespace KdxDesigner.Models
         public int? CYNameSub { get; set; }
         public int? SensorId { get; set; }
         public string? FlowType { get; set; }
+
     }
 
 }
