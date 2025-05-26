@@ -27,10 +27,10 @@ namespace KdxDesigner.Utils
                 switch (detail.Detail.CategoryId)
                 {
                     case 1: // 通常工程
-                        allRows.AddRange(BuildDetail.BuildDetailNormal(detail, processes, operations, cylinders, ioList, out errors));
+                        allRows.AddRange(BuildDetail.BuildDetailNormal(detail, details, processes, operations, cylinders, ioList, out errors));
                         break;
                     case 2: // 工程まとめ
-                        allRows.AddRange(BuildDetail.BuildDetailSummarize(detail, processes, operations, cylinders, ioList, out errors));
+                        allRows.AddRange(BuildDetail.BuildDetailSummarize(detail, details, processes, operations, cylinders, ioList, out errors));
                         break;
                     case 3: // センサON確認
                         break;
