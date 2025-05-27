@@ -122,6 +122,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // 工程まとめを出力するメソッド
         public static List<LadderCsvRow> BuildDetailSummarize(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -139,6 +140,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // センサON確認
         public static List<LadderCsvRow> BuildDetailSensorON(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -156,6 +158,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // センサOFF確認
         public static List<LadderCsvRow> BuildDetailSensorOFF(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -173,6 +176,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // 工程分岐
         public static List<LadderCsvRow> BuildDetailBranch(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -190,6 +194,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // 工程合流
         public static List<LadderCsvRow> BuildDetailMerge(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -207,6 +212,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // IL待ち
         public static List<LadderCsvRow> BuildDetailILWait(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -224,6 +230,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // 工程OFF確認
         public static List<LadderCsvRow> BuildDetailProcessOFF(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -241,6 +248,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         // 期間工程
         public static List<LadderCsvRow> BuildDetailSeason(
             MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
