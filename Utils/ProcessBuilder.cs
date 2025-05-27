@@ -44,8 +44,9 @@ namespace KdxDesigner.Utils
                         break;
                     case 2:     // Single
                         //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                        break;
                     case 3:     // リセット後工程 #issue16
-                        //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                        mnemonic.AddRange(BuildProcess.BuildResetAfter(pros, details));
                         break;
                     case 4:     // センサON確認
                         //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
