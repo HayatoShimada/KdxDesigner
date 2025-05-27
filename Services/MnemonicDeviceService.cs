@@ -237,8 +237,8 @@ namespace KdxDesigner.Services
                 parameters.Add("MnemonicId", (int)MnemonicType.CY, DbType.Int32);                          // MnemoicId = 4はCylinder
                 parameters.Add("RecordId", cylinder.Id, DbType.Int32);
                 parameters.Add("DeviceLabel", "M", DbType.String);                      // CyはM接点で固定
-                parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);      // Cyは100個で固定
-                parameters.Add("OutCoilCount", 10, DbType.Int32);
+                parameters.Add("StartNum", (count * 100 + startNum), DbType.Int32);      // Cyは100個で固定
+                parameters.Add("OutCoilCount", 100, DbType.Int32);
                 parameters.Add("PlcId", plcId, DbType.Int32);
                 parameters.Add("Comment", cylinder.CYNum, DbType.String);
 

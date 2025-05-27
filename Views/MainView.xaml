@@ -227,6 +227,7 @@
 
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="工程名" Binding="{Binding DetailName}" />
+                        <DataGridTextColumn Header="ニモニックID" Binding="{Binding MnemonicId}" />
                         <DataGridTextColumn Header="プロセスID" Binding="{Binding ProcessId}" />
                         <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*" />
                     </DataGrid.Columns>

@@ -1,10 +1,6 @@
 ﻿using KdxDesigner.Models;
-using KdxDesigner.Utils.Process;
-using KdxDesigner.Services;
-
-using System.Windows;
-using KdxDesigner.Utils.ProcessDetail;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Utils.ProcessDetail;
 
 namespace KdxDesigner.Utils
 {
@@ -21,16 +17,19 @@ namespace KdxDesigner.Utils
             LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
             var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
             errors = new List<OutputError>();                   // エラーリストの初期化
+            List<OutputError> errorsForDetail = new(); // 各工程詳細のエラーリスト
 
             foreach (var detail in details)
             {
                 switch (detail.Detail.CategoryId)
                 {
                     case 1: // 通常工程
-                        allRows.AddRange(BuildDetail.BuildDetailNormal(detail, processes, operations, cylinders, ioList, out errors));
+                        allRows.AddRange(BuildDetail.BuildDetailNormal(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
+                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     case 2: // 工程まとめ
-                        allRows.AddRange(BuildDetail.BuildDetailSummarize(detail, processes, operations, cylinders, ioList, out errors));
+                        allRows.AddRange(BuildDetail.BuildDetailSummarize(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
+                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     case 3: // センサON確認
                         break;
