@@ -121,8 +121,126 @@ namespace KdxDesigner.Utils.ProcessDetail
 
         // 工程まとめを出力するメソッド
         public static List<LadderCsvRow> BuildDetailSummarize(
-            MnemonicDeviceWithProcessDetail detail,
-            List<MnemonicDeviceWithProcessDetail> details,
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // センサON確認
+        public static List<LadderCsvRow> BuildDetailSensorON(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // センサOFF確認
+        public static List<LadderCsvRow> BuildDetailSensorOFF(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // 工程分岐
+        public static List<LadderCsvRow> BuildDetailBranch(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // 工程合流
+        public static List<LadderCsvRow> BuildDetailMerge(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // IL待ち
+        public static List<LadderCsvRow> BuildDetailILWait(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // 工程OFF確認
+        public static List<LadderCsvRow> BuildDetailProcessOFF(
+            MnemonicDeviceWithProcessDetail process,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            var result = new List<LadderCsvRow>();
+
+            // L***0 ~ L***9のDeviceリストを取得
+            return result;
+
+        }
+
+        // 期間工程
+        public static List<LadderCsvRow> BuildDetailSeason(
+            MnemonicDeviceWithProcessDetail process,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
