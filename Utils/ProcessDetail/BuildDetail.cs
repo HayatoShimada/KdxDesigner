@@ -20,8 +20,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             List<IO> ioList,
             out List<OutputError> errors)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            errors = new List<OutputError>();                   // エラーリストの初期化
+            List<OutputError> localErrors = new();
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
@@ -66,7 +67,12 @@ namespace KdxDesigner.Utils.ProcessDetail
                 if (ioSensor == null)
                 {
                     result.Add(LadderRow.AddLD(""));
-                    return result; // エラーがあれば空のリストを返す
+                    localErrors.Add(new OutputError
+                    {
+                        Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
+                        MnemonicId = (int)MnemonicType.ProcessDetail,
+                        ProcessId = detail.Detail.Id
+                    });
                 }
                 else
                 {
@@ -115,6 +121,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
+
             return result;
 
         }
@@ -131,8 +140,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }
@@ -149,8 +162,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }
@@ -167,8 +184,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }
@@ -185,8 +206,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }
@@ -203,8 +228,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }
@@ -221,10 +250,13 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
-            return result;
 
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
+            return result;
         }
 
         // 工程OFF確認
@@ -239,8 +271,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }
@@ -257,8 +293,12 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+            // エラーをまとめて返す。
+            errors.AddRange(localErrors);
             return result;
 
         }

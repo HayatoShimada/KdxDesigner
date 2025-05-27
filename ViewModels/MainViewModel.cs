@@ -40,7 +40,7 @@ namespace KdxDesigner.ViewModels
 
 
         [ObservableProperty]
-        private ObservableCollection<OutputError> outputErrors = new();
+        private List<OutputError> outputErrors = new();
 
         private List<ProcessDetailDto> allDetails = new();
         private List<Models.Process> allProcesses = new();
@@ -384,7 +384,12 @@ namespace KdxDesigner.ViewModels
                     joinedProcessDetailList,
                     ioList,
                     out var errors
-                );
+                    );
+
+            foreach (var error in errors)
+            {
+                OutputErrors.Add(error);
+            }
 
             // CSV出力処理
             // \Utils\ProcessDetailBuilder.cs
@@ -396,6 +401,10 @@ namespace KdxDesigner.ViewModels
                     ioList,
                     out var errorDetails
                 );
+            foreach (var error in errorDetails)
+            {
+                OutputErrors.Add(error);
+            }
 
             // 仮：結果をログ出力（実際にはCSVに保存などを検討）
             foreach (var row in outputRows)
