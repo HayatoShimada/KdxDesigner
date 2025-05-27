@@ -70,6 +70,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                     localErrors.Add(new OutputError
                     {
                         Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
+                        DetailName = detail.Detail.ProcessName,
                         MnemonicId = (int)MnemonicType.ProcessDetail,
                         ProcessId = detail.Detail.Id
                     });
