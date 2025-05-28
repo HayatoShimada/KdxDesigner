@@ -12,7 +12,7 @@ https://amethyst-lobster-62f.notion.site/30f7ce7ff0574570900d3bfba87e9d46?v=1411
 # ディレクトリについて
 ## Data
 AccessRepository.csファイル内にAccessファイルへのクエリが記述されています。  
-このクラスを利用して、設計情報をコード内で利用できます。
+このクラスを利用して、ACCESSの情報をコード内で利用できます。
 ## Models
 Accessファイルのテーブル構造を記述しています。
 ## Utils
