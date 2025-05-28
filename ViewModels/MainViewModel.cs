@@ -455,10 +455,22 @@ namespace KdxDesigner.ViewModels
             }
 
             // 仮：結果をログ出力（実際にはCSVに保存などを検討）
-            foreach (var row in outputRows)
+            /*foreach (var row in outputRows)
             {
                 Debug.WriteLine($"{row.Command} {row.Address}");
+            }*/
+            foreach (var row in outputRows)
+            {
+                if (row.StepComment != "\"\"")
+                {
+                    Debug.WriteLine($"\"{row.StepComment}\"");
+                }
+                else
+                {
+                    Debug.WriteLine($"{row.Command} {row.Address}");
+                }
             }
+
 
             MessageBox.Show("出力処理が完了しました。");
             return;

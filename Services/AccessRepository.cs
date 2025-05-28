@@ -22,6 +22,11 @@ namespace KdxDesigner.Services
     {
         public AccessRepository()
         {
+
+            // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
+            ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" 
+                + "Data Source=C:\\Users\\y-yamada.KANAMORI-SYSTEM\\Desktop\\KDX_Designer.accdb;";
+
             //// TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
             //ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" 
             //    + "Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_DesignerTest.accdb;";
@@ -56,7 +61,6 @@ namespace KdxDesigner.Services
             }
 
             ConnectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
-
 
 
 
