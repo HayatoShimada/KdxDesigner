@@ -48,8 +48,8 @@ namespace KdxDesigner.Utils
                     case 3:     // リセット後工程 #issue16
                         mnemonic.AddRange(BuildProcess.BuildResetAfter(pros, details));
                         break;
-                    case 4:     // センサON確認
-                        //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                    case 4:     // センサON確認 #issue17
+                        mnemonic.AddRange(BuildProcess.BuildIL(pros, details));
                         break;
                     default:
                         break;

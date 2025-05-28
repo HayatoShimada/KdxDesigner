@@ -281,12 +281,123 @@ namespace KdxDesigner.Utils.Process
         }
 
         // ProcessCategoryがIL
-        public static List<LadderCsvRow> BuildIL(Models.Process process, int processStartNum, int detailStartNum)
+        public static List<LadderCsvRow> BuildIL(
+            MnemonicDeviceWithProcess process,
+            List<MnemonicDeviceWithProcessDetail> detail)
         {
             var result = new List<LadderCsvRow>();
 
-            // Normalを参考にコードを記述すること
-            // #issue17
+            // 行間ステートメント
+            string id = process.Process.Id.ToString();
+            if (string.IsNullOrEmpty(process.Process.ProcessName))
+            {
+                result.Add(LadderRow.AddStatement(id));
+            }
+            else
+            {
+                result.Add(LadderRow.AddStatement(id + ":" + process.Process.ProcessName));
+            }
+
+            // L0 開始条件
+            // まず開始条件の数値リストを作る
+            // process.Process.Autocondition 例) 1;2;3;4;5
+            // -----------------------------------------ココカラ共通コンポーネント化すること #issue14
+            List<int> startCondition = !string.IsNullOrEmpty(process.Process.AutoCondition)
+                                                ? process.Process.AutoCondition
+                                                    .Split(';')
+                                                    .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                                                    .Where(n => n.HasValue)
+                                                    .Select(n => n.Value)
+                                                    .ToList()
+                                                : new List<int>();
+
+            if (startCondition.Count == 0)
+            {
+                // 開始条件が無い場合は、ProcessDetailのIDを取得する
+                // AutoStartが無い場合のエラー処理をだれか書いてください
+                result.Add(LadderRow.AddLD(process.Process.AutoStart ?? string.Empty));
+
+            }
+            else
+            {
+                // 初回はLD命令
+                var first = true;
+
+                // 開始条件のProcessDetail側の完了接点のアウトコイルを取得する。
+                // 基本ルールとして、ProcessDetail側の完了接点は、[FirstNum + OutCoilCount - 1]の数値になる。
+                foreach (var condition in startCondition)
+                {
+                    // 1. Processの開始条件のIDから、ProcessDetailのレコードを取得する。
+                    var target = detail.FirstOrDefault(d => d.Mnemonic.RecordId == condition);
+
+                    // エラー処理を追加してください   issue#10
+                    if (target?.Mnemonic == null)
+                        continue;
+
+                    // 2. ProcessDetailのレコードから、完了のアウトコイルの数値を取得する。
+                    var mnemonic = target.Mnemonic;
+
+                    // 3. ラベルと数値を取得して結合する。
+                    var label = mnemonic.DeviceLabel ?? string.Empty;
+                    var deviceNumber = mnemonic.StartNum + mnemonic.OutCoilCount - 1;
+                    var device = deviceNumber.ToString();
+
+                    var labelDevice = label + device;
+
+                    // 4. 命令を生成する
+                    var row = first
+                        ? LadderRow.AddLD(labelDevice)
+                        : LadderRow.AddAND(labelDevice);
+
+                    result.Add(row);
+                    first = false;
+                }
+            }
+
+            int? outcoilNum = process.Mnemonic.StartNum;
+            var outcoilLabel = process.Mnemonic.DeviceLabel ?? string.Empty;
+            result.Add(LadderRow.AddOUT(outcoilLabel + outcoilNum.ToString()));
+            // ------------------------------------------ココマデ共通コンポーネント化すること
+
+
+            // OUT L1 開始
+            // 試運転スル
+            var debugContact = process.Process.TestMode;
+            result.Add(LadderRow.AddLDI(debugContact));
+
+            // 試運転実行処理
+            var debugStartContact = process.Process.TestStart;
+            result.Add(LadderRow.AddLD(debugStartContact));
+
+            //var debugCondition = process.Process.TestCondition;
+            //result.Add(LadderRow.AddAND(debugCondition));
+
+            result.Add(LadderRow.AddAND(debugContact));
+            result.Add(LadderRow.AddORB());
+
+            // アウトコイルまで
+            result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
+            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
+
+            var startContact = process.Process.AutoStart;
+            result.Add(LadderRow.AddAND(startContact));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
+
+            // OUT L2 開始
+            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
+
+            // OUT L3 開始確認
+            var iLStart = process.Process.ILStart;
+            result.Add(LadderRow.AddLD(iLStart));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 3).ToString()));
+
+            // OUT L4 完了
+            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 3).ToString()));
+            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 4).ToString()));
 
             return result;
         }
