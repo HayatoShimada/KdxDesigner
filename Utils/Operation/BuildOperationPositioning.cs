@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KdxDesigner.Utils.Operation
 {
-    internal class SingleBuild
+    internal class BuildOperationPositioning
     {
     }
 }
