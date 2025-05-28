@@ -17,7 +17,8 @@ namespace KdxDesigner.Services
         public AccessRepository()
         {
             // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
-            ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_DesignerTest.accdb;";
+            //ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_DesignerTest.accdb;";
+            ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source= C:\\Users\\kunioku.KANAMORI-SYSTEM\\source\\KDX_Designer.accdb;";
 
         }
 
@@ -94,7 +95,7 @@ namespace KdxDesigner.Services
         {
             using var connection = new OleDbConnection(ConnectionString);
             var sql = @"
-SELECT Id, OperationName, CYId, CategoryId, Stay, Start, Finish, Valve1,
+SELECT Id, OperationName, CYId, CategoryId, Start, Finish, Valve1,
        S1, S2, S3, S4, S5, SS1, SS2, SS3, SS4, PIL, SC, FC
 FROM Operation";
             return connection.Query<Operation>(sql).ToList();
@@ -116,7 +117,7 @@ UPDATE Operation SET
     OperationName = @OperationName,
     CYId = @CYId,
     CategoryId = @CategoryId,
-    Stay = @Stay,
+ 
     Start = @Start,
     Finish = @Finish,
     Valve1 = @Valve1,
