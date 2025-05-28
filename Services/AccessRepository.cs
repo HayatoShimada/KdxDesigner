@@ -117,7 +117,7 @@ UPDATE Operation SET
     OperationName = @OperationName,
     CYId = @CYId,
     CategoryId = @CategoryId,
-    Stay = @Stay,
+ 
     Start = @Start,
     Finish = @Finish,
     Valve1 = @Valve1,
