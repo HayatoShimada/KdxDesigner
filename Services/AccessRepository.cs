@@ -88,7 +88,12 @@ namespace KdxDesigner.Services
             var sql = "SELECT Id, PlcId, PUCO, CYNum, OilNum, MacineId, DriveSub, PlaceId, CYNameSub, SensorId, FlowType FROM CY";
             return connection.Query<CY>(sql).ToList();
         }
-
+        public List<Models.Timer> GetTimersByCycleId(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM Timer WHERE CycleId = @CycleId";
+            return connection.Query<Models.Timer>(sql, new { CycleId = cycleId }).ToList();
+        }
 
         // Operation
         public List<Operation> GetOperations()

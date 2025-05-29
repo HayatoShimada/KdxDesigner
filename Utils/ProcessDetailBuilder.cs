@@ -58,6 +58,7 @@ namespace KdxDesigner.Utils
                 }
             }
             // プロセス詳細のニモニックを生成
+            errors = errors.Distinct().ToList(); // 重複を排除
             return allRows;
         }
 
