@@ -31,6 +31,7 @@ namespace KdxDesigner.Models
         public string? UpdatedAt { get; set; }
         public int? MnemonicDeviceId { get; set; }
         public int? OutcoilNumber { get; set; }
+        public int? MnemonicTimerDeviceId { get; set; }
         public bool? GOT { get; set; }
 
     }

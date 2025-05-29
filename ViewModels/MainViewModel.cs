@@ -39,6 +39,8 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int? detailDeviceStartL;
         [ObservableProperty] private int? operationDeviceStartM;
         [ObservableProperty] private int? cylinderDeviceStartM;
+        [ObservableProperty] private int? deviceStartT;
+
 
 
         // メモリ保存処理における進捗バーの最大値（デバイスの総件数を設定） kuni            
@@ -61,6 +63,7 @@ namespace KdxDesigner.ViewModels
         private List<MnemonicDeviceWithProcessDetail> joinedProcessDetailList = new();
         private List<MnemonicDeviceWithOperation> joinedOperationList = new();
         private List<MnemonicDeviceWithCylinder> joinedCylinderList = new();
+        private List<MnemonicTimerDeviceWithOperation> joinedOperationWithTimerList = new();
 
 
 
@@ -166,7 +169,8 @@ namespace KdxDesigner.ViewModels
                 || ProcessDeviceStartL == null 
                 || DetailDeviceStartL == null 
                 || OperationDeviceStartM == null
-                || CylinderDeviceStartM == null)
+                || CylinderDeviceStartM == null
+                || DeviceStartT == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -180,10 +184,14 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("OperationDeviceStartMが入力されていません。");
                 if (CylinderDeviceStartM == null)
                     MessageBox.Show("CylinderDeviceStartMが入力されていません。");
+                if (DeviceStartT == null)
+                    MessageBox.Show("DeviceStartTが入力されていません。");
             }
             else
             {
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
+                var timerService = new MnemonicTimerDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
+
 
                 // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
@@ -201,11 +209,15 @@ namespace KdxDesigner.ViewModels
                     .Where(o => operationIds.Contains(o.Id))
                     .ToList();
 
+                // Timerの一覧を読み出し
+                var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
+
                 // プロセスの必要デバイスを保存
                 mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceProcessDetail(details, DetailDeviceStartL.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
+                timerService.SaveWithOperation(timers, operations, DeviceStartT.Value, SelectedPlc.Id, SelectedCycle.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -221,6 +233,7 @@ namespace KdxDesigner.ViewModels
                 var devicesC = devices
                     .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                     .ToList();
+                var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
 
                 // Memoryテーブルにデータを保存
                 var memoryService = new MemoryService(_repository);
@@ -243,6 +256,22 @@ namespace KdxDesigner.ViewModels
                         return;
                     }
                     MemoryProgressValue++;
+                }
+                MessageBox.Show("Timer情報ZRをMemoryテーブルにデータを保存します。");
+                foreach (var device in timerDevices)
+                {
+                    bool result = memoryService.SaveMnemonicTimerMemoriesZR(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
+                    result = memoryService.SaveMnemonicTimerMemoriesT(device);
+                    if (!result)
+                    {
+                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        return;
+                    }
                 }
 
                 //devices D
@@ -345,6 +374,8 @@ namespace KdxDesigner.ViewModels
             // IO一覧を取得
             var ioList = _repository.GetIoList();
             var memoryService = new MemoryService(_repository);
+            var timerService = new MnemonicTimerDeviceService(_repository);
+
             var memoryList = memoryService.GetMemories(SelectedPlc.Id);
 
             // MnemonicDeviceの一覧を取得
@@ -361,6 +392,8 @@ namespace KdxDesigner.ViewModels
             var devicesC = devices
                 .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                 .ToList();
+            var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
+
 
             // MnemonicDeviceとProcessのリストを結合
             // 並び順はProcess.Idで昇順
@@ -422,6 +455,21 @@ namespace KdxDesigner.ViewModels
                 .OrderBy(mc => mc.Cylinder.Id)
                 .ToList();
 
+            // MnemonicTimerDeviceとOperationのリストを結合
+            // 並び順はOperation.Idで昇順
+            joinedOperationWithTimerList = timerDevices
+                .Join(
+                    operations,
+                    m => m.RecordId,
+                    o => o.Id,
+                    (m, o) => new MnemonicTimerDeviceWithOperation
+                    {
+                        Timer = m,
+                        Operation = o
+                    })
+                .OrderBy(m => m.Operation.Id)
+                .ToList();
+
             // CSV出力処理
             // \Utils\ProcessBuilder.cs
             var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
@@ -448,6 +496,21 @@ namespace KdxDesigner.ViewModels
                 joinedCylinderList,
                     ioList,
                     out var errorDetails
+                );
+            foreach (var error in errorDetails)
+            {
+                OutputErrors.Add(error);
+            }
+
+            // CSV出力処理
+            // \Utils\ProcessDetailBuilder.cs
+            var outputOperationRow = OperationBuilder.GenerateAllLadderCsvRows(
+                joinedProcessDetailList,
+                joinedOperationList,
+                joinedCylinderList,
+                joinedOperationWithTimerList,
+                    ioList,
+                    out var errorOperation
                 );
             foreach (var error in errorDetails)
             {

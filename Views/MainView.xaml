@@ -207,7 +207,17 @@
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left" />
+             
+
+                        <!---->
+                        <TextBlock Text="Tデバイス番号" Margin="5"/>
+                        <TextBox
+                            Text="{Binding DeviceStartT, UpdateSourceTrigger=PropertyChanged}"
+                            Width="100" Margin="5"
+                            PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
+                            HorizontalAlignment="Left"
                         <!--  MemorySettingAsyncCommandに修正-->
+
                         <Button Content="メモリ設定" Command="{Binding MemorySettingCommand}" Width="100" Margin="5" HorizontalAlignment="Right"/>
 
                         <!-- 状態メッセージ表示（ボタン右） -->

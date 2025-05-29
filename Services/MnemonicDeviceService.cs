@@ -50,7 +50,7 @@ namespace KdxDesigner.Services
             {
                 if (process == null) continue;
 
-                var existing = allExisting.FirstOrDefault(m => m.MnemonicId == (int)MnemonicType.Process);
+                var existing = allExisting.FirstOrDefault(m => m.RecordId == process.Id);
 
                 var parameters = new DynamicParameters();
                 parameters.Add("MnemonicId", (int)MnemonicType.Process, DbType.Int32);
@@ -113,7 +113,7 @@ namespace KdxDesigner.Services
             {
                 if (process == null) continue;
 
-                var existing = allExisting.FirstOrDefault(m => m.MnemonicId == (int)MnemonicType.ProcessDetail);
+                var existing = allExisting.FirstOrDefault(m => m.RecordId == process.Id);
 
                 var parameters = new DynamicParameters();
                 parameters.Add("MnemonicId", (int)MnemonicType.ProcessDetail, DbType.Int32);
@@ -171,15 +171,15 @@ namespace KdxDesigner.Services
             foreach (Operation operation in operations)
             {
                 if (operation == null) continue;
-                var existing = allExisting.FirstOrDefault(m => m.MnemonicId == (int)MnemonicType.Operation);
+                var existing = allExisting.FirstOrDefault(m => m.RecordId == operation.Id);
 
 
                 var parameters = new DynamicParameters();
                 parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);                          // MnemoicId = 3はOperation
                 parameters.Add("RecordId", operation.Id, DbType.Int32);
                 parameters.Add("DeviceLabel", "M", DbType.String);                      // OperationはM接点で固定
-                parameters.Add("StartNum", (count * 50 + startNum), DbType.Int32);      // Operationは50個で固定
-                parameters.Add("OutCoilCount", 50, DbType.Int32);
+                parameters.Add("StartNum", (count * 20 + startNum), DbType.Int32);      // Operationは50個で固定
+                parameters.Add("OutCoilCount", 20, DbType.Int32);
                 parameters.Add("PlcId", plcId, DbType.Int32);
                 parameters.Add("Comment", operation.OperationName, DbType.String);
 
@@ -230,8 +230,7 @@ namespace KdxDesigner.Services
             {
                 if (cylinder == null) continue;
 
-                var existing = allExisting.FirstOrDefault(m => m.MnemonicId == (int)MnemonicType.CY);
-
+                var existing = allExisting.FirstOrDefault(m => m.RecordId == cylinder.Id);
 
                 var parameters = new DynamicParameters();
                 parameters.Add("MnemonicId", (int)MnemonicType.CY, DbType.Int32);                          // MnemoicId = 4はCylinder
