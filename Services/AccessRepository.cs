@@ -9,6 +9,12 @@ using System.Data.OleDb;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Transactions;
+using KdxDesigner.Utils.ini;
+using Microsoft.Win32; // ← ファイル選択ダイアログ用
+using System.IO;
+using System.Windows;
+
+
 
 namespace KdxDesigner.Services
 {
@@ -16,9 +22,47 @@ namespace KdxDesigner.Services
     {
         public AccessRepository()
         {
+
             // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
             ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" 
-                + "Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_DesignerTest.accdb;";
+                + "Data Source=C:\\Users\\y-yamada.KANAMORI-SYSTEM\\Desktop\\KDX_Designer.accdb;";
+
+            //// TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
+            //ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" 
+            //    + "Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_DesignerTest.accdb;";
+
+            string iniPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.ini");
+            string? dbPath = IniHelper.ReadValue("Database", "AccessPath", iniPath);
+
+            if (string.IsNullOrWhiteSpace(dbPath))
+            {
+                MessageBox.Show("Accessファイルのパスが設定されていません。ファイルを選択してください。");
+
+                var dialog = new OpenFileDialog
+                {
+                    Filter = "Access DBファイル (*.accdb)|*.accdb",
+                    Title = "Accessファイルを選択"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    dbPath = dialog.FileName;
+                    IniHelper.WriteValue("Database", "AccessPath", dbPath, iniPath);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Accessファイルの選択がキャンセルされました。");
+                }
+            }
+
+            if (!File.Exists(dbPath))
+            {
+                throw new FileNotFoundException($"Accessファイルが見つかりません：{dbPath}");
+            }
+
+            ConnectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
+
+
 
         }
 
@@ -122,7 +166,7 @@ UPDATE Operation SET
     OperationName = @OperationName,
     CYId = @CYId,
     CategoryId = @CategoryId,
-    Stay = @Stay,
+ 
     Start = @Start,
     Finish = @Finish,
     Valve1 = @Valve1,

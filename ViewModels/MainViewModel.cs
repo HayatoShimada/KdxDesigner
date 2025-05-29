@@ -15,10 +15,12 @@ using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.ViewModels
 {
+    
     public partial class MainViewModel : ObservableObject
+
     {
         private readonly AccessRepository _repository = new();
-
+     
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
         [ObservableProperty] private ObservableCollection<PLC> plcs = new();
@@ -41,6 +43,17 @@ namespace KdxDesigner.ViewModels
 
 
 
+        // メモリ保存処理における進捗バーの最大値（デバイスの総件数を設定） kuni            
+        [ObservableProperty] private int memoryProgressMax;
+
+        // メモリ保存処理における現在の進捗値（保存済みの件数）kuni
+        [ObservableProperty] private int memoryProgressValue;
+
+        // メモリ保存処理の進行状況を表示するテキスト（例：「Process保存中」「保存完了」など）kuni
+        [ObservableProperty] private string memoryStatusMessage = string.Empty;
+
+
+
         [ObservableProperty]
         private List<OutputError> outputErrors = new();
 
@@ -53,8 +66,14 @@ namespace KdxDesigner.ViewModels
         private List<MnemonicTimerDeviceWithOperation> joinedOperationWithTimerList = new();
 
 
+
+
+
+
         public MainViewModel()
         {
+          
+
             LoadInitialData();
         }
 
@@ -143,7 +162,7 @@ namespace KdxDesigner.ViewModels
         // MemoryテーブルとMnemonicDeviceテーブルにデータを保存する
         // 処理の流れ：必要事項の入力確認→MnemonicDeviceテーブルにデータを保存→Memoryテーブルにデータを保存
         [RelayCommand]
-        private void MemorySetting()
+        private async Task MemorySetting()
         {
             if (SelectedCycle == null 
                 || SelectedPlc == null 
@@ -218,45 +237,25 @@ namespace KdxDesigner.ViewModels
 
                 // Memoryテーブルにデータを保存
                 var memoryService = new MemoryService(_repository);
+
+
+                // 進捗バーの最大値を事前にセット（全件数） kuni
+                MemoryProgressMax = devicesP.Count + devicesD.Count + devicesO.Count + devicesC.Count;
+                MemoryProgressValue = 0;
+
+                //devices P
                 MessageBox.Show("Process情報をMemoryテーブルにデータを保存します。");
+                MemoryStatusMessage = "Process情報を保存中...";
                 foreach (var device in devicesP)
                 {
-                    bool result = memoryService.SaveMnemonicMemories(device);
+                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
                     if (!result)
                     {
-                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
+                        MemoryStatusMessage = "Memoryテーブル（Process）の保存に失敗しました。";
+                        MessageBox.Show(MemoryStatusMessage);
                         return;
                     }
-                }
-                MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
-                foreach (var device in devicesD)
-                {
-                    bool result = memoryService.SaveMnemonicMemories(device);
-                    if (!result)
-                    {
-                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
-                        return;
-                    }
-                }
-                MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
-                foreach (var device in devicesO)
-                {
-                    bool result = memoryService.SaveMnemonicMemories(device);
-                    if (!result)
-                    {
-                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
-                        return;
-                    }
-                }
-                MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
-                foreach (var device in devicesC)
-                {
-                    bool result = memoryService.SaveMnemonicMemories(device);
-                    if (!result)
-                    {
-                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
-                        return;
-                    }
+                    MemoryProgressValue++;
                 }
                 MessageBox.Show("Timer情報ZRをMemoryテーブルにデータを保存します。");
                 foreach (var device in timerDevices)
@@ -275,7 +274,56 @@ namespace KdxDesigner.ViewModels
                     }
                 }
 
-                MessageBox.Show("完了しました");
+                //devices D
+                MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
+                MemoryStatusMessage = "ProcessDetail情報を保存中...";
+                foreach (var device in devicesD)
+                {
+                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                    if (!result)
+                    {
+                        MemoryStatusMessage = "Memoryテーブル（ProcessDetail）の保存に失敗しました。";
+                        MessageBox.Show(MemoryStatusMessage);
+                        return;
+                    }
+                    MemoryProgressValue++;
+                }
+
+
+                //devices O
+                MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
+                MemoryStatusMessage = "Operation情報を保存中...";
+                foreach (var device in devicesO)
+                {
+                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                    if (!result)
+                    {
+                        MemoryStatusMessage = "Memoryテーブル（Operation）の保存に失敗しました。";
+                        MessageBox.Show(MemoryStatusMessage);
+                        return;
+                    }
+                    MemoryProgressValue++;
+                }
+
+                //devicesC
+
+                MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
+                MemoryStatusMessage = "CY情報を保存中...";
+                foreach (var device in devicesC)
+                {
+                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                    if (!result)
+                    {
+                        MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
+                        MessageBox.Show(MemoryStatusMessage);
+                        return;
+                    }
+                    MemoryProgressValue++;
+                }
+
+                MemoryStatusMessage = "保存完了！";
+                MessageBox.Show("すべてのメモリ保存が完了しました。");
+
             }
         }
 
@@ -470,10 +518,22 @@ namespace KdxDesigner.ViewModels
             }
 
             // 仮：結果をログ出力（実際にはCSVに保存などを検討）
-            foreach (var row in outputRows)
+            /*foreach (var row in outputRows)
             {
                 Debug.WriteLine($"{row.Command} {row.Address}");
+            }*/
+            foreach (var row in outputRows)
+            {
+                if (row.StepComment != "\"\"")
+                {
+                    Debug.WriteLine($"\"{row.StepComment}\"");
+                }
+                else
+                {
+                    Debug.WriteLine($"{row.Command} {row.Address}");
+                }
             }
+
 
             MessageBox.Show("出力処理が完了しました。");
             return;
