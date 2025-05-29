@@ -13,9 +13,11 @@ namespace KdxDesigner.Models
         public long? ID { get; set; }
         public int MnemonicId { get; set; }             // Process: 1, ProcessDetail:2, Operation:3, CY:4
         public int RecordId { get; set; }               // MnemonicIdに対応するテーブルのレコードID
-        public string? TimerId {  get; set; }           // TimerテーブルのID
-        public int? ProcessTimerNum { get; set; }       // RecordIdに対応する処理番号
-        public int? ProcessTimerDevice { get; set; }    // RecordIdに対応する処理番号のデバイス
-        public int? TimerDevice { get; set; }           // 外部タイマのデバイス
+        public int? TimerId {  get; set; }           // TimerテーブルのID
+        public int? TimerCategoryId { get; set; }       // RecordIdに対応する処理番号
+        public string? ProcessTimerDevice { get; set; }    // RecordIdに対応する処理番号のデバイス
+        public string? TimerDevice { get; set; }           // 外部タイマのデバイス
+        public int? PlcId { get; set; }               // PLCのID
+        public int? CycleId { get; set; }                // サイクルID
     }
 }
