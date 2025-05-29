@@ -33,7 +33,7 @@ namespace KdxDesigner.Services
             return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, CycleId = cycleId, MnemonicId = mnemonicId }).ToList();
         }
 
-        // Operationのリストを受け取り、MnemonicDeviceテーブルに保存する
+        // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         public void SaveWithOperation(List<Models.Timer> timers, List<Operation> operations, int startNum, int plcId, int cycleId)
         {
             using var connection = new OleDbConnection(_connectionString);
@@ -41,7 +41,7 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
 
             // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.Process);
+            var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.Operation);
             int count = 0;
             foreach (Operation operation in operations)
             {
@@ -57,7 +57,7 @@ namespace KdxDesigner.Services
                     var timerDevice = "ZR" + timer.TimerNum.ToString() ?? string.Empty;
 
                     var parameters = new DynamicParameters();
-                    parameters.Add("MnemonicId", (int)MnemonicType.Process, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
                     parameters.Add("RecordId", operation.Id, DbType.Int32);
                     parameters.Add("TimerId", timer.ID, DbType.String);
                     parameters.Add("TimerCategoryId", timer.TimerCategoryId, DbType.Int32);
@@ -70,7 +70,7 @@ namespace KdxDesigner.Services
                     {
                         parameters.Add("ID", existing.ID, DbType.Int32);
                         connection.Execute(@"
-                            UPDATE [MnemonicDevice] SET
+                            UPDATE [MnemonicTimerDevice] SET
                                 [MnemonicId] = @MnemonicId,
                                 [RecordId] = @RecordId,
                                 [TimerId] = @TimerId,
@@ -85,7 +85,7 @@ namespace KdxDesigner.Services
                     else
                     {
                         connection.Execute(@"
-                            INSERT INTO [MnemonicDevice] (
+                            INSERT INTO [MnemonicTimerDevice] (
                                 [MnemonicId], [RecordId], [TimerId], [TimerCategoryId], [ProcessTimerDevice], [TimerDevice], [PlcId], [CycleId]
                             ) VALUES (
                                 @NemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId

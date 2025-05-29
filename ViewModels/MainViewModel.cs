@@ -454,6 +454,21 @@ namespace KdxDesigner.ViewModels
                 OutputErrors.Add(error);
             }
 
+            // CSV出力処理
+            // \Utils\ProcessDetailBuilder.cs
+            var outputOperationRow = OperationBuilder.GenerateAllLadderCsvRows(
+                joinedProcessDetailList,
+                joinedOperationList,
+                joinedCylinderList,
+                joinedOperationWithTimerList,
+                    ioList,
+                    out var errorOperation
+                );
+            foreach (var error in errorDetails)
+            {
+                OutputErrors.Add(error);
+            }
+
             // 仮：結果をログ出力（実際にはCSVに保存などを検討）
             foreach (var row in outputRows)
             {

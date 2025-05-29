@@ -11,9 +11,6 @@ namespace KdxDesigner.Utils
     public static class OperationBuilder
     {
         public static List<LadderCsvRow> GenerateAllLadderCsvRows(
-            Cycle selectedCycle,
-            int processStartDevice,
-            int detailStartDevice,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -31,7 +28,9 @@ namespace KdxDesigner.Utils
             {
                 switch (operation.Operation.CategoryId)
                 {
-                    case 1:     // 通常工程
+                    case 1:     // 励磁
+                        break;
+                    case 2:     // 保持
                         allRows.AddRange(BuildOperationSingle.Retention(
                             operation, 
                             details, 
@@ -41,9 +40,6 @@ namespace KdxDesigner.Utils
                             ioList, 
                             out errors));
                         errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
-
-                        break;
-                    case 2:     // 
                         break;
                     case 3:     // 
                         break;

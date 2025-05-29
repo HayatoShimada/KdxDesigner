@@ -29,6 +29,9 @@ namespace KdxDesigner.Utils.MnemonicCommon
         public static List<LadderCsvRow> AddMOVPSet(string source, string destination)
             => CreateMOV(Command.MOVP, source, destination);
 
+        public static List<LadderCsvRow> AddTimer(string source, string destination)
+            => CreateMOV(Command.OUTH, source, destination);
+
         private static List<LadderCsvRow> CreateMOV(string command, string source, string destination)
         {
             return new List<LadderCsvRow>

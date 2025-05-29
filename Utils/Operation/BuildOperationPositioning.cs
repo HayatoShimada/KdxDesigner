@@ -17,14 +17,12 @@ namespace KdxDesigner.Utils.Operation
         {
             // ここに単一工程の処理を実装
             errors = new List<OutputError>(); // エラーリストの初期化
-            var rows = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
+            var result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             List<OutputError> localErrors = new();
 
             // 実際の処理ロジックをここに追加
-
-
             errors.AddRange(localErrors);
-            return rows; // 生成されたLadderCsvRowのリストを返す
+            return result; // 生成されたLadderCsvRowのリストを返す
         }
     }
 }
