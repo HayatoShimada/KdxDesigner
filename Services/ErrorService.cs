@@ -109,22 +109,22 @@ namespace KdxDesigner.Services
                 {
                     string device = "M" + (startNum + alarmCount).ToString(); // 例: 01A01, 01A02, ...
                     var parameters = new DynamicParameters();
-
+                    int errorTime = 1000; // エラー時間の初期値
                     string comment = messages.FirstOrDefault(m => m.AlarmId == id)?.BaseMessage ?? string.Empty;
                     string alarm = messages.FirstOrDefault(m => m.AlarmId == id)?.BaseAlarm ?? string.Empty;
                     // 将来的にメッセージの代入処理を追加する。
 
                     parameters.Add("PlcId", plcId, DbType.Int32);
-                    //parameters.Add("CycleId", cycleId, DbType.Int32);
-                    //parameters.Add("Device", device, DbType.String);
-                    //parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
-                    //parameters.Add("RecordId", operation.Id, DbType.Int32);
-                    //parameters.Add("AlarmId", id, DbType.Int32);
-                    //parameters.Add("ErrorNum", alarmCount, DbType.Int32);
-                    //parameters.Add("AlarmComment", alarm, DbType.String);
-                    //parameters.Add("MessageComment", comment, DbType.String);
-                    //parameters.Add("ErrorTime", 1000, DbType.Int32);
-                    //parameters.Add("ErrorTimeDevice", "", DbType.String);
+                    parameters.Add("CycleId", cycleId, DbType.Int32);
+                    parameters.Add("Device", device, DbType.String);
+                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
+                    parameters.Add("RecordId", operation.Id, DbType.Int32);
+                    parameters.Add("AlarmId", id, DbType.Int32);
+                    parameters.Add("ErrorNum", alarmCount, DbType.Int32);
+                    parameters.Add("AlarmComment", alarm, DbType.String);
+                    parameters.Add("MessageComment", comment, DbType.String);
+                    parameters.Add("ErrorTime", errorTime, DbType.Int32);
+                    parameters.Add("ErrorTimeDevice", "", DbType.String);
 
                     if (existing != null)
                     {
@@ -136,6 +136,7 @@ namespace KdxDesigner.Services
                             [Device] = @Device,
                             [MnemonicId] = @MnemonicId,
                             [RecordId] = @RecordId,
+                            [AlarmId] = @AlarmId,
                             [ErrorNum] = @ErrorNum,
                             [AlarmComment] = @AlarmComment,
                             [MessageComment] = @MessageComment,
@@ -153,10 +154,11 @@ namespace KdxDesigner.Services
         [Device], 
         [MnemonicId], 
         [RecordId], 
+        [AlarmId],
         [ErrorNum], 
         [AlarmComment], 
-        [MessageComment], 
-        [ErrorTime], 
+        [MessageComment],
+        [ErrorTime],
         [ErrorTimeDevice])
     VALUES
         (@PlcId, 
@@ -164,10 +166,11 @@ namespace KdxDesigner.Services
         @Device, 
         @MnemonicId, 
         @RecordId, 
+        @AlarmId, 
         @ErrorNum, 
         @AlarmComment, 
-        @MessageComment, 
-        @ErrorTime, 
+        @MessageComment,
+        @ErrorTime,
         @ErrorTimeDevice)",
     parameters, transaction);
 
