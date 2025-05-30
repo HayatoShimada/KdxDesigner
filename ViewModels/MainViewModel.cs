@@ -572,6 +572,7 @@ namespace KdxDesigner.ViewModels
             {
                 Debug.WriteLine($"{row.Command} {row.Address}");
             }*/
+
             foreach (var row in outputRows)
             {
                 if (row.StepComment != "\"\"")
