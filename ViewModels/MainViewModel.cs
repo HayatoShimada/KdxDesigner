@@ -2,25 +2,24 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using KdxDesigner.Services;
 using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
+using KdxDesigner.Services;
+using KdxDesigner.Utils;
 using KdxDesigner.Views;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
-using KdxDesigner.Utils;
-using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.ViewModels
 {
-    
+
     public partial class MainViewModel : ObservableObject
 
     {
         private readonly AccessRepository _repository = new();
-     
+
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
         [ObservableProperty] private ObservableCollection<PLC> plcs = new();
@@ -35,11 +34,23 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private Cycle? selectedCycle;
         [ObservableProperty] private Models.Process? selectedProcess;
 
-        [ObservableProperty] private int? processDeviceStartL;
-        [ObservableProperty] private int? detailDeviceStartL;
-        [ObservableProperty] private int? operationDeviceStartM;
-        [ObservableProperty] private int? cylinderDeviceStartM;
-        [ObservableProperty] private int? deviceStartT;
+        [ObservableProperty] private int? processDeviceStartL = 2000;
+        [ObservableProperty] private int? detailDeviceStartL = 3000;
+        [ObservableProperty] private int? operationDeviceStartM = 20000;
+        [ObservableProperty] private int? cylinderDeviceStartM = 30000;
+        [ObservableProperty] private int? errorDeviceStartM = 52000;
+        [ObservableProperty] private int? deviceStartT = 2000;
+        [ObservableProperty] private int? prosTimeStartZR = 10000;
+        [ObservableProperty] private int? cyTimeStartZR = 30000;
+
+        [ObservableProperty] private bool isProcessMemory = false;
+        [ObservableProperty] private bool isDetailMemory = false;
+        [ObservableProperty] private bool isOperationMemory = false;
+        [ObservableProperty] private bool isCylinderMemory = false;
+        [ObservableProperty] private bool isErrorMemory = false;
+        [ObservableProperty] private bool isTimerMemory = false;
+        [ObservableProperty] private bool isProsTimeMemory = false;
+        [ObservableProperty] private bool isCyTimeMemory = false;
 
 
 
@@ -52,10 +63,7 @@ namespace KdxDesigner.ViewModels
         // メモリ保存処理の進行状況を表示するテキスト（例：「Process保存中」「保存完了」など）kuni
         [ObservableProperty] private string memoryStatusMessage = string.Empty;
 
-
-
-        [ObservableProperty]
-        private List<OutputError> outputErrors = new();
+        [ObservableProperty] private List<OutputError> outputErrors = new();
 
         private List<ProcessDetailDto> allDetails = new();
         private List<Models.Process> allProcesses = new();
@@ -65,15 +73,8 @@ namespace KdxDesigner.ViewModels
         private List<MnemonicDeviceWithCylinder> joinedCylinderList = new();
         private List<MnemonicTimerDeviceWithOperation> joinedOperationWithTimerList = new();
 
-
-
-
-
-
         public MainViewModel()
         {
-          
-
             LoadInitialData();
         }
 
@@ -126,7 +127,6 @@ namespace KdxDesigner.ViewModels
             ProcessDetails = new ObservableCollection<ProcessDetailDto>(filtered);
         }
 
-
         public void OnProcessDetailSelected(ProcessDetailDto selected)
         {
             if (selected?.OperationId != null)
@@ -164,13 +164,14 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private async Task MemorySetting()
         {
-            if (SelectedCycle == null 
-                || SelectedPlc == null 
-                || ProcessDeviceStartL == null 
-                || DetailDeviceStartL == null 
+            if (SelectedCycle == null
+                || SelectedPlc == null
+                || ProcessDeviceStartL == null
+                || DetailDeviceStartL == null
                 || OperationDeviceStartM == null
                 || CylinderDeviceStartM == null
-                || DeviceStartT == null)
+                || DeviceStartT == null
+                || ErrorDeviceStartM == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -186,12 +187,14 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("CylinderDeviceStartMが入力されていません。");
                 if (DeviceStartT == null)
                     MessageBox.Show("DeviceStartTが入力されていません。");
+                if (ErrorDeviceStartM == null)
+                    MessageBox.Show("ErrorStartMが入力されていません。");
             }
             else
             {
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
                 var timerService = new MnemonicTimerDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
-
+                var errorService = new ErrorService(_repository);    // MnemonicDeviceServiceのインスタンス
 
                 // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
@@ -209,6 +212,8 @@ namespace KdxDesigner.ViewModels
                     .Where(o => operationIds.Contains(o.Id))
                     .ToList();
 
+                var ioList = _repository.GetIoList();
+
                 // Timerの一覧を読み出し
                 var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
 
@@ -218,6 +223,7 @@ namespace KdxDesigner.ViewModels
                 mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
                 timerService.SaveWithOperation(timers, operations, DeviceStartT.Value, SelectedPlc.Id, SelectedCycle.Id);
+                errorService.SaveMnemonicDeviceOperation(operations, ioList, ErrorDeviceStartM.Value, SelectedPlc.Id, SelectedCycle.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -234,6 +240,8 @@ namespace KdxDesigner.ViewModels
                     .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                     .ToList();
                 var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
+                var errorDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
+
 
                 // Memoryテーブルにデータを保存
                 var memoryService = new MemoryService(_repository);
@@ -244,81 +252,123 @@ namespace KdxDesigner.ViewModels
                 MemoryProgressValue = 0;
 
                 //devices P
-                MessageBox.Show("Process情報をMemoryテーブルにデータを保存します。");
-                MemoryStatusMessage = "Process情報を保存中...";
-                foreach (var device in devicesP)
+                if (IsProcessMemory)
                 {
-                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                    if (!result)
+                    MessageBox.Show("Process情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "Process情報を保存中...";
+                    foreach (var device in devicesP)
                     {
-                        MemoryStatusMessage = "Memoryテーブル（Process）の保存に失敗しました。";
-                        MessageBox.Show(MemoryStatusMessage);
-                        return;
-                    }
-                    MemoryProgressValue++;
-                }
-                MessageBox.Show("Timer情報ZRをMemoryテーブルにデータを保存します。");
-                foreach (var device in timerDevices)
-                {
-                    bool result = memoryService.SaveMnemonicTimerMemoriesZR(device);
-                    if (!result)
-                    {
-                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
-                        return;
-                    }
-                    result = memoryService.SaveMnemonicTimerMemoriesT(device);
-                    if (!result)
-                    {
-                        MessageBox.Show("Memoryテーブルの保存に失敗しました。");
-                        return;
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（Process）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
                     }
                 }
 
-                //devices D
-                MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
-                MemoryStatusMessage = "ProcessDetail情報を保存中...";
-                foreach (var device in devicesD)
+                if (IsDetailMemory)
                 {
-                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                    if (!result)
+                    //devices D
+                    MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "ProcessDetail情報を保存中...";
+                    foreach (var device in devicesD)
                     {
-                        MemoryStatusMessage = "Memoryテーブル（ProcessDetail）の保存に失敗しました。";
-                        MessageBox.Show(MemoryStatusMessage);
-                        return;
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（ProcessDetail）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
                     }
-                    MemoryProgressValue++;
                 }
 
-
-                //devices O
-                MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
-                MemoryStatusMessage = "Operation情報を保存中...";
-                foreach (var device in devicesO)
+                if (IsOperationMemory)
                 {
-                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                    if (!result)
+                    //devices O
+                    MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "Operation情報を保存中...";
+                    foreach (var device in devicesO)
                     {
-                        MemoryStatusMessage = "Memoryテーブル（Operation）の保存に失敗しました。";
-                        MessageBox.Show(MemoryStatusMessage);
-                        return;
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（Operation）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
                     }
-                    MemoryProgressValue++;
                 }
 
-                //devicesC
-
-                MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
-                MemoryStatusMessage = "CY情報を保存中...";
-                foreach (var device in devicesC)
+                if (IsCylinderMemory)
                 {
-                    bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                    if (!result)
+                    //devices C
+                    MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "CY情報を保存中...";
+                    foreach (var device in devicesC)
                     {
-                        MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
-                        MessageBox.Show(MemoryStatusMessage);
-                        return;
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
                     }
-                    MemoryProgressValue++;
+                }
+
+                if (IsErrorMemory)
+                {
+                    //devices C
+                    MessageBox.Show("エラー情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "エラー情報を保存中...";
+                    foreach (var device in devicesC)
+                    {
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
+                    }
+                }
+
+                if (IsTimerMemory)
+                {
+                    //devices T
+                    MessageBox.Show("Timer情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "Timer情報を保存中...";
+                    foreach (var device in timerDevices)
+                    {
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicTimerMemoriesT(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（Timer）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
+                    }
+
+                    foreach (var device in timerDevices)
+                    {
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicTimerMemoriesZR(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（Timer）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
+                    }
                 }
 
                 MemoryStatusMessage = "保存完了！";
