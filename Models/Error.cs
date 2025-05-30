@@ -12,12 +12,12 @@ namespace KdxDesigner.Models
     public class Error
     {
         [Key]
-        public long ID { get; set; }
+        public int ID { get; set; }
         public int? PlcId { get; set; }
         public int? CycleId { get; set; }
         public string? Device { get; set; }
         public int? MnemonicId { get; set; }
-        public long? RecordId { get; set; }
+        public int? RecordId { get; set; }
         public int? AlarmId { get; set; }
         public int? ErrorNum { get; set; }
         public string? AlarmComment { get; set; }

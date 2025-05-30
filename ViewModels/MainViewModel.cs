@@ -170,7 +170,8 @@ namespace KdxDesigner.ViewModels
                 || DetailDeviceStartL == null
                 || OperationDeviceStartM == null
                 || CylinderDeviceStartM == null
-                || DeviceStartT == null)
+                || DeviceStartT == null
+                || ErrorDeviceStartM == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -186,12 +187,14 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("CylinderDeviceStartMが入力されていません。");
                 if (DeviceStartT == null)
                     MessageBox.Show("DeviceStartTが入力されていません。");
+                if (ErrorDeviceStartM == null)
+                    MessageBox.Show("ErrorStartMが入力されていません。");
             }
             else
             {
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
                 var timerService = new MnemonicTimerDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
-
+                var errorService = new ErrorService(_repository);    // MnemonicDeviceServiceのインスタンス
 
                 // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
@@ -209,6 +212,8 @@ namespace KdxDesigner.ViewModels
                     .Where(o => operationIds.Contains(o.Id))
                     .ToList();
 
+                var ioList = _repository.GetIoList();
+
                 // Timerの一覧を読み出し
                 var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
 
@@ -218,6 +223,7 @@ namespace KdxDesigner.ViewModels
                 mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
                 timerService.SaveWithOperation(timers, operations, DeviceStartT.Value, SelectedPlc.Id, SelectedCycle.Id);
+                errorService.SaveMnemonicDeviceOperation(operations, ioList, ErrorDeviceStartM.Value, SelectedPlc.Id, SelectedCycle.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -234,6 +240,8 @@ namespace KdxDesigner.ViewModels
                     .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                     .ToList();
                 var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
+                var errorDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
+
 
                 // Memoryテーブルにデータを保存
                 var memoryService = new MemoryService(_repository);
@@ -302,6 +310,24 @@ namespace KdxDesigner.ViewModels
                     //devices C
                     MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
                     MemoryStatusMessage = "CY情報を保存中...";
+                    foreach (var device in devicesC)
+                    {
+                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
+                        if (!result)
+                        {
+                            MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
+                            MessageBox.Show(MemoryStatusMessage);
+                            return;
+                        }
+                        MemoryProgressValue++;
+                    }
+                }
+
+                if (IsErrorMemory)
+                {
+                    //devices C
+                    MessageBox.Show("エラー情報をMemoryテーブルにデータを保存します。");
+                    MemoryStatusMessage = "エラー情報を保存中...";
                     foreach (var device in devicesC)
                     {
                         bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
