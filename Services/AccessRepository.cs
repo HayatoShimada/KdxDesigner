@@ -157,6 +157,13 @@ FROM Operation";
                 "SELECT * FROM Operation WHERE Id = @Id", new { Id = id });
         }
 
+        public List<Length>? GetLengthByPlcId(int plcId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            return connection.Query<Length>(
+                "SELECT * FROM Length WHERE PlcId = @PlcId", new { PlcId = plcId }).ToList();
+        }
+
         public void UpdateOperation(Operation operation)
         {
             using var connection = new OleDbConnection(ConnectionString);

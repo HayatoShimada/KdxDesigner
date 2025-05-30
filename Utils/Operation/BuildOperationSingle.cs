@@ -17,7 +17,8 @@ namespace KdxDesigner.Utils.Operation
             List<MnemonicDeviceWithCylinder> cylinders,
             List<MnemonicTimerDeviceWithOperation> timers,
             List<IO> ioList,
-            out List<OutputError> errors)
+            out List<OutputError> errors,
+            int plcId)
         {
             // ここに単一工程の処理を実装
             errors = new List<OutputError>(); // エラーリストの初期化
@@ -120,7 +121,8 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
                 // ioの取得を共通コンポーネント化すること
-                var ioSensor = ioList.FirstOrDefault(io => io.IOName.Contains(operation.Operation.Start));
+                var ioSensor = IOAddress.FindByIOText(ioList, operation.Operation.Start, plcId, out localErrors);
+
                 if (ioSensor == null)
                 {
                     result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
@@ -136,11 +138,11 @@ namespace KdxDesigner.Utils.Operation
                 {
                     if (operation.Operation.Start.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddAND(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddAND(ioSensor ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddANI(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddANI(ioSensor ?? ""));
 
                     }
                 }
@@ -155,7 +157,8 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
                 // ioの取得を共通コンポーネント化すること
-                var ioSensor = ioList.FirstOrDefault(io => io.IOName.Contains(operation.Operation.Finish));
+                var ioSensor = IOAddress.FindByIOText(ioList, operation.Operation.Finish, plcId, out localErrors);
+
                 if (ioSensor == null)
                 {
                     result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
@@ -171,11 +174,11 @@ namespace KdxDesigner.Utils.Operation
                 {
                     if (operation.Operation.Finish.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddANI(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddANI(ioSensor ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddAND(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddAND(ioSensor ?? ""));
                     }
                 }
                 result.Add(LadderRow.AddOR(label + (outNum + 17).ToString()));

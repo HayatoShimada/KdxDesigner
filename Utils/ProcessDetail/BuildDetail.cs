@@ -1,7 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Utils.MnemonicCommon;
-
+using KdxDesigner.Services;
 using System.Diagnostics;
 using Windows.ApplicationModel.Contacts;
 
@@ -64,7 +64,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.StartSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var ioSensor = ioList.FirstOrDefault(io => io.IOName.Contains(detail.Detail.StartSensor));
+                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
+                var cycle = _repository.GetCycles();
+                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
+                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.StartSensor, plcId, out localErrors);
+
                 if (ioSensor == null)
                 {
                     result.Add(LadderRow.AddLD(""));
@@ -80,11 +84,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
 
                     }
                 }
@@ -329,8 +333,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
             if (detail.Detail.StartSensor != null)
             {
-                // ioの取得を共通コンポーネント化すること
-                var ioSensor = ioList.FirstOrDefault(io => io.IOName.Contains(detail.Detail.StartSensor));
+                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
+                var cycle = _repository.GetCycles();
+                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
+                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.StartSensor, plcId, out localErrors);
 
                 if (ioSensor == null)
                 {
@@ -347,11 +353,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.Address ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
 
                     }
                 }

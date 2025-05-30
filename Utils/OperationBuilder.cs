@@ -16,6 +16,7 @@ namespace KdxDesigner.Utils
             List<MnemonicDeviceWithCylinder> cylinders,
             List<MnemonicTimerDeviceWithOperation> timers,
             List<IO> ioList,
+            int plcId,
             out List<OutputError> errors)
         {
             LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
@@ -38,7 +39,9 @@ namespace KdxDesigner.Utils
                             cylinders, 
                             timers, 
                             ioList, 
-                            out errors));
+                            out errors,
+                            plcId
+                            ));
                         errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
                     case 3:     // 
