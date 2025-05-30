@@ -33,5 +33,11 @@ namespace KdxDesigner.Models.Define
 
         [Description("常時OFF信号")]
         public string AlwaysOFF { get; set; } = "SM401";
+
+        [Description("エラー格納デバイス")]
+        public string ErrorDevice { get; set; } = "D401";
+
+        [Description("出力エラーデバイス")]
+        public string OutErrorDevice { get; set; } = "M9999";
     }
 }
