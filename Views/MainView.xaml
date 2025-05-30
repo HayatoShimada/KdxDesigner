@@ -215,7 +215,7 @@
                             Text="{Binding DeviceStartT, UpdateSourceTrigger=PropertyChanged}"
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
-                            HorizontalAlignment="Left"
+                            HorizontalAlignment="Left" />
                         <!--  MemorySettingAsyncCommandに修正-->
 
                         <Button Content="メモリ設定" Command="{Binding MemorySettingCommand}" Width="100" Margin="5" HorizontalAlignment="Right"/>
