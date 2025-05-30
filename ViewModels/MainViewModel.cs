@@ -560,6 +560,7 @@ namespace KdxDesigner.ViewModels
                 joinedCylinderList,
                 joinedOperationWithTimerList,
                     ioList,
+                    SelectedPlc.Id,
                     out var errorOperation
                 );
             foreach (var error in errorDetails)
