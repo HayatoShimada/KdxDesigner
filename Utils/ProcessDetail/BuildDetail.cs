@@ -1,9 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.Services;
-using System.Diagnostics;
-using Windows.ApplicationModel.Contacts;
+using KdxDesigner.Utils.MnemonicCommon;
 
 // ProcessDetail（工程プログラム）のニモニック配列を返すコード群
 
@@ -123,7 +121,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
-            result.Add(LadderRow.AddLD(operationFinishDeviceLabel +　(operationFinishStartNum + 49).ToString()));
+            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 49).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
@@ -209,7 +207,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
 
             //4行目この工程の最終の出力番号算出と LDコマンド発行
-           
+
             result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
             //3行目 M3300後の　L0初期値　AND
             result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
@@ -455,8 +453,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             foreach (var d in processDetailStartDevices)
             {
                 var row = first
-                    ?LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString())
-                    :LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString());
+                    ? LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString())
+                    : LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString());
 
                 result.Add(row);
                 first = false;
