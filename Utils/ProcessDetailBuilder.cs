@@ -36,8 +36,12 @@ namespace KdxDesigner.Utils
                     case 4: // センサOFF確認
                         break;
                     case 5: // 工程分岐
+                        allRows.AddRange(BuildDetail.BuildDetailBranch(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
+                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     case 6: // 工程合流
+                        allRows.AddRange(BuildDetail.BuildDetailMerge(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
+                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     case 7: // サーボ座標指定
                         break;

@@ -3,6 +3,7 @@ using KdxDesigner.Models.Define;
 using KdxDesigner.Utils.MnemonicCommon;
 
 using System.Diagnostics;
+using Windows.ApplicationModel.Contacts;
 
 // ProcessDetail（工程プログラム）のニモニック配列を返すコード群
 
@@ -197,7 +198,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
         // 工程分岐
         public static List<LadderCsvRow> BuildDetailBranch(
-            MnemonicDeviceWithProcessDetail process,
+            MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
@@ -205,21 +206,123 @@ namespace KdxDesigner.Utils.ProcessDetail
             List<IO> ioList,
             out List<OutputError> errors)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
-            // L***0 ~ L***9のDeviceリストを取得
+            // 行間ステートメントを追加
+            string id = detail.Detail.Id.ToString();
+            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            {
+                result.Add(LadderRow.AddStatement(id));
+            }
+            else
+            {
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+            }
+
+            // L0 の初期値を設定
+            var deviceNum = detail.Mnemonic.StartNum;
+            var label = detail.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessIdからデバイスを取得
+            var process = processes.FirstOrDefault(p => p.Mnemonic.RecordId == detail.Detail.ProcessId);
+            var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
+            var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessDetailの開始条件
+            // この辺の処理がややこしいので共通コンポーネント化すること
+            var processDetailStartIds = detail.Detail.StartIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToList() ?? new List<int>();
+            var processDetailStartDevices = details
+                .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+            // L0 工程開始
+            // 設定値を使う場合の構文 SettingsManager.Settings.""
+            // 設定値の初期値は\Model\AppSettings.csに定義
+
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddAND(processDeviceLabel + (processDeviceStartNum + 0).ToString()));
+
+            foreach (var d in processDetailStartDevices)
+            {
+                result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString()));
+            }
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 0).ToString()));
+
+            // L1 操作開始
+            // StartSensorが設定されている場合は、IOリストからセンサーを取得
+            if (detail.Detail.StartSensor != null)
+            {
+                // ioの取得を共通コンポーネント化すること
+                var ioSensor = ioList.FirstOrDefault(io => io.IOName.Contains(detail.Detail.StartSensor));
+
+                if (ioSensor == null)
+                {
+                    result.Add(LadderRow.AddLD(""));
+                    localErrors.Add(new OutputError
+                    {
+                        Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
+                        DetailName = detail.Detail.ProcessName,
+                        MnemonicId = (int)MnemonicType.ProcessDetail,
+                        ProcessId = detail.Detail.Id
+                    });
+                }
+                else
+                {
+                    if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
+                    {
+                        result.Add(LadderRow.AddLDI(ioSensor.Address ?? ""));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddLD(ioSensor.Address ?? ""));
+
+                    }
+                }
+                //result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
+            }
+            else
+            {
+                // StartSensornの設定ナシ
+                result.Add(LadderRow.AddLD(""));
+                localErrors.Add(new OutputError
+                {
+                    Message = "StartSensor が設定されていません。",
+                    DetailName = detail.Detail.ProcessName,
+                    MnemonicId = (int)MnemonicType.ProcessDetail,
+                    ProcessId = detail.Detail.Id
+                });
+            }
+
+            result.Add(LadderRow.AddANI(label + (deviceNum + 2).ToString()));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 1).ToString()));
+
+            // L9 工程完了
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
             // エラーをまとめて返す。
             errors.AddRange(localErrors);
+
             return result;
 
         }
 
         // 工程合流
         public static List<LadderCsvRow> BuildDetailMerge(
-            MnemonicDeviceWithProcessDetail process,
+            MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
@@ -227,14 +330,73 @@ namespace KdxDesigner.Utils.ProcessDetail
             List<IO> ioList,
             out List<OutputError> errors)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
+            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
-            // L***0 ~ L***9のDeviceリストを取得
+            // 行間ステートメントを追加
+            string id = detail.Detail.Id.ToString();
+            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            {
+                result.Add(LadderRow.AddStatement(id));
+            }
+            else
+            {
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+            }
+
+            // L0 の初期値を設定
+            var deviceNum = detail.Mnemonic.StartNum;
+            var label = detail.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessIdからデバイスを取得
+            var process = processes.FirstOrDefault(p => p.Mnemonic.RecordId == detail.Detail.ProcessId);
+            var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
+            var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessDetailの開始条件
+            // この辺の処理がややこしいので共通コンポーネント化すること
+            var processDetailStartIds = detail.Detail.StartIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToList() ?? new List<int>();
+            var processDetailStartDevices = details
+                .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+            // L0 工程開始
+            // 設定値を使う場合の構文 SettingsManager.Settings.""
+            // 設定値の初期値は\Model\AppSettings.csに定義
+
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddAND(processDeviceLabel + (processDeviceStartNum + 0).ToString()));
+
+            // 初回はLD命令
+            var first = true;
+
+            foreach (var d in processDetailStartDevices)
+            {
+                var row = first
+                    ?LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString())
+                    :LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString());
+
+                result.Add(row);
+                first = false;
+            }
+            result.Add(LadderRow.AddANB());
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 0).ToString()));
+
+            // L9 工程完了
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
             // エラーをまとめて返す。
             errors.AddRange(localErrors);
+
             return result;
 
         }

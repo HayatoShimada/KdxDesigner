@@ -20,6 +20,7 @@ namespace KdxDesigner.Utils.MnemonicCommon
         public static LadderCsvRow AddORI(string address) => CreateRow(Command.ORI, address);
         public static LadderCsvRow AddCJ(string address) => CreateRow(Command.CJ, address);
         public static LadderCsvRow AddORB() => CreateRow(Command.ORB);
+        public static LadderCsvRow AddANB() => CreateRow(Command.ANB);
 
 
         // ソースとデスティネーションを入力すると、MOV命令等を生成する
