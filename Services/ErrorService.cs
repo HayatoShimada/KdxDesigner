@@ -87,7 +87,7 @@ namespace KdxDesigner.Services
                     case 4 or 10 or 16 or 28: // 速度制御INV2
                         AlarmIds.AddRange([1, 2, 3, 4, 3, 4, 5]);
                         break;
-                    case 5 or 11 or 17: // 速度制御INV3
+                    case 5 or 11 or 17:     // 速度制御INV3
                         AlarmIds.AddRange([1, 2, 3, 4, 3, 4, 3, 4, 5]);
                         break;
                     case 6 or 12 or 18: // 速度制御INV4
@@ -96,10 +96,10 @@ namespace KdxDesigner.Services
                     case 7 or 13 or 19: // 速度制御INV5
                         AlarmIds.AddRange([1, 2, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 5]);
                         break;
-                    case 20: // バネ
+                    case 20:            // バネ
                         AlarmIds.AddRange([5]);
                         break;
-                    case 31: // サーボ
+                    case 31:            // サーボ
                         break;
                     default:
                         break;
