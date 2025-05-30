@@ -16,6 +16,7 @@ namespace KdxDesigner.Utils.Operation
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
             List<MnemonicTimerDeviceWithOperation> timers,
+            List<Error> mnemonicError,
             List<IO> ioList,
             out List<OutputError> errors,
             int plcId)
@@ -237,6 +238,17 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddOUT(label + (outNum + 19).ToString()));
 
             errors.AddRange(localErrors);
+
+            // エラー回路の生成
+            result.AddRange(ErrorBuilder.Operation(
+                operation.Operation,
+                mnemonicError,
+                label + (outNum + 0).ToString(),
+                label + (outNum + 1).ToString(),
+                out localErrors
+            ));
+
+
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 

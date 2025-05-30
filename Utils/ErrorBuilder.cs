@@ -8,21 +8,22 @@ namespace KdxDesigner.Utils
     {
         public static List<LadderCsvRow> Operation(
             Models.Operation operation,
-            Error error,
+            List<Error> error,
             string ldText,
             string ldiTest,
             out List<OutputError> errors)
         {
             List<LadderCsvRow>? result = new();
             errors = new List<OutputError>();
+            var eachError = error.FirstOrDefault(e => e.RecordId == operation.Id);
 
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddAND(ldText));
             result.Add(LadderRow.AddANI(ldText));
 
-            if (!string.IsNullOrEmpty(error.Device))
+            if (!string.IsNullOrEmpty(eachError.Device))
             {
-                result.Add(LadderRow.AddOUT(error.Device));
+                result.Add(LadderRow.AddOUT(eachError.Device));
             }
             else
             {
@@ -32,11 +33,16 @@ namespace KdxDesigner.Utils
                     operation.OperationName ?? "", 3, 0);
             }
 
-            result.AddRange(LadderRow.AddMOVSet("K" + error.ErrorNum.ToString(), SettingsManager.Settings.ErrorDevice));
+            result.AddRange(LadderRow.AddMOVSet("K" + eachError.ErrorNum.ToString(), SettingsManager.Settings.ErrorDevice));
             return result;
         }
 
-        private static void AddError(List<OutputError> errors, string message, string detailName, int mnemonicId, int processId)
+        private static void AddError(
+            List<OutputError> errors,
+            string message,
+            string detailName,
+            int mnemonicId,
+            int processId)
         {
             errors.Add(new OutputError
             {
