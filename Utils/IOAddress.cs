@@ -12,11 +12,6 @@ namespace KdxDesigner.Utils
         private const string UnderscorePrefix = "_";
         private const int DefaultErrorMnemonicId = 6; // 元のコードのエラーで使用されていたID
 
-        public static string? Find(List<IO> ioList, int id)
-        {
-            return ioList.FirstOrDefault(io => io.Id == id)?.Address;
-        }
-
         public static string? FindByIOText(List<IO> ioList, string ioText, int plcId, out List<OutputError> errors)
         {
             errors = new List<OutputError>();
