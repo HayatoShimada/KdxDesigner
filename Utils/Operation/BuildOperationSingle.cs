@@ -243,11 +243,10 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(ErrorBuilder.Operation(
                 operation.Operation,
                 mnemonicError,
-                label + (outNum + 0).ToString(),
-                label + (outNum + 1).ToString(),
+                label, 
+                outNum.Value,
                 out localErrors
             ));
-
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
