@@ -24,13 +24,14 @@ namespace KdxDesigner.Utils
 
             if (ioText.StartsWith(LengthPrefix))
             {
+                var lengthResult = SettingsManager.Settings.OutErrorDevice;
                 AccessRepository repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
                 string lengthName = ioText.Substring(LengthPrefix.Length);
 
                 if (string.IsNullOrEmpty(lengthName))
                 {
                     AddError(errors, $"不正なL-プレフィックス形式です: '{ioText}'", ioText, DefaultErrorMnemonicId, 0);
-                    return null;
+                    return lengthResult;
                 }
 
                 List<Length>? lengths = repository.GetLengthByPlcId(plcId);
@@ -39,8 +40,9 @@ namespace KdxDesigner.Utils
                 if (length == null || string.IsNullOrEmpty(length.Device))
                 {
                     AddError(errors, $"Lengthセンサー '{ioText}' が見つかりませんでした。", ioText, DefaultErrorMnemonicId, 0);
-                    return null;
+                    return lengthResult;
                 }
+
                 return length.Device;
             }
 
