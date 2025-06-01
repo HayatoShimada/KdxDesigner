@@ -520,6 +520,9 @@ namespace KdxDesigner.ViewModels
                 .OrderBy(m => m.Operation.Id)
                 .ToList();
 
+            var _errorService = new ErrorService(_repository);
+            List<Error>? mnemonicErrors = _errorService.GetErrors(SelectedPlc.Id, SelectedCycle.Id, (int)MnemonicType.Operation);
+
             // CSV出力処理
             // \Utils\ProcessBuilder.cs
             var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
@@ -532,6 +535,7 @@ namespace KdxDesigner.ViewModels
                     out var errors
                     );
 
+            
             foreach (var error in errors)
             {
                 OutputErrors.Add(error);
@@ -553,12 +557,13 @@ namespace KdxDesigner.ViewModels
             }
 
             // CSV出力処理
-            // \Utils\ProcessDetailBuilder.cs
+            // \Utils\OperationBuilder.cs
             var outputOperationRow = OperationBuilder.GenerateAllLadderCsvRows(
                 joinedProcessDetailList,
                 joinedOperationList,
                 joinedCylinderList,
                 joinedOperationWithTimerList,
+                mnemonicErrors,
                     ioList,
                     SelectedPlc.Id,
                     out var errorOperation
