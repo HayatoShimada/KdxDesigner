@@ -16,9 +16,14 @@
         public const string ANI = "\"ANI\"";
         public const string END = "\"END\"";
         public const string OUT = "\"OUT\"";
+        public const string PLS = "\"PLS\"";
+        public const string INC = "\"INC\"";
         public const string MOV = "\"MOV\"";
         public const string MOVP = "\"MOVP\"";
         public const string DMOV = "\"DMOV\"";
+        public const string BMOV = "\"BMOV\"";
+        public const string FMOV = "\"FMOV\"";
+        public const string SUBP = "\"-P\"";
         public const string INV = "\"INV\"";
         public const string SET = "\"SET\"";
         public const string RST = "\"RST\"";

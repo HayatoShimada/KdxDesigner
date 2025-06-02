@@ -34,6 +34,12 @@ namespace KdxDesigner.Models.Define
         [Description("常時OFF信号")]
         public string AlwaysOFF { get; set; } = "SM401";
 
+        [Description("0.1秒クロック信号")]
+        public string Clock01 { get; set; } = "SM410";
+
+        [Description("サイクルタイムデバイス")]
+        public string CycleTime { get; set; } = "D400";
+
         [Description("エラー格納デバイス")]
         public string ErrorDevice { get; set; } = "D401";
 

@@ -249,6 +249,14 @@ namespace KdxDesigner.Utils.Operation
                 out localErrors
             ));
 
+            result.AddRange(ProsTimeBuilder.Retention(
+                operation.Operation,
+                prosTimes,
+                label,
+                outNum.Value,
+                out localErrors
+            ));
+
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 

@@ -172,7 +172,8 @@ namespace KdxDesigner.ViewModels
                 || DeviceStartT == null
                 || ErrorDeviceStartM == null
                 || ProsTimeStartZR == null
-                || ProsTimePreviousStartZR == null)
+                || ProsTimePreviousStartZR == null
+                || CyTimeStartZR == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -240,8 +241,8 @@ namespace KdxDesigner.ViewModels
                     operations, 
                     ProsTimeStartZR.Value, 
                     ProsTimePreviousStartZR.Value, 
+                    CyTimeStartZR.Value,
                     SelectedPlc.Id);
-
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -425,7 +426,9 @@ namespace KdxDesigner.ViewModels
                 MessageBox.Show("Processが選択されていません。");
                 return;
             }
-            if (ProcessDeviceStartL == null || DetailDeviceStartL == null)
+            if (ProcessDeviceStartL == null 
+                || DetailDeviceStartL == null
+                || CyTimeStartZR == null)
             {
                 MessageBox.Show("ProcessDeviceStartLまたはDetailDeviceStartLが入力されていません。");
                 return;

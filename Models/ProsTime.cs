@@ -19,6 +19,8 @@ namespace KdxDesigner.Models
         public int? SortId { get; set; }
         public string? CurrentDevice { get; set; }
         public string? PreviousDevice { get; set; }
+        public string? CylinderDevice { get; set; }
+
     }
 }
 

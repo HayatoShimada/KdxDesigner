@@ -35,7 +35,7 @@ namespace KdxDesigner.Services
         }
 
         // Operationのリストを受け取り、ProsTimeテーブルに保存する
-        public void SaveProsTime(List<Operation> operations, int startCurrent, int startPrevious, int plcId)
+        public void SaveProsTime(List<Operation> operations, int startCurrent, int startPrevious, int startCylinder, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
@@ -57,25 +57,25 @@ namespace KdxDesigner.Services
                 switch (category)
                 {
                     case 2 or 29 or 30 or 20: // 保持
-                        prosTimeCount = 4;
+                        prosTimeCount = 5;
                         break;
                     case 3 or 9 or 15 or 27: // 速度制御INV1
-                        prosTimeCount = 4 + 2;
+                        prosTimeCount = 5 + 2;
                         break;
                     case 4 or 10 or 16 or 28: // 速度制御INV2
-                        prosTimeCount = 4 + 4;
+                        prosTimeCount = 5 + 4;
                         break;
                     case 5 or 11 or 17:     // 速度制御INV3
-                        prosTimeCount = 4 + 6;
+                        prosTimeCount = 5 + 6;
                         break;
                     case 6 or 12 or 18: // 速度制御INV4
-                        prosTimeCount = 4 + 8;
+                        prosTimeCount = 5 + 8;
                         break;
                     case 7 or 13 or 19: // 速度制御INV5
-                        prosTimeCount = 4 + 12;
+                        prosTimeCount = 5 + 12;
                         break;
                     case 31:            // サーボ
-                        prosTimeCount = 0;
+                        prosTimeCount = 5;
                         break;
                     default:
                         prosTimeCount = 0;
@@ -84,10 +84,10 @@ namespace KdxDesigner.Services
 
                 for (int  i = 0; i < prosTimeCount; i++)
                 {
-                    string currentDevice = "ZR" + (startCurrent + count + prosTimeCount).ToString(); 
-                    string previousDevice = "ZR" + (startPrevious + count + prosTimeCount).ToString();
-
-
+                    string currentDevice = "ZR" + (startCurrent + count + i + prosTimeCount).ToString(); 
+                    string previousDevice = "ZR" + (startPrevious + count + i + prosTimeCount).ToString();
+                    string cylinderDevice = "ZR" + (startCylinder + count + i + prosTimeCount).ToString();
+                    
                     var parameters = new DynamicParameters();
 
                     parameters.Add("PlcId", plcId, DbType.Int32);
@@ -96,6 +96,7 @@ namespace KdxDesigner.Services
                     parameters.Add("SortId", i, DbType.Int32);
                     parameters.Add("CurrentDevice", currentDevice, DbType.String);
                     parameters.Add("PreviousDevice", previousDevice, DbType.String);
+                    parameters.Add("CylinderDevice", cylinderDevice, DbType.String);
 
                     if (existing != null)
                     {
@@ -107,7 +108,8 @@ namespace KdxDesigner.Services
                             [RecordId] = @RecordId,
                             [SortId] = @SortId,
                             [CurrentDevice] = @CurrentDevice,
-                            [PreviousDevice] = @PreviousDevice
+                            [PreviousDevice] = @PreviousDevice,
+                            [CylinderDevice] = @CylinderDevice
                         WHERE [ID] = @ID",
                             parameters, transaction);
                     }
@@ -120,14 +122,18 @@ namespace KdxDesigner.Services
         [RecordId], 
         [SortId],
         [CurrentDevice], 
-        [PreviousDevice])
+        [PreviousDevice],
+        [CylinderDevice]        
+)
     VALUES
         (@PlcId, 
         @MnemonicId, 
         @RecordId, 
         @SortId, 
         @CurrentDevice,
-        @PreviousDevice)",
+        @PreviousDevice,
+        @CylinderDevice
+)",
     parameters, transaction);
 
                     }
