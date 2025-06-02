@@ -15,11 +15,12 @@ namespace KdxDesigner.Utils
         {
             List<LadderCsvRow>? result = new();
             errors = new List<OutputError>();
-            var eachError = error.FirstOrDefault(e => e.RecordId == operation.Id);
+
+            List<Error> errorList = error.Where(e => e.RecordId == operation.Id).ToList();
 
             int countSpeed = 0;
 
-            foreach (var each in error)
+            foreach (var each in errorList)
             {
                 switch (each.AlarmId)
                     {
