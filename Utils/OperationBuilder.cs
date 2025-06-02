@@ -16,6 +16,7 @@ namespace KdxDesigner.Utils
             List<MnemonicDeviceWithCylinder> cylinders,
             List<MnemonicTimerDeviceWithOperation> timers,
             List<Error> mnemonicErrors,
+            List<ProsTime> prosTimes,
             List<IO> ioList,
             int plcId,
             out List<OutputError> errors)
@@ -40,6 +41,7 @@ namespace KdxDesigner.Utils
                             cylinders, 
                             timers, 
                             mnemonicErrors,
+                            prosTimes,
                             ioList, 
                             out errors,
                             plcId

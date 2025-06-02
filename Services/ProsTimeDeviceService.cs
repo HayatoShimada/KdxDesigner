@@ -35,7 +35,7 @@ namespace KdxDesigner.Services
         }
 
         // Operationのリストを受け取り、ProsTimeテーブルに保存する
-        public void SaveMnemonicDeviceProcess(List<Operation> operations, int startCurrent, int startPrevious, int plcId)
+        public void SaveProsTime(List<Operation> operations, int startCurrent, int startPrevious, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();

@@ -332,7 +332,7 @@
                             Grid.Column="2"/>
 
                         <TextBlock 
-                            Text="ZRデバイス[工程タイム]"
+                            Text="ZRデバイス[工程タイム現在]"
                             Margin="5"
                             Grid.Row="6"
                             Grid.Column="0"/>
@@ -350,7 +350,27 @@
                             HorizontalAlignment="Left"
                             Grid.Row="6"
                             Grid.Column="2"/>
-                        
+
+                        <TextBlock 
+                            Text="ZRデバイス[工程タイム前回]"
+                            Margin="5"
+                            Grid.Row="6"
+                            Grid.Column="0"/>
+                        <TextBox
+                            Text="{Binding ProsTimePreviousStartZR, UpdateSourceTrigger=PropertyChanged}"
+                            Width="100" Margin="5"
+                            PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
+                            HorizontalAlignment="Left"
+                            Grid.Row="6"
+                            Grid.Column="1"/>
+                        <CheckBox 
+                            Content="出力" 
+                            IsChecked="{Binding IsProsTimeMemory, Mode=TwoWay}"
+                            Margin="5" 
+                            HorizontalAlignment="Left"
+                            Grid.Row="6"
+                            Grid.Column="2"/>
+
                         <TextBlock 
                             Text="ZRデバイス[CYタイム]"
                             Margin="5"
