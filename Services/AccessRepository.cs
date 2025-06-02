@@ -202,7 +202,8 @@ WHERE Id = @Id";
             var sql = @"
 SELECT Id, ProcessId, OperationId, DetailName,
        StartIds, FinishIds,
-       StartSensor, CategoryId, FinishSensor
+       
+, CategoryId, FinishSensor
 FROM ProcessDetail";
             return connection.Query<ProcessDetail>(sql).ToList();
         }

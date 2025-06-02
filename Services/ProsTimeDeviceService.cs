@@ -40,6 +40,9 @@ namespace KdxDesigner.Services
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
+            // 修正: List<T> の Sort メソッドを使用するために、ラムダ式を Comparison<T> に変換する必要があります。
+            // 変更前: operations = operations.Sort(o => o.Id);
+            operations.Sort((o1, o2) => o1.Id.CompareTo(o2.Id));
 
             // MnemonicDeviceテーブルの既存データを取得
             var allExisting = GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
@@ -84,10 +87,11 @@ namespace KdxDesigner.Services
 
                 for (int  i = 0; i < prosTimeCount; i++)
                 {
-                    string currentDevice = "ZR" + (startCurrent + count + i + prosTimeCount).ToString(); 
-                    string previousDevice = "ZR" + (startPrevious + count + i + prosTimeCount).ToString();
-                    string cylinderDevice = "ZR" + (startCylinder + count + i + prosTimeCount).ToString();
-                    
+                    string currentDevice = "ZR" + (startCurrent + count ).ToString(); 
+                    string previousDevice = "ZR" + (startPrevious + count).ToString();
+                    string cylinderDevice = "ZR" + (startCylinder + count).ToString();
+
+                    count++;
                     var parameters = new DynamicParameters();
 
                     parameters.Add("PlcId", plcId, DbType.Int32);
@@ -102,7 +106,7 @@ namespace KdxDesigner.Services
                     {
                         parameters.Add("ID", existing.ID, DbType.Int32);
                         connection.Execute(@"
-                        UPDATE [Error] SET
+                        UPDATE [ProsTime] SET
                             [PlcId] = @PlcId,
                             [MnemonicId] = @MnemonicId,
                             [RecordId] = @RecordId,
@@ -116,7 +120,7 @@ namespace KdxDesigner.Services
                     else
                     {
                         connection.Execute(@"
-    INSERT INTO [Error] (
+    INSERT INTO [ProsTime] (
         [PlcId], 
         [MnemonicId], 
         [RecordId], 
@@ -138,7 +142,6 @@ namespace KdxDesigner.Services
 
                     }
                 }
-                count += prosTimeCount ?? 0;
             }
             transaction.Commit();
         }
