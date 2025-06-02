@@ -52,8 +52,6 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool isProsTimeMemory = false;
         [ObservableProperty] private bool isCyTimeMemory = false;
 
-
-
         // メモリ保存処理における進捗バーの最大値（デバイスの総件数を設定） kuni            
         [ObservableProperty] private int memoryProgressMax;
 
@@ -195,6 +193,8 @@ namespace KdxDesigner.ViewModels
                 var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
                 var timerService = new MnemonicTimerDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
                 var errorService = new ErrorService(_repository);    // MnemonicDeviceServiceのインスタンス
+                var prosTimeService = new ProsTimeDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
+
 
                 // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
@@ -224,6 +224,9 @@ namespace KdxDesigner.ViewModels
                 mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
                 timerService.SaveWithOperation(timers, operations, DeviceStartT.Value, SelectedPlc.Id, SelectedCycle.Id);
                 errorService.SaveMnemonicDeviceOperation(operations, ioList, ErrorDeviceStartM.Value, SelectedPlc.Id, SelectedCycle.Id);
+
+                prosTimeService.SaveOperationTime(operations, ioList, ErrorDeviceStartM.Value, SelectedPlc.Id, SelectedCycle.Id);
+
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
