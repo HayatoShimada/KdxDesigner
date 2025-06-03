@@ -61,9 +61,6 @@ namespace KdxDesigner.Services
             }
 
             ConnectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
-
-
-
         }
 
         public string ConnectionString { get; }
@@ -202,7 +199,8 @@ WHERE Id = @Id";
             var sql = @"
 SELECT Id, ProcessId, OperationId, DetailName,
        StartIds, FinishIds,
-       StartSensor, CategoryId, FinishSensor
+       
+, CategoryId, FinishSensor
 FROM ProcessDetail";
             return connection.Query<ProcessDetail>(sql).ToList();
         }

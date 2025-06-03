@@ -202,6 +202,8 @@
                             <RowDefinition />
                             <RowDefinition />
                             <RowDefinition />
+                            <RowDefinition />
+
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -332,7 +334,7 @@
                             Grid.Column="2"/>
 
                         <TextBlock 
-                            Text="ZRデバイス[工程タイム]"
+                            Text="ZRデバイス[工程タイム現在]"
                             Margin="5"
                             Grid.Row="6"
                             Grid.Column="0"/>
@@ -350,14 +352,14 @@
                             HorizontalAlignment="Left"
                             Grid.Row="6"
                             Grid.Column="2"/>
-                        
+
                         <TextBlock 
-                            Text="ZRデバイス[CYタイム]"
+                            Text="ZRデバイス[工程タイム前回]"
                             Margin="5"
                             Grid.Row="7"
                             Grid.Column="0"/>
                         <TextBox
-                            Text="{Binding CyTimeStartZR, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding ProsTimePreviousStartZR, UpdateSourceTrigger=PropertyChanged}"
                             Width="100" Margin="5"
                             PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
                             HorizontalAlignment="Left"
@@ -365,10 +367,30 @@
                             Grid.Column="1"/>
                         <CheckBox 
                             Content="出力" 
-                            IsChecked="{Binding IsCyTimeMemory, Mode=TwoWay}"
+                            IsChecked="{Binding IsProsTimeMemory, Mode=TwoWay}"
                             Margin="5" 
                             HorizontalAlignment="Left"
                             Grid.Row="7"
+                            Grid.Column="2"/>
+
+                        <TextBlock 
+                            Text="ZRデバイス[CYタイム]"
+                            Margin="5"
+                            Grid.Row="8"
+                            Grid.Column="0"/>
+                        <TextBox
+                            Text="{Binding CyTimeStartZR, UpdateSourceTrigger=PropertyChanged}"
+                            Width="100" Margin="5"
+                            PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
+                            HorizontalAlignment="Left"
+                            Grid.Row="8"
+                            Grid.Column="1"/>
+                        <CheckBox 
+                            Content="出力" 
+                            IsChecked="{Binding IsCyTimeMemory, Mode=TwoWay}"
+                            Margin="5" 
+                            HorizontalAlignment="Left"
+                            Grid.Row="8"
                             Grid.Column="2"/>
                         
                         <!-- 進捗バー -->
@@ -379,7 +401,7 @@
                             Maximum="{Binding MemoryProgressMax}" 
                             Value="{Binding MemoryProgressValue}" 
                             Margin="0,0,5,0"
-                            Grid.Row="8"
+                            Grid.Row="9"
                             Grid.Column="0"/>
                         <Button 
                             Content="メモリ設定" 
@@ -387,7 +409,7 @@
                             Width="100" 
                             Margin="5" 
                             HorizontalAlignment="Right"
-                            Grid.Row="8"
+                            Grid.Row="9"
                             Grid.Column="1"/>
                         <!-- 状態メッセージ表示（ボタン右） -->
                         <TextBlock 
@@ -396,7 +418,7 @@
                             Foreground="DarkBlue" 
                             FontWeight="Bold" 
                             Margin="10,0,10,0"
-                            Grid.Row="9"
+                            Grid.Row="10"
                             Grid.Column="0"/>
                         <Button 
                             Content="工程出力" 
@@ -404,7 +426,7 @@
                             Width="100" 
                             Margin="5" 
                             HorizontalAlignment="Right"
-                            Grid.Row="9"
+                            Grid.Row="10"
                             Grid.Column="1"/>
                     </Grid>
                     <!---->

@@ -42,6 +42,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int? errorDeviceStartM = 52000;
         [ObservableProperty] private int? deviceStartT = 2000;
         [ObservableProperty] private int? prosTimeStartZR = 10000;
+        [ObservableProperty] private int? prosTimePreviousStartZR = 20000;
         [ObservableProperty] private int? cyTimeStartZR = 30000;
 
         [ObservableProperty] private bool isProcessMemory = false;
@@ -52,8 +53,6 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool isTimerMemory = false;
         [ObservableProperty] private bool isProsTimeMemory = false;
         [ObservableProperty] private bool isCyTimeMemory = false;
-
-
 
         // メモリ保存処理における進捗バーの最大値（デバイスの総件数を設定） kuni            
         [ObservableProperty] private int memoryProgressMax;
@@ -172,7 +171,10 @@ namespace KdxDesigner.ViewModels
                 || OperationDeviceStartM == null
                 || CylinderDeviceStartM == null
                 || DeviceStartT == null
-                || ErrorDeviceStartM == null)
+                || ErrorDeviceStartM == null
+                || ProsTimeStartZR == null
+                || ProsTimePreviousStartZR == null
+                || CyTimeStartZR == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -190,12 +192,17 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("DeviceStartTが入力されていません。");
                 if (ErrorDeviceStartM == null)
                     MessageBox.Show("ErrorStartMが入力されていません。");
+                if (ProsTimeStartZR == null)
+                    MessageBox.Show("ProsTimeStartZRが入力されていません。");
+                if (ProsTimePreviousStartZR == null)
+                    MessageBox.Show("ProsTimePreviousStartZRが入力されていません。");
             }
             else
             {
-                var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
-                var timerService = new MnemonicTimerDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
-                var errorService = new ErrorService(_repository);    // MnemonicDeviceServiceのインスタンス
+                var mnemonicService = new MnemonicDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
+                var timerService = new MnemonicTimerDeviceService(_repository); // MnemonicDeviceServiceのインスタンス
+                var errorService = new ErrorService(_repository);               // MnemonicDeviceServiceのインスタンス
+                var prosTimeService = new ProsTimeDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
 
                 // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
@@ -224,7 +231,19 @@ namespace KdxDesigner.ViewModels
                 mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
                 mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
                 timerService.SaveWithOperation(timers, operations, DeviceStartT.Value, SelectedPlc.Id, SelectedCycle.Id);
-                errorService.SaveMnemonicDeviceOperation(operations, ioList, ErrorDeviceStartM.Value, SelectedPlc.Id, SelectedCycle.Id);
+                errorService.SaveMnemonicDeviceOperation(
+                    operations, 
+                    ioList, 
+                    ErrorDeviceStartM.Value, 
+                    SelectedPlc.Id, 
+                    SelectedCycle.Id);
+
+                prosTimeService.SaveProsTime(
+                    operations, 
+                    ProsTimeStartZR.Value, 
+                    ProsTimePreviousStartZR.Value, 
+                    CyTimeStartZR.Value,
+                    SelectedPlc.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -242,7 +261,6 @@ namespace KdxDesigner.ViewModels
                     .ToList();
                 var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
                 var errorDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
-
 
                 // Memoryテーブルにデータを保存
                 var memoryService = new MemoryService(_repository);
@@ -409,6 +427,14 @@ namespace KdxDesigner.ViewModels
                 MessageBox.Show("Processが選択されていません。");
                 return;
             }
+            if (ProcessDeviceStartL == null 
+                || DetailDeviceStartL == null
+                || CyTimeStartZR == null)
+            {
+                MessageBox.Show("ProcessDeviceStartLまたはDetailDeviceStartLが入力されていません。");
+                return;
+            }
+
             var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
 
             // detailsを取得
@@ -426,6 +452,8 @@ namespace KdxDesigner.ViewModels
             var ioList = _repository.GetIoList();
             var memoryService = new MemoryService(_repository);
             var timerService = new MnemonicTimerDeviceService(_repository);
+            var prosTimeService = new ProsTimeDeviceService(_repository);
+
 
             var memoryList = memoryService.GetMemories(SelectedPlc.Id);
 
@@ -444,7 +472,7 @@ namespace KdxDesigner.ViewModels
                 .Where(m => m.MnemonicId == (int)MnemonicType.CY)
                 .ToList();
             var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
-
+            var prosTime = prosTimeService.GetProsTimeByMnemonicId(SelectedPlc.Id, (int)MnemonicType.Operation);
 
             // MnemonicDeviceとProcessのリストを結合
             // 並び順はProcess.Idで昇順
@@ -560,11 +588,12 @@ namespace KdxDesigner.ViewModels
             // CSV出力処理
             // \Utils\OperationBuilder.cs
             var outputOperationRow = OperationBuilder.GenerateAllLadderCsvRows(
-                joinedProcessDetailList,
-                joinedOperationList,
-                joinedCylinderList,
-                joinedOperationWithTimerList,
-                mnemonicErrors,
+                    joinedProcessDetailList,
+                    joinedOperationList,
+                    joinedCylinderList,
+                    joinedOperationWithTimerList,
+                    mnemonicErrors,
+                    prosTime,
                     ioList,
                     SelectedPlc.Id,
                     out var errorOperation
