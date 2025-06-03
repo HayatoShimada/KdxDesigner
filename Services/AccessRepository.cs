@@ -61,9 +61,6 @@ namespace KdxDesigner.Services
             }
 
             ConnectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
-
-
-
         }
 
         public string ConnectionString { get; }

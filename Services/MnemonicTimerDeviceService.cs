@@ -29,12 +29,15 @@ namespace KdxDesigner.Services
         public List<MnemonicTimerDevice> GetMnemonicTimerDeviceByMnemonic(int plcId, int cycleId, int mnemonicId)
         {
             using var connection = new OleDbConnection(_connectionString);
-            var sql = "SELECT * FROM MnemonicDevice WHERE PlcId = @PlcId AND CycleId = @CycleId AND MnemonicId = @MnemonicId";
+            var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND CycleId = @CycleId AND MnemonicId = @MnemonicId";
             return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, CycleId = cycleId, MnemonicId = mnemonicId }).ToList();
         }
 
         // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
-        public void SaveWithOperation(List<Models.Timer> timers, List<Operation> operations, int startNum, int plcId, int cycleId)
+        public void SaveWithOperation(
+            List<Models.Timer> timers, 
+            List<Operation> operations, 
+            int startNum, int plcId, int cycleId)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
@@ -59,7 +62,7 @@ namespace KdxDesigner.Services
                     var parameters = new DynamicParameters();
                     parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
                     parameters.Add("RecordId", operation.Id, DbType.Int32);
-                    parameters.Add("TimerId", timer.ID, DbType.String);
+                    parameters.Add("TimerId", timer.ID, DbType.Int32);
                     parameters.Add("TimerCategoryId", timer.TimerCategoryId, DbType.Int32);
                     parameters.Add("ProcessTimerDevice", processTimerDevice, DbType.String);
                     parameters.Add("TimerDevice", timerDevice, DbType.String);

@@ -13,13 +13,22 @@ namespace KdxDesigner.Models
     {
         [Key]
         public int ID { get; set; }
-        public int? PlcId { get; set; }
-        public int? MnemonicId { get; set; }
-        public int? RecordId { get; set; }
-        public int? SortId { get; set; }
-        public string? CurrentDevice { get; set; }
-        public string? PreviousDevice { get; set; }
-        public string? CylinderDevice { get; set; }
+        [Required]
+        public int PlcId { get; set; }
+        [Required]
+        public int MnemonicId { get; set; }
+        [Required]
+        public int RecordId { get; set; }
+        [Required]
+        public int SortId { get; set; }
+        [Required]
+        public string CurrentDevice { get; set; } = "ZR0";
+        [Required]
+        public string PreviousDevice { get; set; } = "ZR0";
+        [Required]
+        public string CylinderDevice { get; set; } = "ZR0";
+        [Required]
+        public int CategoryId { get; set; } // OperationDifinitionsのID
 
     }
 }

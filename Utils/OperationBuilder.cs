@@ -31,9 +31,22 @@ namespace KdxDesigner.Utils
             {
                 switch (operation.Operation.CategoryId)
                 {
-                    case 1:     // 励磁
+                    case 1 :                // 励磁
+                        allRows.AddRange(BuildOperationSingle.Excitation(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList,
+                            out errors,
+                            plcId
+                            ));
+                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
-                    case 2:     // 保持
+                    case 2 or 14 or 20:     // 保持
                         allRows.AddRange(BuildOperationSingle.Retention(
                             operation, 
                             details, 
@@ -48,19 +61,98 @@ namespace KdxDesigner.Utils
                             ));
                         errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
-                    case 3:     // 
+                    case 3 or 9 or 15:      // 速度変化1回
+                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList,
+                            out errors,
+                            plcId,
+                            1
+                            ));
+                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
-                    case 4:     // 
+
+                    case 4 or 10 or 16:     // 速度変化2回
+                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList,
+                            out errors,
+                            plcId,
+                            2
+                            ));
+                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
+
+                    case 5 or 11 or 17:     // 速度変化3回
+                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList,
+                            out errors,
+                            plcId,
+                            3
+                            ));
+                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
+                        break;
+
+                    case 6 or 12 or 18:     // 速度変化4回
+                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList,
+                            out errors,
+                            plcId,
+                            4
+                            ));
+                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
+                        break;
+
+                    case 7 or 13 or 19:     // 速度変化5回
+                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList,
+                            out errors,
+                            plcId,
+                            5
+                            ));
+                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
+                        break;
+
                     default:
                         break;
                 }
             }
 
-            // プロセス詳細のニモニックを生成
             errors = errorsForOperation.Distinct().ToList(); // 重複を排除
             return allRows;
-            // プロセス詳細のニモニックを生成
         }
 
     }

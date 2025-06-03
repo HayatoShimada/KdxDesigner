@@ -51,7 +51,7 @@ namespace KdxDesigner.Utils
                               : ioText;
 
             var matches = ioList
-                .Where(io => io.IOText != null && io.IOText.Contains(searchText))
+                .Where(io => io.IOName != null && io.IOName.Contains(searchText))
                 .ToList();
 
             if (matches.Count == 0)
