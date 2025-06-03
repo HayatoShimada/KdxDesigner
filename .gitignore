@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /KdxDesigner.csproj
 /KdxDesigner.sln
+/KdxDesigner.csproj
+/.gitignore
+/KdxDesigner.sln

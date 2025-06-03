@@ -10,6 +10,7 @@ using KdxDesigner.Views;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 
 namespace KdxDesigner.ViewModels
@@ -608,18 +609,9 @@ namespace KdxDesigner.ViewModels
                 Debug.WriteLine($"{row.Command} {row.Address}");
             }*/
 
-            foreach (var row in outputRows)
-            {
-                if (row.StepComment != "\"\"")
-                {
-                    Debug.WriteLine($"\"{row.StepComment}\"");
-                }
-                else
-                {
-                    Debug.WriteLine($"{row.Command} {row.Address}");
-                }
-            }
-
+            // #50 CSVファイルに出力
+            string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Test.csv");
+            LadderCsvExporter.ExportLadderCsv(outputRows, csvPath);
 
             MessageBox.Show("出力処理が完了しました。");
             return;

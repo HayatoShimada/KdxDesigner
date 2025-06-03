@@ -50,12 +50,18 @@ namespace KdxDesigner.Utils
                     case 9: // INV座標指定
                         break;
                     case 10: // IL待ち
+                        allRows.AddRange(BuildDetail.BuildDetailILWait(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
+                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     case 11: // リセット工程開始
                         break;
                     case 12: // リセット工程完了
                         break;
                     case 13: // 工程OFF確認
+                        break;
+                    case 15: // 期間工程
+                        allRows.AddRange(BuildDetail.BuildDetailSeason(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
+                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     default:
                         break;
