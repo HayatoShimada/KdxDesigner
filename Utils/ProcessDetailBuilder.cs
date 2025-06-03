@@ -56,8 +56,6 @@ namespace KdxDesigner.Utils
                     case 12: // リセット工程完了
                         break;
                     case 13: // 工程OFF確認
-                        allRows.AddRange(BuildDetail.BuildDetailProcessOFF(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
                         break;
                     default:
                         break;
