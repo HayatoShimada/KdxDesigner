@@ -168,6 +168,8 @@ namespace KdxDesigner.Utils.Operation
             MnemonicTimerDeviceWithOperation operationTimer,
             List<IO> ioList,
             string speedSensor,
+            List<MnemonicSpeedDevice> speeds,
+            string operationSpeed,
             int plcId,
             string label,
             int outNum,
@@ -218,6 +220,9 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
             result.Add(LadderRow.AddOUT(label + (outNum + 10 + speedCount).ToString()));
 
+            // 速度指令
+            var speedDevice = speeds.FirstOrDefault(s => s.CylinderId == operation.Operation.CYId)?.Device ?? "";
+            result.AddRange(LadderRow.AddMOVPSet(operationSpeed, speedDevice));
             return result;
         }
 

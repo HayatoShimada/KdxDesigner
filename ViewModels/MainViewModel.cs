@@ -39,6 +39,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int? detailDeviceStartL = 3000;
         [ObservableProperty] private int? operationDeviceStartM = 20000;
         [ObservableProperty] private int? cylinderDeviceStartM = 30000;
+        [ObservableProperty] private int? cylinderDeviceStartD = 30000;
         [ObservableProperty] private int? errorDeviceStartM = 52000;
         [ObservableProperty] private int? deviceStartT = 2000;
         [ObservableProperty] private int? prosTimeStartZR = 10000;
@@ -174,7 +175,8 @@ namespace KdxDesigner.ViewModels
                 || ErrorDeviceStartM == null
                 || ProsTimeStartZR == null
                 || ProsTimePreviousStartZR == null
-                || CyTimeStartZR == null)
+                || CyTimeStartZR == null
+                || CylinderDeviceStartD == null)
             {
                 if (SelectedCycle == null)
                     MessageBox.Show("Cycleが選択されていません。");
@@ -196,6 +198,8 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show("ProsTimeStartZRが入力されていません。");
                 if (ProsTimePreviousStartZR == null)
                     MessageBox.Show("ProsTimePreviousStartZRが入力されていません。");
+                if (CylinderDeviceStartD == null)
+                    MessageBox.Show("CylinderDeviceStartDが入力されていません。");
             }
             else
             {
@@ -203,6 +207,7 @@ namespace KdxDesigner.ViewModels
                 var timerService = new MnemonicTimerDeviceService(_repository); // MnemonicDeviceServiceのインスタンス
                 var errorService = new ErrorService(_repository);               // MnemonicDeviceServiceのインスタンス
                 var prosTimeService = new ProsTimeDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
+                var speedService = new MnemonicSpeedDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
 
                 // 工程詳細の一覧を読み出し
                 List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
@@ -244,6 +249,8 @@ namespace KdxDesigner.ViewModels
                     ProsTimePreviousStartZR.Value, 
                     CyTimeStartZR.Value,
                     SelectedPlc.Id);
+
+                speedService.Save(cylinder, CylinderDeviceStartD.Value, SelectedPlc.Id);
 
                 // MnemonicId = 1 だとProcessニモニックのレコード
                 var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
@@ -453,6 +460,7 @@ namespace KdxDesigner.ViewModels
             var memoryService = new MemoryService(_repository);
             var timerService = new MnemonicTimerDeviceService(_repository);
             var prosTimeService = new ProsTimeDeviceService(_repository);
+            var speedService = new MnemonicSpeedDeviceService(_repository);
 
 
             var memoryList = memoryService.GetMemories(SelectedPlc.Id);
@@ -473,6 +481,7 @@ namespace KdxDesigner.ViewModels
                 .ToList();
             var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
             var prosTime = prosTimeService.GetProsTimeByMnemonicId(SelectedPlc.Id, (int)MnemonicType.Operation);
+            var speedDevice = speedService.GetMnemonicSpeedDevice(SelectedPlc.Id);
 
             // MnemonicDeviceとProcessのリストを結合
             // 並び順はProcess.Idで昇順
@@ -592,6 +601,7 @@ namespace KdxDesigner.ViewModels
                     joinedOperationList,
                     joinedCylinderList,
                     joinedOperationWithTimerList,
+                    speedDevice,
                     mnemonicErrors,
                     prosTime,
                     ioList,

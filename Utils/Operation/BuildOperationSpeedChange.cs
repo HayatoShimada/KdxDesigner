@@ -16,6 +16,7 @@ namespace KdxDesigner.Utils.Operation
             List<MnemonicTimerDeviceWithOperation> timers,
             List<KdxDesigner.Models.Error> mnemonicError, // KdxDesigner.Models.Error 型であると明示
             List<ProsTime> prosTimes,
+            List<MnemonicSpeedDevice> speeds, // 速度デバイスのリスト
             List<IO> ioList,
             out List<OutputError> errors,
             int plcId,
@@ -71,7 +72,7 @@ namespace KdxDesigner.Utils.Operation
                     if (i >= s_speedChangeConfigs.Count) // 設定されている速度変化のステップ数を超えた場合
                     {
                         localErrors.Add(CreateOperationError(
-                            operation, 
+                            operation,
                             $"定義されている速度変化ステップ数 ({s_speedChangeConfigs.Count}) を超えています (要求: {i + 1})。"));
                         continue;
                     }
@@ -111,8 +112,59 @@ namespace KdxDesigner.Utils.Operation
                     }
 
                     List<OutputError> speedGenErrors; // Common.GenerateSpeed からのエラーを個別に受け取る
+
+                    string? operationSpeed = string.Empty;
+
+                    // 速度変化ステップごとの処理
+                    switch (i)
+                    {
+                        case 0:
+                            operationSpeed = operation.Operation.S1;
+                            operationSpeed = FlowSpeedNumber(
+                                                            operationSpeed,
+                                                            out localErrors,
+                                                            operation,
+                                                            cylinders
+                                                        );
+                            break;
+                        case 1:
+                            operationSpeed = operation.Operation.S2;
+                            operationSpeed = FlowSpeedNumber(
+                                                            operationSpeed,
+                                                            out localErrors,
+                                                            operation,
+                                                            cylinders
+                                                        );
+                            break;
+                        case 2:
+                            operationSpeed = operation.Operation.S3;
+                            operationSpeed = FlowSpeedNumber(
+                                                            operationSpeed,
+                                                            out localErrors,
+                                                            operation,
+                                                            cylinders
+                                                        );
+                            break;
+                        case 3:
+                            operationSpeed = operation.Operation.S4;
+                            operationSpeed = FlowSpeedNumber(
+                                                            operationSpeed,
+                                                            out localErrors,
+                                                            operation,
+                                                            cylinders
+                                                        );
+                            break;
+                        // 必要に応じてさらに追加
+                        default:
+                            localErrors.Add(CreateOperationError(
+                                operation,
+                                $"速度変化ステップ {i + 1} の設定が見つかりません。"
+                            ));
+                            continue; // このステップの処理をスキップ
+                    }
+
                     result.AddRange(Common.GenerateSpeed(
-                        operation, speedTimer, ioList, speedSensor, plcId, label, outNum.Value,
+                        operation, speedTimer, ioList, speedSensor, speeds, operationSpeed, plcId, label, outNum.Value,
                         out speedGenErrors, // out パラメータでエラーリストを受け取る
                         i));
                     if (speedGenErrors != null) localErrors.AddRange(speedGenErrors);
@@ -190,7 +242,7 @@ namespace KdxDesigner.Utils.Operation
         }
 
         // BuildOperationSpeedChange クラス内
-        private static readonly List<SpeedChangeStepConfig> s_speedChangeConfigs = new List<SpeedChangeStepConfig>
+        private static readonly List<SpeedChangeStepConfig> s_speedChangeConfigs = new()
         {
             new SpeedChangeStepConfig(9,  op => op.SS1, "SS1"),
             new SpeedChangeStepConfig(10, op => op.SS2, "SS2"),
@@ -260,6 +312,56 @@ namespace KdxDesigner.Utils.Operation
                 MnemonicId = (int)MnemonicType.Operation, // KdxDesigner.Utils.MnemonicCommon.MnemonicType を想定
                 ProcessId = operation.Operation?.Id ?? 0 // operation.Operation.Id が int であると仮定
             };
+        }
+
+        private static string FlowSpeedNumber(
+            string? operationSpeed,
+            out List<OutputError> localErrors,
+            MnemonicDeviceWithOperation operation,
+            List<MnemonicDeviceWithCylinder> cylinders
+            )
+        {
+            localErrors = new List<OutputError>();
+            string result = string.Empty;
+            if (string.IsNullOrEmpty(operationSpeed))
+            {
+                localErrors.Add(CreateOperationError(
+                    operation,
+                    $"操作「{operation.Operation.OperationName}」(ID: {operation.Operation.Id}) の速度変化ステップ 1 (SS1) が設定されていません。"
+                ));
+            }
+            else
+            {
+                if (operationSpeed.Contains("A"))
+                {
+                    result = operationSpeed.Replace("A", ""); // "A"を削除
+                }
+                else if (operationSpeed.Contains("B"))
+                {
+                    operationSpeed = operationSpeed.Replace("B", ""); // "B"を削除
+                    var flow = cylinders.SingleOrDefault(c => c.Cylinder.Id == operation.Operation.CYId)?
+                        .Cylinder?.FlowType; // "B"が含まれている場合は SetB を true に設定
+                    switch (flow)
+                    {
+                        case "A5:B5":
+                            operationSpeed = (int.Parse(operationSpeed) + 5).ToString(); // "B"を先頭に追加
+                            break;
+                        case "A6:B4":
+                            operationSpeed = (int.Parse(operationSpeed) + 6).ToString(); // "B"を先頭に追加
+                            break;
+                        case "A7:B3":
+                            operationSpeed = (int.Parse(operationSpeed) + 8).ToString(); // "B"を先頭に追加
+                            break;
+                    }
+                }
+                else
+                {
+                    result = operationSpeed;
+                }
+
+            }
+
+            return result;
         }
     }
 }

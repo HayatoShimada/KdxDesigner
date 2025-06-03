@@ -203,6 +203,7 @@
                             <RowDefinition />
                             <RowDefinition />
                             <RowDefinition />
+                            <RowDefinition />
 
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
@@ -392,7 +393,27 @@
                             HorizontalAlignment="Left"
                             Grid.Row="8"
                             Grid.Column="2"/>
-                        
+
+                        <TextBlock 
+                            Text="Dデバイス[速度変化指令]"
+                            Margin="5"
+                            Grid.Row="9"
+                            Grid.Column="0"/>
+                        <TextBox
+                            Text="{Binding CylinderDeviceStartD, UpdateSourceTrigger=PropertyChanged}"
+                            Width="100" Margin="5"
+                            PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"
+                            HorizontalAlignment="Left"
+                            Grid.Row="9"
+                            Grid.Column="1"/>
+                        <CheckBox 
+                            Content="出力" 
+                            IsChecked="{Binding IsCyTimeMemory, Mode=TwoWay}"
+                            Margin="5" 
+                            HorizontalAlignment="Left"
+                            Grid.Row="9"
+                            Grid.Column="2"/>
+
                         <!-- 進捗バー -->
                         <ProgressBar 
                             Height="20" 
@@ -401,7 +422,7 @@
                             Maximum="{Binding MemoryProgressMax}" 
                             Value="{Binding MemoryProgressValue}" 
                             Margin="0,0,5,0"
-                            Grid.Row="9"
+                            Grid.Row="10"
                             Grid.Column="0"/>
                         <Button 
                             Content="メモリ設定" 
@@ -409,7 +430,7 @@
                             Width="100" 
                             Margin="5" 
                             HorizontalAlignment="Right"
-                            Grid.Row="9"
+                            Grid.Row="10"
                             Grid.Column="1"/>
                         <!-- 状態メッセージ表示（ボタン右） -->
                         <TextBlock 
@@ -418,7 +439,7 @@
                             Foreground="DarkBlue" 
                             FontWeight="Bold" 
                             Margin="10,0,10,0"
-                            Grid.Row="10"
+                            Grid.Row="11"
                             Grid.Column="0"/>
                         <Button 
                             Content="工程出力" 
@@ -426,7 +447,7 @@
                             Width="100" 
                             Margin="5" 
                             HorizontalAlignment="Right"
-                            Grid.Row="10"
+                            Grid.Row="11"
                             Grid.Column="1"/>
                     </Grid>
                     <!---->

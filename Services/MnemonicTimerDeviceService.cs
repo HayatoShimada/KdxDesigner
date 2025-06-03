@@ -91,7 +91,7 @@ namespace KdxDesigner.Services
                             INSERT INTO [MnemonicTimerDevice] (
                                 [MnemonicId], [RecordId], [TimerId], [TimerCategoryId], [ProcessTimerDevice], [TimerDevice], [PlcId], [CycleId]
                             ) VALUES (
-                                @NemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId
+                                @MnemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId
                             )",
                             parameters, transaction);
                     }
