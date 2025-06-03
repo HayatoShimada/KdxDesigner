@@ -248,7 +248,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
         // センサOFF確認
         public static List<LadderCsvRow> BuildDetailSensorOFF(
-            MnemonicDeviceWithProcessDetail process,
+            MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
@@ -262,7 +262,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L***0 ~ L***9のDeviceリストを取得
 
-            // エラーをまとめて返す。
+                        // エラーをまとめて返す。
             errors.AddRange(localErrors);
             return result;
 
@@ -498,7 +498,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
         // 工程OFF確認
         public static List<LadderCsvRow> BuildDetailProcessOFF(
-            MnemonicDeviceWithProcessDetail process,
+            MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
@@ -511,6 +511,147 @@ namespace KdxDesigner.Utils.ProcessDetail
             List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
+
+
+            // 行間ステートメントを追加
+            string id = detail.Detail.Id.ToString();
+            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            {
+                result.Add(LadderRow.AddStatement(id));
+            }
+            else
+            {
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+            }
+
+            // L0 の初期値を設定
+            var deviceNum = detail.Mnemonic.StartNum;
+            var label = detail.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessIdからデバイスを取得　流用する
+            var process = processes.FirstOrDefault(p => p.Mnemonic.RecordId == detail.Detail.ProcessId);
+            var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
+            var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessDetailの開始条件
+            // この辺の処理がややこしいので共通コンポーネント化すること
+            var processDetailStartIds = detail.Detail.StartIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToList() ?? new List<int>();
+
+            var processDetailStartDevices = details
+                .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+            //finishID検索
+            var processDerailFinishIds = detail.Detail.FinishIds?.Split(";")
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToList() ?? new List<int>();
+
+            var processDerailFinishDevices = details
+                .Where(d => processDerailFinishIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+            // L0 工程開始
+            // 設定値を使う場合の構文 SettingsManager.Settings.""
+            // 設定値の初期値は\Model\AppSettings.csに定義
+
+            // StartSensorが設定されている場合は、IOリストからセンサーを取得
+            if (detail.Detail.StartSensor != null)
+            {
+                // ioの取得を共通コンポーネント化すること
+                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
+                var cycle = _repository.GetCycles();
+                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
+                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.StartSensor, plcId, out localErrors);
+
+                if (ioSensor == null)
+                {
+                    result.Add(LadderRow.AddLD(""));
+                    localErrors.Add(new OutputError
+                    {
+                        Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
+                        DetailName = detail.Detail.ProcessName,
+                        MnemonicId = (int)MnemonicType.ProcessDetail,
+                        ProcessId = detail.Detail.Id
+                    });
+                }
+                else
+                {
+                    if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
+                    {
+                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+
+                    }
+                }
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
+            }
+            else
+            {
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            }
+
+
+            //
+            result.Add(LadderRow.AddOR(label + (deviceNum + 0).ToString()));
+
+            //L3106 のところ　流用する
+            result.Add(LadderRow.AddAND(processDeviceLabel + (processDeviceStartNum + 0).ToString()));
+
+
+            //1行目　他工程の完了確認接点 
+            //null の場合　未確認
+            foreach (var d in processDetailStartDevices)
+            {
+                result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString()));
+            }
+            //1行目　OUTコイル接点　→　2行目の先頭接点と同じ　
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 0).ToString()));
+
+
+            //3行目 finishIdから算出した番号　+9　をLDI
+            foreach (var d in processDerailFinishDevices)
+            {
+                result.Add(LadderRow.AddLDI(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString()));
+            }
+
+            //M3300 finishIDの配列が０かそうでないか
+            if (processDerailFinishDevices.Count == 0)
+            {
+                //3行目　m3300
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            }
+            else
+            {
+                //3行目　m3300
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            }
+
+            //4行目 3行目の値+1
+            result.Add(LadderRow.AddOR(label + (deviceNum + 1).ToString()));
+            //4行目
+            result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
+            //3行目  OUT
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 1).ToString()));
+
+            //5行目
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            //6行目
+            result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
+            //5行目
+            result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
+
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
+
 
             // エラーをまとめて返す。
             errors.AddRange(localErrors);
