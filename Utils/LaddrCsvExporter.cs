@@ -11,7 +11,7 @@ namespace KdxDesigner.Utils
     {
         public static void ExportLadderCsv(List<LadderCsvRow> rows, string filePath)
         {
-            using var writer = new StreamWriter(filePath, false, Encoding.GetEncoding("shift_jis"));
+            using var writer = new StreamWriter(filePath, false, Encoding.Unicode);
 
             // 固定ヘッダー3行
             writer.WriteLine("\"E5482L_220317\"");
@@ -34,6 +34,9 @@ namespace KdxDesigner.Utils
 
                 writer.WriteLine(string.Join("\t", fields.Select(f => string.IsNullOrEmpty(f) ? "\"\"" : f)));
             }
+
+            // END
+            writer.WriteLine("\"\"\t\"\"\t\"END\"\t\"\"\t\"\"\t\"\"\t\"\"");
         }
     }
 }
