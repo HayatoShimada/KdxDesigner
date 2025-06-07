@@ -231,11 +231,40 @@ namespace KdxDesigner.ViewModels
                 var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
 
                 // プロセスの必要デバイスを保存
-                mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL.Value, SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceProcessDetail(details, DetailDeviceStartL.Value, SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceOperation(operations, OperationDeviceStartM.Value, SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceCY(cylinder, CylinderDeviceStartM.Value, SelectedPlc.Id);
-                timerService.SaveWithOperation(timers, operations, DeviceStartT.Value, SelectedPlc.Id, SelectedCycle.Id);
+                mnemonicService.SaveMnemonicDeviceProcess(
+                    Processes.ToList(), 
+                    ProcessDeviceStartL.Value, 
+                    SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceProcessDetail(
+                    details, 
+                    DetailDeviceStartL.Value, 
+                    SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceOperation(
+                    operations, 
+                    OperationDeviceStartM.Value, 
+                    SelectedPlc.Id);
+                mnemonicService.SaveMnemonicDeviceCY(
+                    cylinder, 
+                    CylinderDeviceStartM.Value, 
+                    SelectedPlc.Id);
+
+                int timerCount = 0;
+                timerService.SaveWithOperation(
+                    timers, 
+                    operations, 
+                    DeviceStartT.Value,
+                    SelectedPlc.Id, 
+                    SelectedCycle.Id,
+                    out timerCount);
+
+                timerService.SaveWithCY(
+                    timers,
+                    cylinder,
+                    DeviceStartT.Value,
+                    SelectedPlc.Id,
+                    SelectedCycle.Id,
+                    ref timerCount);
+
                 errorService.SaveMnemonicDeviceOperation(
                     operations, 
                     ioList, 

@@ -58,7 +58,7 @@ namespace KdxDesigner.ViewModels
             await Task.Run(() =>
             {
                 var memoryService = new MemoryService(_repository);
-                memoryService.SaveMemories(Memories.ToList(), msg =>
+                memoryService.SaveMemories(_plcId, Memories.ToList(), msg =>
                 {
                     // UIスレッドに戻してメッセージ更新
                     App.Current.Dispatcher.Invoke(() =>

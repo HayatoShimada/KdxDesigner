@@ -18,8 +18,9 @@ namespace KdxDesigner.Models
 
         public int? TimerNum { get; set; }
         public string? TimerName { get; set; }
+        public int? MnemonicId { get; set; }
 
-        public int? OperationId { get; set; }
+        public int? RecordId { get; set; }
         public int? Example { get; set; }
 
     }
