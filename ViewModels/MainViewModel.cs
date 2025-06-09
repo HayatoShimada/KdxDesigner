@@ -46,6 +46,9 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int? prosTimePreviousStartZR = 20000;
         [ObservableProperty] private int? cyTimeStartZR = 30000;
 
+        [ObservableProperty] private string? valveSearchText = "SV";
+
+
         [ObservableProperty] private bool isProcessMemory = false;
         [ObservableProperty] private bool isDetailMemory = false;
         [ObservableProperty] private bool isOperationMemory = false;
@@ -57,13 +60,10 @@ namespace KdxDesigner.ViewModels
 
         // メモリ保存処理における進捗バーの最大値（デバイスの総件数を設定） kuni            
         [ObservableProperty] private int memoryProgressMax;
-
         // メモリ保存処理における現在の進捗値（保存済みの件数）kuni
         [ObservableProperty] private int memoryProgressValue;
-
         // メモリ保存処理の進行状況を表示するテキスト（例：「Process保存中」「保存完了」など）kuni
         [ObservableProperty] private string memoryStatusMessage = string.Empty;
-
         [ObservableProperty] private List<OutputError> outputErrors = new();
 
         private List<ProcessDetailDto> allDetails = new();
@@ -640,7 +640,11 @@ namespace KdxDesigner.ViewModels
 
             // CSV出力処理
             // \Utils\OperationBuilder.cs
-            var outputCylinderRow = CylinderBuilder.GenerateAllLadderCsvRows(
+            List<Cycle> allCycle = _repository.GetCycles().Where(c => c.PlcId == SelectedPlc.Id).ToList();
+
+            var cylinderBuilder = new CylinderBuilder(this);
+
+            var outputCylinderRow = cylinderBuilder.GenerateAllLadderCsvRows(
                     joinedProcessDetailList,
                     joinedOperationList,
                     joinedCylinderList,

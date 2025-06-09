@@ -1,16 +1,26 @@
 ﻿using KdxDesigner.Models;
-using KdxDesigner.Utils.Process;
+using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
+using KdxDesigner.Utils.Cylinder;
+using KdxDesigner.Utils.Process;
+using KdxDesigner.ViewModels;
 
 using System.Windows;
-using KdxDesigner.Utils.Operation;
-using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.Utils
 {
-    public static class CylinderBuilder
+    public class CylinderBuilder
     {
-        public static List<LadderCsvRow> GenerateAllLadderCsvRows(
+
+        private readonly MainViewModel _mainViewModel;
+
+        // コンストラクタでMainViewModelをインジェクト
+        public CylinderBuilder(MainViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+        }
+
+        public List<LadderCsvRow> GenerateAllLadderCsvRows(
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -27,12 +37,14 @@ namespace KdxDesigner.Utils
             var allRows = new List<LadderCsvRow>();
             List<OutputError> errorsForOperation = new(); // 各工程詳細のエラーリスト
 
+             
+
             foreach (var cylinder in cylinders)
             {
                 switch (cylinder.Cylinder.DriveSub)
                 {
                     case 1 :                // 励磁
-                        allRows.AddRange(BuildCylinder.Excitation(
+                        allRows.AddRange(BuildCylinder.Valve1(
                             cylinder,
                             details,
                             operations,
@@ -42,7 +54,8 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList,
                             out errors,
-                            plcId));
+                            plcId,
+                            _mainViewModel));
                         errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
                     default:

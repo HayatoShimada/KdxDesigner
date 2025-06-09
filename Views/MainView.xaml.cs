@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KdxDesigner.Views
 {
@@ -16,7 +17,7 @@ namespace KdxDesigner.Views
         public MainView()
         {
             InitializeComponent();
-            DataContext = new MainViewModel(); // ← これがあるか？
+            DataContext = App.Services.GetRequiredService<MainViewModel>(); // 修正: 'App.Services' を型名でアクセス  
         }
 
         private void ProcessGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -27,7 +28,6 @@ namespace KdxDesigner.Views
                 vm.UpdateSelectedProcesses(selected);
             }
         }
-
 
         private void DetailGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -43,7 +43,7 @@ namespace KdxDesigner.Views
 
         private void NumberOnlyTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // 数字（0～9）のみ許可
+            // 数字（0～9）のみ許可  
             e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
         }
     }

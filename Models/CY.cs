@@ -16,6 +16,8 @@ namespace KdxDesigner.Models
         public int PlcId { get; set; }
         public string? PUCO { get; set; }
         public string? CYNum { get; set; }
+        public string? Go { get; set; }
+        public string? Back { get; set; }
         public string? OilNum { get; set; }
         public int? MacineId { get; set; }
         public int? DriveSub { get; set; }
@@ -23,6 +25,8 @@ namespace KdxDesigner.Models
         public int? CYNameSub { get; set; }
         public int? SensorId { get; set; }
         public string? FlowType { get; set; }
+        public string? ProcessStartCycle { get; set; }
+
 
     }
 

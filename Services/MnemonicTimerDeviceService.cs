@@ -145,6 +145,7 @@ namespace KdxDesigner.Services
             catch (Exception ex)
             {
                 transaction.Rollback();
+                Console.WriteLine($"SaveWithOperation 失敗: {ex.Message}");
                 // エラーログの記録や上位への例外通知など
                 // Debug.WriteLine($"SaveWithOperation 失敗: {ex.Message}");
                 throw;
@@ -222,6 +223,7 @@ namespace KdxDesigner.Services
             catch (Exception ex)
             {
                 transaction.Rollback();
+                Console.WriteLine($"SaveWithCY 失敗: {ex.Message}");
                 // Debug.WriteLine($"SaveWithCY 失敗: {ex.Message}");
                 throw;
             }
