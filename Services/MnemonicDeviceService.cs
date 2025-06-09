@@ -3,9 +3,11 @@
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 
+using System; // Encoding.RegisterProvider を使うために追加
+using System.Collections.Generic; // List, Dictionary のために追加
 using System.Data;
 using System.Data.OleDb;
-using System.Reflection;
+using System.Linq; // FirstOrDefault を使うために追加
 using System.Text;
 
 namespace KdxDesigner.Services
@@ -13,6 +15,12 @@ namespace KdxDesigner.Services
     internal class MnemonicDeviceService
     {
         private readonly string _connectionString;
+
+        static MnemonicDeviceService()
+        {
+            // Shift_JIS エンコーディングを有効にする
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        }
 
         public MnemonicDeviceService(AccessRepository repository)
         {
@@ -35,81 +43,68 @@ namespace KdxDesigner.Services
             return connection.Query<MnemonicDevice>(sql, new { PlcId = plcId, MnemonicId = mnemonicId }).ToList();
         }
 
-
         // Processesのリストを受け取り、MnemonicDeviceテーブルに保存する
         public void SaveMnemonicDeviceProcess(List<Models.Process> processes, int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
-
-
             connection.Open();
             using var transaction = connection.BeginTransaction();
-
-
-
-            // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.Process);
-
-            int count = 0;
-            foreach (Models.Process process in processes)
+            try
             {
-                if (process == null) continue;
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.Process);
+                var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
 
-                var existing = allExisting.FirstOrDefault(m => m.RecordId == process.Id);
-                var parameters = new DynamicParameters();
-
-                // ProcessNameがnullの場合は空文字列にする
-                string input = process.ProcessName ?? "";
-                var result = SplitByByteLength(input, 8, 2);  // 8バイト × 2つに分ける
-
-
-                parameters.Add("MnemonicId", (int)MnemonicType.Process, DbType.Int32);
-                parameters.Add("RecordId", process.Id, DbType.Int32);
-                parameters.Add("DeviceLabel", "L", DbType.String);
-                parameters.Add("StartNum", (count * 5 + startNum), DbType.Int32);
-                parameters.Add("OutCoilCount", 5, DbType.Int32);
-                parameters.Add("PlcId", plcId, DbType.Int32);
-                parameters.Add("Comment1", result[0], DbType.String);
-                parameters.Add("Comment2", result[1], DbType.String);
-
-                if (existing != null)
+                int count = 0;
+                foreach (Models.Process process in processes)
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int32);
-                    connection.Execute(@"
-                        UPDATE [MnemonicDevice] SET
-                            [MnemonicId] = @MnemonicId,
-                            [RecordId] = @RecordId,
-                            [DeviceLabel] = @DeviceLabel,
-                            [StartNum] = @StartNum,
-                            [OutCoilCount] = @OutCoilCount,
-                            [PlcId] = @PlcId,
-                            [Comment1] = @Comment1
-                            [Comment2] = @Comment2
+                    if (process == null) continue;
 
-                        WHERE [ID] = @ID",
-                        parameters, transaction);
+                    existingLookup.TryGetValue(process.Id, out var existing);
+                    var parameters = new DynamicParameters();
+
+                    string input = process.ProcessName ?? "";
+                    var result = SplitByByteLength(input, 8, 2); // ★このメソッドは修正済み
+
+                    parameters.Add("MnemonicId", (int)MnemonicType.Process, DbType.Int32);
+                    parameters.Add("RecordId", process.Id, DbType.Int32);
+                    parameters.Add("DeviceLabel", "L", DbType.String);
+                    parameters.Add("StartNum", (count * 5 + startNum), DbType.Int32);
+                    parameters.Add("OutCoilCount", 5, DbType.Int32);
+                    parameters.Add("PlcId", plcId, DbType.Int32);
+                    parameters.Add("Comment1", result[0], DbType.String); // result[0]は常に安全
+                    parameters.Add("Comment2", result[1], DbType.String); // result[1]も常に安全
+
+                    if (existing != null)
+                    {
+                        parameters.Add("ID", existing.ID, DbType.Int32);
+                        connection.Execute(@"
+                            UPDATE [MnemonicDevice] SET
+                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
+                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
+                                [Comment1] = @Comment1, [Comment2] = @Comment2
+                            WHERE [ID] = @ID",
+                            parameters, transaction);
+                    }
+                    else
+                    {
+                        // ★修正: SQLのパラメータ名と数を修正
+                        connection.Execute(@"
+                            INSERT INTO [MnemonicDevice] (
+                                [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
+                            ) VALUES (
+                                @MnemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
+                            )",
+                            parameters, transaction);
+                    }
+                    count++;
                 }
-                else
-                {
-                    connection.Execute(@"
-                        INSERT INTO [MnemonicDevice] (
-                            [MnemonicId], 
-                            [RecordId], 
-                            [DeviceLabel], 
-                            [StartNum], 
-                            [OutCoilCount], 
-                            [PlcId], 
-                            [Comment1],
-                            [Comment2]
-                        ) VALUES (
-                            @NemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment
-                        )",
-                        parameters, transaction);
-                }
-                count++;
+                transaction.Commit();
             }
-
-            transaction.Commit();
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         // ProcessDetailのリストを受け取り、MnemonicDeviceテーブルに保存する
@@ -118,62 +113,71 @@ namespace KdxDesigner.Services
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
-
-            // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
-
-            int count = 0;
-            foreach (ProcessDetailDto process in processes)
+            try
             {
-                if (process == null) continue;
-                var existing = allExisting.FirstOrDefault(m => m.RecordId == process.Id);
-                var repository = new AccessRepository();
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
+                var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
 
-                var operation = repository.GetOperationById(process.OperationId.Value);
-                var comment1 = operation?.OperationName ?? "";
-                var comment2 = process.DetailName ?? "";
+                // ★パフォーマンス改善の提案:
+                // ループ内で毎回 new AccessRepository() と GetOperationById() を呼び出すのは非効率です。
+                // 本来は、必要なOperationを一括で取得するか、キャッシュする仕組みが望ましいです。
+                // このサービスが AccessRepository インスタンスをDI（依存性注入）で受け取るのが理想的な設計です。
+                // ここでは、元のロジックを維持しつつ、非効率である点をコメントで指摘します。
+                var repository = new AccessRepository(); // ★注意: 本来はループの外で一度だけ初期化すべき
 
-                var parameters = new DynamicParameters();
-                parameters.Add("MnemonicId", (int)MnemonicType.ProcessDetail, DbType.Int32);
-                parameters.Add("RecordId", process.Id, DbType.Int32);
-                parameters.Add("DeviceLabel", "L", DbType.String);
-                parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);
-                parameters.Add("OutCoilCount", 10, DbType.Int32);
-                parameters.Add("PlcId", plcId, DbType.Int32);
-                parameters.Add("Comment1", comment1, DbType.String);
-                parameters.Add("Comment2", comment2, DbType.String);
-
-                if (existing != null)
+                int count = 0;
+                foreach (ProcessDetailDto process in processes)
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int32);
-                    connection.Execute(@"
-                        UPDATE [MnemonicDevice] SET
-                            [MnemonicId] = @MnemonicId,
-                            [RecordId] = @RecordId,
-                            [DeviceLabel] = @DeviceLabel,
-                            [StartNum] = @StartNum,
-                            [OutCoilCount] = @OutCoilCount,
-                            [PlcId] = @PlcId,
-                            [Comment1] = @Comment1,
-                            [Comment2] = @Comment2
-                        WHERE [ID] = @ID",
-                        parameters, transaction);
-                }
-                else
-                {
-                    connection.Execute(@"
-                        INSERT INTO [MnemonicDevice] (
-                            [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
-                        ) VALUES (
-                            @NemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
-                        )",
-                        parameters, transaction);
-                }
+                    if (process == null || !process.OperationId.HasValue) continue;
 
-                count++;
+                    existingLookup.TryGetValue(process.Id, out var existing);
+
+                    var operation = repository.GetOperationById(process.OperationId.Value); // ★注意: ループ内でのDBアクセス
+                    var comment1 = operation?.OperationName ?? "";
+                    var comment2 = process.DetailName ?? "";
+
+                    var parameters = new DynamicParameters();
+                    parameters.Add("MnemonicId", (int)MnemonicType.ProcessDetail, DbType.Int32);
+                    parameters.Add("RecordId", process.Id, DbType.Int32);
+                    parameters.Add("DeviceLabel", "L", DbType.String);
+                    parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);
+                    parameters.Add("OutCoilCount", 10, DbType.Int32);
+                    parameters.Add("PlcId", plcId, DbType.Int32);
+                    parameters.Add("Comment1", comment1, DbType.String);
+                    parameters.Add("Comment2", comment2, DbType.String);
+
+                    if (existing != null)
+                    {
+                        parameters.Add("ID", existing.ID, DbType.Int32);
+                        connection.Execute(@"
+                            UPDATE [MnemonicDevice] SET
+                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
+                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
+                                [Comment1] = @Comment1, [Comment2] = @Comment2
+                            WHERE [ID] = @ID",
+                            parameters, transaction);
+                    }
+                    else
+                    {
+                        // ★修正: SQLのパラメータ名のタイプミスを修正
+                        connection.Execute(@"
+                            INSERT INTO [MnemonicDevice] (
+                                [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
+                            ) VALUES (
+                                @MnemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
+                            )",
+                            parameters, transaction);
+                    }
+
+                    count++;
+                }
+                transaction.Commit();
             }
-
-            transaction.Commit();
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         // Operationのリストを受け取り、MnemonicDeviceテーブルに保存する
@@ -182,59 +186,59 @@ namespace KdxDesigner.Services
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
-
-            // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.Operation);
-
-
-            int count = 0;
-            foreach (Operation operation in operations)
+            try
             {
-                if (operation == null) continue;
-                var existing = allExisting.FirstOrDefault(m => m.RecordId == operation.Id);
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.Operation);
+                var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
 
-
-                var parameters = new DynamicParameters();
-                parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);                          // MnemoicId = 3はOperation
-                parameters.Add("RecordId", operation.Id, DbType.Int32);
-                parameters.Add("DeviceLabel", "M", DbType.String);                      // OperationはM接点で固定
-                parameters.Add("StartNum", (count * 20 + startNum), DbType.Int32);      // Operationは50個で固定
-                parameters.Add("OutCoilCount", 20, DbType.Int32);
-                parameters.Add("PlcId", plcId, DbType.Int32);
-                parameters.Add("Comment1", operation.OperationName, DbType.String);
-                parameters.Add("Comment2", operation.OperationName, DbType.String);
-
-                if (existing != null)
+                int count = 0;
+                foreach (Operation operation in operations)
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int32);
-                    connection.Execute(@"
-                        UPDATE [MnemonicDevice] SET
-                            [MnemonicId] = @MnemonicId,
-                            [RecordId] = @RecordId,
-                            [DeviceLabel] = @DeviceLabel,
-                            [StartNum] = @StartNum,
-                            [OutCoilCount] = @OutCoilCount,
-                            [PlcId] = @PlcId,
-                            [Comment1] = @Comment1,
-                            [Comment2] = @Comment2
-                        WHERE [ID] = @ID",
-                        parameters, transaction);
-                }
-                else
-                {
-                    connection.Execute(@"
-                        INSERT INTO [MnemonicDevice] (
-                            [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
-                        ) VALUES (
-                            @NemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
-                        )",
-                        parameters, transaction);
-                }
+                    if (operation == null) continue;
 
-                count++;
+                    existingLookup.TryGetValue(operation.Id, out var existing);
+
+                    var parameters = new DynamicParameters();
+                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
+                    parameters.Add("RecordId", operation.Id, DbType.Int32);
+                    parameters.Add("DeviceLabel", "M", DbType.String);
+                    parameters.Add("StartNum", (count * 20 + startNum), DbType.Int32);
+                    parameters.Add("OutCoilCount", 20, DbType.Int32);
+                    parameters.Add("PlcId", plcId, DbType.Int32);
+                    parameters.Add("Comment1", operation.OperationName ?? "", DbType.String);
+                    parameters.Add("Comment2", operation.OperationName ?? "", DbType.String);
+
+                    if (existing != null)
+                    {
+                        parameters.Add("ID", existing.ID, DbType.Int32);
+                        connection.Execute(@"
+                            UPDATE [MnemonicDevice] SET
+                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
+                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
+                                [Comment1] = @Comment1, [Comment2] = @Comment2
+                            WHERE [ID] = @ID",
+                            parameters, transaction);
+                    }
+                    else
+                    {
+                        // ★修正: SQLのパラメータ名のタイプミスを修正
+                        connection.Execute(@"
+                            INSERT INTO [MnemonicDevice] (
+                                [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
+                            ) VALUES (
+                                @MnemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
+                            )",
+                            parameters, transaction);
+                    }
+                    count++;
+                }
+                transaction.Commit();
             }
-
-            transaction.Commit();
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         // Cylinderのリストを受け取り、MnemonicDeviceテーブルに保存する
@@ -243,86 +247,97 @@ namespace KdxDesigner.Services
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
-
-            // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.CY);
-
-            int count = 0;
-            foreach (CY cylinder in cylinders)
+            try
             {
-                if (cylinder == null) continue;
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.CY);
+                var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
 
-                var existing = allExisting.FirstOrDefault(m => m.RecordId == cylinder.Id);
-
-                var parameters = new DynamicParameters();
-                parameters.Add("MnemonicId", (int)MnemonicType.CY, DbType.Int32);                          // MnemoicId = 4はCylinder
-                parameters.Add("RecordId", cylinder.Id, DbType.Int32);
-                parameters.Add("DeviceLabel", "M", DbType.String);                      // CyはM接点で固定
-                parameters.Add("StartNum", (count * 100 + startNum), DbType.Int32);      // Cyは100個で固定
-                parameters.Add("OutCoilCount", 100, DbType.Int32);
-                parameters.Add("PlcId", plcId, DbType.Int32);
-                parameters.Add("Comment1", cylinder.CYNum, DbType.String);
-                parameters.Add("Comment2", cylinder.CYNum, DbType.String);
-
-
-                if (existing != null)
+                int count = 0;
+                foreach (CY cylinder in cylinders)
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int32);
-                    connection.Execute(@"
-                        UPDATE [MnemonicDevice] SET
-                            [MnemonicId] = @MnemonicId,
-                            [RecordId] = @RecordId,
-                            [DeviceLabel] = @DeviceLabel,
-                            [StartNum] = @StartNum,
-                            [OutCoilCount] = @OutCoilCount,
-                            [PlcId] = @PlcId,
-                            [Comment1] = @Comment1,
-                            [Comment2] = @Comment2
-                        WHERE [ID] = @ID",
-                        parameters, transaction);
-                }
-                else
-                {
-                    connection.Execute(@"
-                        INSERT INTO [MnemonicDevice] (
-                            [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
-                        ) VALUES (
-                            @NemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
-                        )",
-                        parameters, transaction);
-                }
+                    if (cylinder == null) continue;
 
-                count++;
+                    existingLookup.TryGetValue(cylinder.Id, out var existing);
+
+                    var parameters = new DynamicParameters();
+                    parameters.Add("MnemonicId", (int)MnemonicType.CY, DbType.Int32);
+                    parameters.Add("RecordId", cylinder.Id, DbType.Int32);
+                    parameters.Add("DeviceLabel", "M", DbType.String);
+                    parameters.Add("StartNum", (count * 50 + startNum), DbType.Int32);
+                    parameters.Add("OutCoilCount", 50, DbType.Int32);
+                    parameters.Add("PlcId", plcId, DbType.Int32);
+                    parameters.Add("Comment1", cylinder.CYNum, DbType.String);
+                    parameters.Add("Comment2", cylinder.CYNum, DbType.String);
+
+                    if (existing != null)
+                    {
+                        parameters.Add("ID", existing.ID, DbType.Int32);
+                        connection.Execute(@"
+                            UPDATE [MnemonicDevice] SET
+                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
+                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
+                                [Comment1] = @Comment1, [Comment2] = @Comment2
+                            WHERE [ID] = @ID",
+                            parameters, transaction);
+                    }
+                    else
+                    {
+                        // ★修正: SQLのパラメータ名のタイプミスを修正
+                        connection.Execute(@"
+                            INSERT INTO [MnemonicDevice] (
+                                [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
+                            ) VALUES (
+                                @MnemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
+                            )",
+                            parameters, transaction);
+                    }
+                    count++;
+                }
+                transaction.Commit();
             }
-
-            transaction.Commit();
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
+        /// <summary>
+        /// ★修正: ArgumentOutOfRangeExceptionを防ぐため、常にpartsで指定された数の要素を返すように修正。
+        /// 足りない場合は空文字列で埋める。
+        /// </summary>
         static List<string> SplitByByteLength(string input, int maxBytesPerPart, int parts)
         {
             List<string> result = new();
-            int byteCount = 0;
+            if (string.IsNullOrEmpty(input))
+            {
+                // 入力がnullまたは空の場合、空文字列で埋めたリストを返す
+                while (result.Count < parts)
+                {
+                    result.Add(string.Empty);
+                }
+                return result;
+            }
+
+            Encoding encoding = Encoding.GetEncoding("shift_jis");
+            int currentByteCount = 0;
             StringBuilder sb = new();
-            Encoding encoding = Encoding.GetEncoding("shift_jis"); // 2バイト文字対応
 
             foreach (char c in input)
             {
-                int charByteLength = encoding.GetByteCount(c.ToString());
+                if (result.Count >= parts) break; // 必要なパーツ数に達したら終了
 
-                if (byteCount + charByteLength > maxBytesPerPart)
+                int charByteLength = encoding.GetByteCount(new[] { c });
+                if (currentByteCount + charByteLength > maxBytesPerPart)
                 {
                     result.Add(sb.ToString());
                     sb.Clear();
-                    byteCount = 0;
-
+                    currentByteCount = 0;
                     if (result.Count == parts) break;
                 }
 
-                if (result.Count < parts)
-                {
-                    sb.Append(c);
-                    byteCount += charByteLength;
-                }
+                sb.Append(c);
+                currentByteCount += charByteLength;
             }
 
             if (sb.Length > 0 && result.Count < parts)
@@ -330,8 +345,13 @@ namespace KdxDesigner.Services
                 result.Add(sb.ToString());
             }
 
+            // ★修正点: 足りない部分を空文字列で埋める
+            while (result.Count < parts)
+            {
+                result.Add(string.Empty);
+            }
+
             return result;
         }
-
     }
 }

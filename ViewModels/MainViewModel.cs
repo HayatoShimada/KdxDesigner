@@ -637,6 +637,22 @@ namespace KdxDesigner.ViewModels
                     SelectedPlc.Id,
                     out var errorOperation
                 );
+
+            // CSV出力処理
+            // \Utils\OperationBuilder.cs
+            var outputCylinderRow = CylinderBuilder.GenerateAllLadderCsvRows(
+                    joinedProcessDetailList,
+                    joinedOperationList,
+                    joinedCylinderList,
+                    joinedOperationWithTimerList,
+                    speedDevice,
+                    mnemonicErrors,
+                    prosTime,
+                    ioList,
+                    SelectedPlc.Id,
+                    out var errorCylinder
+                );
+
             foreach (var error in errorDetails)
             {
                 OutputErrors.Add(error);

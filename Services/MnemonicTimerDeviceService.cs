@@ -7,6 +7,7 @@ using System; // Exception, Action のために追加
 using System.Collections.Generic; // List, Dictionary のために追加
 using System.Data;
 using System.Data.OleDb;
+using System.Diagnostics;
 using System.Linq; // ToList, GroupBy, FirstOrDefault, SingleOrDefault 等のために追加
 
 namespace KdxDesigner.Services
@@ -41,7 +42,16 @@ namespace KdxDesigner.Services
         /// </summary>
         private void UpsertMnemonicTimerDevice(OleDbConnection connection, OleDbTransaction transaction, MnemonicTimerDevice deviceToSave, MnemonicTimerDevice? existingRecord)
         {
-            var parameters = new DynamicParameters(deviceToSave); // オブジェクトからパラメータを自動生成
+            var parameters = new DynamicParameters(); // オブジェクトからパラメータを自動生成
+
+            parameters.Add("MnemonicId", deviceToSave.MnemonicId, DbType.Int32);
+            parameters.Add("RecordId", deviceToSave.RecordId, DbType.Int32);
+            parameters.Add("TimerId", deviceToSave.TimerId, DbType.Int32);
+            parameters.Add("TimerCategoryId", deviceToSave.TimerCategoryId, DbType.Int32);
+            parameters.Add("ProcessTimerDevice", deviceToSave.ProcessTimerDevice, DbType.String);
+            parameters.Add("TimerDevice", deviceToSave.TimerDevice, DbType.String);
+            parameters.Add("PlcId", deviceToSave.PlcId, DbType.Int32); // result[0]は常に安全
+            parameters.Add("CycleId", deviceToSave.CycleId, DbType.Int32); // result[1]も常に安全
 
             if (existingRecord != null)
             {
@@ -89,10 +99,10 @@ namespace KdxDesigner.Services
                 var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.Operation);
                 var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerId: m.TimerId), m => m);
 
-                // 処理対象のタイマーをRecordIdでグループ化
+                // 修正: 'int?' 型を 'int' 型に変換して、ToDictionary のキーとして使用可能にする
                 var timersByRecordId = timers
                     .Where(t => t.MnemonicId == (int)MnemonicType.Operation)
-                    .GroupBy(t => t.RecordId)
+                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
                     .ToDictionary(g => g.Key, g => g.ToList());
 
                 foreach (Operation operation in operations)
@@ -161,8 +171,8 @@ namespace KdxDesigner.Services
 
                 // 処理対象のタイマーをRecordId(Cylinder.Id)でグループ化
                 var timersByRecordId = timers
-                    .Where(t => t.MnemonicId == (int)MnemonicType.CY)
-                    .GroupBy(t => t.RecordId)
+                    .Where(t => t.MnemonicId == (int)MnemonicType.Operation)
+                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
                     .ToDictionary(g => g.Key, g => g.ToList());
 
                 // 処理対象とするTimerCategoryIdのリスト

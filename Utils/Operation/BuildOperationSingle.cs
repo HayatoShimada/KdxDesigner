@@ -58,18 +58,18 @@ namespace KdxDesigner.Utils.Operation
 
             // M6
             result.AddRange(Common.GenerateM6(operationTimers, label, outNum.Value));
-            
+
             // M7
             // Start信号がある場合のみ回路を生成
             if (operation.Operation.Start != null)
             {
                 result.AddRange(Common.GenerateM7(
-                    operationTimers, 
-                    ioList, 
-                    operation, 
-                    plcId, 
-                    label, 
-                    outNum.Value, 
+                    operationTimers,
+                    ioList,
+                    operation,
+                    plcId,
+                    label,
+                    outNum.Value,
                     out localErrors));
             }
 
@@ -104,7 +104,7 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(ErrorBuilder.Operation(
                 operation.Operation,
                 mnemonicError,
-                label, 
+                label,
                 outNum.Value,
                 out localErrors
             ));

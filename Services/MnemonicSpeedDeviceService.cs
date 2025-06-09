@@ -64,7 +64,7 @@ namespace KdxDesigner.Services
                 else
                 {
                     connection.Execute(@"
-                        INSERT INTO [MnemonicTimerDevice] (
+                        INSERT INTO [MnemonicSpeedDevice] (
                             [CylinderId], [Device], [PlcId]
                         ) VALUES (
                             @CylinderId, @Device, @PlcId
