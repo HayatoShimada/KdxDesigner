@@ -80,6 +80,34 @@ namespace KdxDesigner.Utils
             }
         }
 
+
+        public static List<IO>? FindByIORange(List<IO> ioList, string ioText, out List<OutputError> errors)
+        {
+            errors = new List<OutputError>();
+
+            if (string.IsNullOrEmpty(ioText))
+            {
+                AddError(errors, "IOテキストが指定されていません。", ioText, DefaultErrorMnemonicId, 0);
+                return null;
+            }
+
+            if (ioText.StartsWith(LengthPrefix))
+            {
+                AddError(errors, "L-から始まるものは検索できません", ioText, DefaultErrorMnemonicId, 0);
+                return null;
+            }
+
+            string searchText = ioText.StartsWith(UnderscorePrefix)
+                              ? ioText.Substring(UnderscorePrefix.Length)
+                              : ioText;
+
+            var matches = ioList
+                .Where(io => io.IOName != null && io.IOName.Contains(searchText))
+                .ToList();
+
+            return matches;
+        }
+
         private static void AddError(List<OutputError> errors, string message, string originalIoText, int mnemonicId, int processId)
         {
             errors.Add(new OutputError

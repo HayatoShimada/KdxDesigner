@@ -32,552 +32,374 @@ namespace KdxDesigner.Services
             return connection.Query<MemoryCategory>(sql).ToList();
         }
 
-        public void SaveMemories(List<Memory> memories, Action<string>? progressCallback = null)
+        // MemoryService クラス内
+        private void ExecuteUpsertMemory(OleDbConnection connection, OleDbTransaction transaction, Memory memoryToSave, Memory? existingRecord)
         {
-            using var connection = new OleDbConnection(_connectionString);
+            var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            var parameters = new DynamicParameters();
 
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
+            // Memory オブジェクトのプロパティを DynamicParameters に設定
+            parameters.Add("PlcId", memoryToSave.PlcId, DbType.Int32); // PlcIdはキーなので必須
+            parameters.Add("Device", memoryToSave.Device ?? "", DbType.String); // Deviceはキーなので必須
+            parameters.Add("MemoryCategory", memoryToSave.MemoryCategory ?? 0, DbType.Int32);
+            parameters.Add("DeviceNumber", memoryToSave.DeviceNumber ?? 0, DbType.Int32);
+            parameters.Add("DeviceNumber1", memoryToSave.DeviceNumber1 ?? "", DbType.String);
+            parameters.Add("DeviceNumber2", memoryToSave.DeviceNumber2 ?? "", DbType.String);
+            parameters.Add("Category", memoryToSave.Category ?? "", DbType.String);
+            parameters.Add("Row_1", memoryToSave.Row_1 ?? "", DbType.String);
+            parameters.Add("Row_2", memoryToSave.Row_2 ?? "", DbType.String);
+            parameters.Add("Row_3", memoryToSave.Row_3 ?? "", DbType.String);
+            parameters.Add("Row_4", memoryToSave.Row_4 ?? "", DbType.String);
+            parameters.Add("Direct_Input", memoryToSave.Direct_Input ?? "", DbType.String);
+            parameters.Add("Confirm", memoryToSave.Confirm ?? "", DbType.String);
+            parameters.Add("Note", memoryToSave.Note ?? "", DbType.String);
+            parameters.Add("UpdatedAt", now, DbType.String); // 更新日は常に現在時刻
+            parameters.Add("GOT", memoryToSave.GOT ?? false, DbType.Boolean);
+            parameters.Add("MnemonicId", memoryToSave.MnemonicId, DbType.Int32);
+            parameters.Add("RecordId", memoryToSave.RecordId, DbType.Int32);
+            parameters.Add("OutcoilNumber", memoryToSave.OutcoilNumber, DbType.Int32);
 
-            var allExisting = connection.Query<Memory>("SELECT * FROM Memory", transaction: transaction).ToList();
-
-            for (int i = 0; i < memories.Count; i++)
+            if (existingRecord != null) // Update
             {
-                var memory = memories[i];
-                progressCallback?.Invoke($"[{i + 1}/{memories.Count}] 保存中: {memory.Device}");
-
-                try
-                {
-                    var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                    var existing = allExisting.FirstOrDefault(m =>
-                        m.PlcId == memory.PlcId && m.Device == memory.Device);
-
-                    var parameters = new DynamicParameters();
-                    parameters.Add("PlcId", memory.PlcId ?? 0, DbType.Int32);
-                    parameters.Add("MemoryCategory", memory.MemoryCategory ?? 0, DbType.Int32);
-                    parameters.Add("DeviceNumber", memory.DeviceNumber ?? 0, DbType.Int32);
-                    parameters.Add("DeviceNumber1", memory.DeviceNumber1 ?? "", DbType.String);
-                    parameters.Add("DeviceNumber2", memory.DeviceNumber2 ?? "", DbType.String);
-                    parameters.Add("Device", memory.Device ?? "", DbType.String);
-                    parameters.Add("Category", memory.Category ?? "", DbType.String);
-                    parameters.Add("Row_1", memory.Row_1 ?? "", DbType.String);
-                    parameters.Add("Row_2", memory.Row_2 ?? "", DbType.String);
-                    parameters.Add("Row_3", memory.Row_3 ?? "", DbType.String);
-                    parameters.Add("Row_4", memory.Row_4 ?? "", DbType.String);
-                    parameters.Add("Direct_Input", memory.Direct_Input ?? "", DbType.String);
-                    parameters.Add("Confirm", memory.Confirm ?? "", DbType.String);
-                    parameters.Add("Note", memory.Note ?? "", DbType.String);
-                    parameters.Add("CreatedAt", memory.CreatedAt ?? now, DbType.String);
-                    parameters.Add("UpdatedAt", now, DbType.String);
-                    parameters.Add("GOT", memory.GOT ?? false, DbType.Boolean);
-
-                    if (existing != null)
-                    {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
-                            UPDATE [Memory] SET
-                                [MemoryCategory] = @MemoryCategory,
-                                [DeviceNumber] = @DeviceNumber,
-                                [DeviceNumber1] = @DeviceNumber1,
-                                [DeviceNumber2] = @DeviceNumber2,
-                                [Category] = @Category,
-                                [Row_1] = @Row_1,
-                                [Row_2] = @Row_2,
-                                [Row_3] = @Row_3,
-                                [Row_4] = @Row_4,
-                                [Direct_Input] = @Direct_Input,
-                                [Confirm] = @Confirm,
-                                [Note] = @Note,
-                                [UpdatedAt] = @UpdatedAt,
-                                [GOT] = @GOT
-                            WHERE [ID] = @ID",
-                        parameters, transaction);
-                    }
-                    else
-                    {
-                        connection.Execute(@"
-                            INSERT INTO [Memory] (
-                                [PlcId], [MemoryCategory], [DeviceNumber],
-                                [DeviceNumber1], [DeviceNumber2], [Device],
-                                [Category], [Row_1], [Row_2], [Row_3], [Row_4],
-                                [Direct_Input], [Confirm], [Note],
-                                [CreatedAt], [UpdatedAt], [GOT]
-                            ) VALUES (
-                                @PlcId, @MemoryCategory, @DeviceNumber,
-                                @DeviceNumber1, @DeviceNumber2, @Device,
-                                @Category, @Row_1, @Row_2, @Row_3, @Row_4,
-                                @Direct_Input, @Confirm, @Note,
-                                @CreatedAt, @UpdatedAt, @GOT
-                            )",
-                        parameters, transaction);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[ERROR] Device={memory.Device} 保存失敗 → {ex.Message}");
-                    throw;
-                }
+                // CreatedAt は更新しないため、ここではパラメータに追加しない
+                // PlcId と Device は WHERE 句で使用される (既に parameters に含まれている)
+                connection.Execute(@"
+            UPDATE [Memory] SET
+                [MemoryCategory] = @MemoryCategory, [DeviceNumber] = @DeviceNumber,
+                [DeviceNumber1] = @DeviceNumber1, [DeviceNumber2] = @DeviceNumber2,
+                [Category] = @Category, [Row_1] = @Row_1, [Row_2] = @Row_2,
+                [Row_3] = @Row_3, [Row_4] = @Row_4, [Direct_Input] = @Direct_Input,
+                [Confirm] = @Confirm, [Note] = @Note, [UpdatedAt] = @UpdatedAt, [GOT] = @GOT,
+                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [OutcoilNumber] = @OutcoilNumber
+            WHERE [PlcId] = @PlcId AND [Device] = @Device",
+                parameters, transaction);
             }
-
-            transaction.Commit();
-
-            // ✅ 挿入後、件数確認
-            var count = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM [Memory]");
-            Debug.WriteLine($"[確認] Memory テーブルのレコード数: {count}");
+            else // Insert
+            {
+                parameters.Add("CreatedAt", memoryToSave.CreatedAt ?? now, DbType.String); // 新規作成時のみ CreatedAt を設定
+                connection.Execute(@"
+            INSERT INTO [Memory] (
+                [PlcId], [MemoryCategory], [DeviceNumber], [DeviceNumber1], [DeviceNumber2], [Device],
+                [Category], [Row_1], [Row_2], [Row_3], [Row_4], [Direct_Input], [Confirm], [Note],
+                [CreatedAt], [UpdatedAt], [GOT], [MnemonicId], [RecordId], [OutcoilNumber]
+            ) VALUES (
+                @PlcId, @MemoryCategory, @DeviceNumber, @DeviceNumber1, @DeviceNumber2, @Device,
+                @Category, @Row_1, @Row_2, @Row_3, @Row_4, @Direct_Input, @Confirm, @Note,
+                @CreatedAt, @UpdatedAt, @GOT, @MnemonicId, @RecordId, @OutcoilNumber
+            )",
+                parameters, transaction);
+            }
         }
 
-        // MnemonicDeviceのリストからメモリを登録する
+        private (int PlcId, string Device) GetMemoryKey(Memory memory)
+        {
+           
+            if (string.IsNullOrEmpty(memory.Device))
+                throw new ArgumentException("Memory Device cannot be null or empty for key generation.", nameof(memory.Device));
+
+            return (memory.PlcId, memory.Device);
+        }
+
+        public void SaveMemories(int plcId, List<Memory> memories, Action<string>? progressCallback = null)
+        {
+            if (memories == null || !memories.Any())
+            {
+                progressCallback?.Invoke($"保存対象のメモリデータがありません (PlcId: {plcId})。");
+                return;
+            }
+
+            using var connection = new OleDbConnection(_connectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 1. 渡された plcId を使用して、関連する既存レコードのみをDBから取得
+                var existingForThisPlcId = connection.Query<Memory>(
+                    "SELECT * FROM Memory WHERE PlcId = @PlcId", // SQLクエリで直接フィルタリング
+                    new { PlcId = plcId },
+                    transaction
+                ).ToList();
+
+                // 2. 取得した既存レコードからルックアップ用辞書を作成
+                var existingLookup = new Dictionary<(int PlcId, string Device), Memory>();
+                foreach (var mem in existingForThisPlcId)
+                {
+                    // GetMemoryKey は (mem.PlcId.Value, mem.Device) を返すことを想定
+                    // mem.PlcId はこの時点で引数の plcId と一致しているはず
+                    if (mem.PlcId == plcId && !string.IsNullOrEmpty(mem.Device))
+                    {
+                        existingLookup[GetMemoryKey(mem)] = mem;
+                    }
+                }
+
+                for (int i = 0; i < memories.Count; i++)
+                {
+                    var memoryToSave = memories[i];
+
+                    // 3. 入力される Memory オブジェクトの検証
+                    if (memoryToSave == null)
+                    {
+                        progressCallback?.Invoke($"[{i + 1}/{memories.Count}] スキップ: null のメモリデータです。");
+                        continue;
+                    }
+
+                    // memoryToSave の PlcId が引数の plcId と一致するか確認
+                    if (memoryToSave.PlcId != plcId)
+                    {
+                        progressCallback?.Invoke($"[{i + 1}/{memories.Count}] スキップ: PlcId ({memoryToSave.PlcId.ToString() ?? "null"}) が指定された PlcId ({plcId}) と一致しません。Device: {memoryToSave.Device}");
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(memoryToSave.Device))
+                    {
+                        progressCallback?.Invoke($"[{i + 1}/{memories.Count}] スキップ: Device が null または空です (PlcId: {plcId})。");
+                        continue;
+                    }
+
+                    progressCallback?.Invoke($"[{i + 1}/{memories.Count}] 保存中: {memoryToSave.Device} (PlcId: {plcId})");
+
+                    // GetMemoryKey を使って既存レコードを検索
+                    existingLookup.TryGetValue(GetMemoryKey(memoryToSave), out Memory? existingRecord);
+
+                    // ExecuteUpsertMemory ヘルパーメソッドを呼び出し
+                    // memoryToSave.PlcId は検証済みなので、引数の plcId と一致している
+                    ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
+                }
+
+                transaction.Commit();
+                progressCallback?.Invoke($"メモリデータの保存が完了しました (PlcId: {plcId})。");
+
+                // 件数確認 (引数の plcId を使用)
+                var finalCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM [Memory] WHERE PlcId = @PlcId", new { PlcId = plcId });
+                Debug.WriteLine($"[確認] Memory テーブルのレコード数 (PlcId={plcId}): {finalCount}");
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback(); // エラー発生時はロールバック
+                Debug.WriteLine($"[ERROR] SaveMemories 処理中にエラーが発生しました (PlcId={plcId}): {ex.Message}");
+                progressCallback?.Invoke($"エラーが発生しました (PlcId={plcId}): {ex.Message}");
+                throw; // 上位の呼び出し元に例外を通知して処理を中断させる
+            }
+        }
+
+
+        // GetMemories, GetMemoryCategories は変更なし
         public bool SaveMnemonicMemories(MnemonicDevice device)
         {
+            if (device?.PlcId == null) return false; // PlcId が必須
+
             using var connection = new OleDbConnection(_connectionString);
-            var count = 0;
+            AccessRepository _repository = new(); // AccessRepositoryのインスタンスを作成
+            var difinitionsService = new DifinitionsService(_repository); // DifinitionsServiceのインスタンスを作成
 
             connection.Open();
             using var transaction = connection.BeginTransaction();
-            var allExisting = connection.Query<Memory>("SELECT * FROM Memory", transaction: transaction).ToList();
             try
             {
-                // MnemonicDeviceの情報をMemoryに変換
-                int category = 0;
-                switch (device.DeviceLabel)
-                {
-                    case "L":
-                        category = 1;
-                        break;
-                    case "M":
-                        category = 2;
-                        break;
-                    default:
-                        // 誰かエラー処理書いて
-                        category = 1;
-                        break;
-                }
-                var memoryCategory = "";
-                switch (device.MnemonicId)
-                {
-                    case 1:
-                        memoryCategory = "工程";
-                        break;
-                    case 2:
-                        memoryCategory = "工程詳細";
-                        break;
-                    case 3:
-                        memoryCategory = "操作";
-                        break;
-                    case 4:
-                        memoryCategory = "出力";
-                        break;
-                    default:
-                        // 誰かエラー処理書いて
-                        memoryCategory = "なし";
-                        break;
-                }
+                var existingForPlcIdList = connection.Query<Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
+                var existingLookup = existingForPlcIdList.Where(m => !string.IsNullOrEmpty(m.Device))
+                                                        .ToDictionary(m => m.Device!, m => m); // Deviceで検索 (PlcIdは共通)
 
-                // OutCoilCount分だけクエリを実行
-                while (count < device.OutCoilCount)
+                int deviceLabelCategoryId = device.DeviceLabel switch
                 {
-                    var deviceNum = device.StartNum + count;
+                    "L" => 1,
+                    "M" => 2,
+                    _ => 1, // TODO: エラー処理または明確なデフォルト値
+                };
+                string mnemonicTypeBasedCategoryString = device.MnemonicId switch
+                {
+                    1 => "工程",
+                    2 => "工程詳細",
+                    3 => "操作",
+                    4 => "出力",
+                    _ => "なし", // TODO: エラー処理または明確なデフォルト値
+                };
+                var difinitions = device.MnemonicId switch
+                {
+                    1 => difinitionsService.GetDifinitions("Process"),
+                    2 => difinitionsService.GetDifinitions("Detail"),
+                    3 => difinitionsService.GetDifinitions("Operation"),
+                    4 => difinitionsService.GetDifinitions("Cylinder"),
+                    _ => new List<Difinitions>(), // TODO: エラー処理または明確なデフォルト値
+                };
+
+                for (int i = 0; i < device.OutCoilCount; i++)
+                {
+                    var deviceNum = device.StartNum + i;
                     var deviceString = device.DeviceLabel + deviceNum.ToString();
 
-                    var memory = new Memory
+                    var memoryToSave = new Memory
                     {
                         PlcId = device.PlcId,
-                        MemoryCategory = category,
-                        DeviceNumber = device.StartNum + count,
+                        MemoryCategory = deviceLabelCategoryId,
+                        DeviceNumber = deviceNum,
                         DeviceNumber1 = deviceString,
                         DeviceNumber2 = "",
                         Device = deviceString,
-                        Category = memoryCategory,
-                        Row_1 = memoryCategory,
-                        Row_2 = device.Comment,
-                        Row_3 = count.ToString(),
-                        Row_4 = "",
+                        Category = mnemonicTypeBasedCategoryString,
+                        Row_1 = difinitions.Where(d => d.Label == "").Single(d => d.OutCoilNumber == i).Comment1,
+                        Row_2 = difinitions.Single(d => d.OutCoilNumber == i).Comment1,
+                        Row_3 = device.Comment2, // Outcoilのインデックスとして
+                        Row_4 = device.Comment2,
                         Direct_Input = "",
-                        Confirm = memoryCategory + device.Comment + count.ToString() + "",
+                        Confirm = mnemonicTypeBasedCategoryString + device.Comment1 + i.ToString(),
                         Note = "",
-                        CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                        UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                        // CreatedAt, UpdatedAt は ExecuteUpsertMemory で処理
                         GOT = false,
-                        MnemonicDeviceId = (int?)device.ID,
-                        OutcoilNumber = count
+                        MnemonicId = device.MnemonicId, // MnemonicDevice の ID
+                        RecordId = device.RecordId, // MnemonicDevice の ID
+                        OutcoilNumber = i
                     };
 
-                    count++;
-
-
-                    var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                    var existing = allExisting.FirstOrDefault(m =>
-                        m.PlcId == memory.PlcId && m.Device == memory.Device);
-
-                    var parameters = new DynamicParameters();
-                    parameters.Add("PlcId", memory.PlcId ?? 0, DbType.Int32);
-                    parameters.Add("MemoryCategory", memory.MemoryCategory ?? 0, DbType.Int32);
-                    parameters.Add("DeviceNumber", memory.DeviceNumber ?? 0, DbType.Int32);
-                    parameters.Add("DeviceNumber1", memory.DeviceNumber1 ?? "", DbType.String);
-                    parameters.Add("DeviceNumber2", memory.DeviceNumber2 ?? "", DbType.String);
-                    parameters.Add("Device", memory.Device ?? "", DbType.String);
-                    parameters.Add("Category", memory.Category ?? "", DbType.String);
-                    parameters.Add("Row_1", memory.Row_1 ?? "", DbType.String);
-                    parameters.Add("Row_2", memory.Row_2 ?? "", DbType.String);
-                    parameters.Add("Row_3", memory.Row_3 ?? "", DbType.String);
-                    parameters.Add("Row_4", memory.Row_4 ?? "", DbType.String);
-                    parameters.Add("Direct_Input", memory.Direct_Input ?? "", DbType.String);
-                    parameters.Add("Confirm", memory.Confirm ?? "", DbType.String);
-                    parameters.Add("Note", memory.Note ?? "", DbType.String);
-                    parameters.Add("CreatedAt", memory.CreatedAt ?? now, DbType.String);
-                    parameters.Add("UpdatedAt", now, DbType.String);
-                    parameters.Add("GOT", memory.GOT ?? false, DbType.Boolean);
-                    parameters.Add("MnemonicDeviceId", memory.MnemonicDeviceId ?? 0, DbType.Int32);
-                    parameters.Add("OutcoilNumber", memory.OutcoilNumber ?? 0, DbType.Int32);
-
-                    if (existing != null)
-                    {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
-                        UPDATE [Memory] SET
-                            [MemoryCategory] = @MemoryCategory,
-                            [DeviceNumber] = @DeviceNumber,
-                            [DeviceNumber1] = @DeviceNumber1,
-                            [DeviceNumber2] = @DeviceNumber2,
-                            [Category] = @Category,
-                            [Row_1] = @Row_1,
-                            [Row_2] = @Row_2,
-                            [Row_3] = @Row_3,
-                            [Row_4] = @Row_4,
-                            [Direct_Input] = @Direct_Input,
-                            [Confirm] = @Confirm,
-                            [Note] = @Note,
-                            [UpdatedAt] = @UpdatedAt,
-                            [GOT] = @GOT,
-                            [MnemonicDeviceId] = @MnemonicDeviceId,
-                            [OutcoilNumber] = @OutcoilNumber
-                        WHERE [ID] = @ID",
-                        parameters, transaction);
-                    }
-                    else
-                    {
-                        connection.Execute(@"
-                        INSERT INTO [Memory] (
-                            [PlcId], [MemoryCategory], [DeviceNumber],
-                            [DeviceNumber1], [DeviceNumber2], [Device],
-                            [Category], [Row_1], [Row_2], [Row_3], [Row_4],
-                            [Direct_Input], [Confirm], [Note],
-                            [CreatedAt], [UpdatedAt], [GOT],
-                            [MnemonicDeviceId], [OutcoilNumber]
-                        ) VALUES (
-                            @PlcId, @MemoryCategory, @DeviceNumber,
-                            @DeviceNumber1, @DeviceNumber2, @Device,
-                            @Category, @Row_1, @Row_2, @Row_3, @Row_4,
-                            @Direct_Input, @Confirm, @Note,
-                            @CreatedAt, @UpdatedAt, @GOT,
-                            @MnemonicDeviceId, @OutcoilNumber
-                        )",
-                        parameters, transaction);
-                    }
+                    existingLookup.TryGetValue(memoryToSave.Device!, out Memory? existingRecord);
+                    ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
                 }
+                transaction.Commit();
+                Debug.WriteLine($"[確認] SaveMnemonicMemories 完了 (MnemonicDevice ID: {device.ID}, PlcId: {device.PlcId})");
+                return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ERROR] Device={device.ID} 保存失敗 → {ex.Message}");
+                transaction.Rollback();
+                Debug.WriteLine($"[ERROR] MnemonicDevice ID={device.ID} のMemory保存失敗 → {ex.Message}");
                 return false;
             }
-
-            transaction.Commit();
-            Debug.WriteLine($"[確認] Memory テーブルのレコード数: {count}");
-            return true;
-
         }
 
+        // SaveMnemonicTimerMemoriesZR と SaveMnemonicTimerMemoriesT も同様のパターンで修正します。
+        // Memoryオブジェクトの構築ロジックは各メソッド固有ですが、保存部分はExecuteUpsertMemoryを呼び出します。
 
-        // MnemonicDeviceのリストからメモリを登録する
         public bool SaveMnemonicTimerMemoriesZR(MnemonicTimerDevice device)
         {
+            if (device?.PlcId == null || string.IsNullOrEmpty(device.TimerDevice) || !device.TimerDevice.StartsWith("ZR")) return false;
+
             using var connection = new OleDbConnection(_connectionString);
-            var count = 0;
+            AccessRepository _repository = new(); // AccessRepositoryのインスタンスを作成
+            var difinitionsService = new DifinitionsService(_repository); // DifinitionsServiceのインスタンスを作成
+            var dinitions = new List<Difinitions>();
 
             connection.Open();
             using var transaction = connection.BeginTransaction();
-            var allExisting = connection.Query<Memory>("SELECT * FROM Memory", transaction: transaction).ToList();
             try
             {
-                // MnemonicDeviceの情報をMemoryに変換
-                int category = 0;
-                var memoryCategory = "";
-                switch (device.MnemonicId)
-                {
-                    case 1:
-                        memoryCategory = "工程";
-                        break;
-                    case 2:
-                        memoryCategory = "工程詳細";
-                        break;
-                    case 3:
-                        memoryCategory = "操作";
-                        break;
-                    case 4:
-                        memoryCategory = "出力";
-                        break;
-                    default:
-                        // 誰かエラー処理書いて
-                        memoryCategory = "なし";
-                        break;
-                }
+                var existingForPlcIdList = connection.Query<Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
+                var existingLookup = existingForPlcIdList.Where(m => !string.IsNullOrEmpty(m.Device))
+                                                        .ToDictionary(m => m.Device!, m => m);
 
-                // "T" を削除してから int に変換
-                var TdeviceNum = int.Parse(device.TimerDevice.Replace("ZR", ""));
-                var DdeviceNum = int.Parse(device.ProcessTimerDevice.Replace("T", ""));
 
-                var memoryZR = new Memory
+                string mnemonicTypeBasedCategoryString = device.MnemonicId switch
                 {
-                    PlcId = device.PlcId,
-                    MemoryCategory = category,
-                    DeviceNumber = TdeviceNum,
-                    DeviceNumber1 = device.TimerDevice,
-                    DeviceNumber2 = "",
-                    Device = device.TimerDevice,
-                    Category = memoryCategory,
-                    Row_1 = memoryCategory,
-                    Row_2 = "",
-                    Row_3 = "",
-                    Row_4 = "",
-                    Direct_Input = "",
-                    Confirm = "",
-                    Note = "",
-                    CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    GOT = false,
-                    MnemonicTimerDeviceId = (int?)device.ID,
-                    OutcoilNumber = count
+                    1 => "工程ﾀｲﾏ",
+                    2 => "詳細ﾀｲﾏ",
+                    3 => "操作ﾀｲﾏ",
+                    4 => "出力ﾀｲﾏ",
+                    _ => "なし",
                 };
 
-                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                var existing = allExisting.FirstOrDefault(m =>
-                    m.PlcId == memoryZR.PlcId && m.Device == memoryZR.Device);
-
-                var parameters = new DynamicParameters();
-                parameters.Add("PlcId", memoryZR.PlcId ?? 0, DbType.Int32);
-                parameters.Add("MemoryCategory", memoryZR.MemoryCategory ?? 0, DbType.Int32);
-                parameters.Add("DeviceNumber", memoryZR.DeviceNumber ?? 0, DbType.Int32);
-                parameters.Add("DeviceNumber1", memoryZR.DeviceNumber1 ?? "", DbType.String);
-                parameters.Add("DeviceNumber2", memoryZR.DeviceNumber2 ?? "", DbType.String);
-                parameters.Add("Device", memoryZR.Device ?? "", DbType.String);
-                parameters.Add("Category", memoryZR.Category ?? "", DbType.String);
-                parameters.Add("Row_1", memoryZR.Row_1 ?? "", DbType.String);
-                parameters.Add("Row_2", memoryZR.Row_2 ?? "", DbType.String);
-                parameters.Add("Row_3", memoryZR.Row_3 ?? "", DbType.String);
-                parameters.Add("Row_4", memoryZR.Row_4 ?? "", DbType.String);
-                parameters.Add("Direct_Input", memoryZR.Direct_Input ?? "", DbType.String);
-                parameters.Add("Confirm", memoryZR.Confirm ?? "", DbType.String);
-                parameters.Add("Note", memoryZR.Note ?? "", DbType.String);
-                parameters.Add("CreatedAt", memoryZR.CreatedAt ?? now, DbType.String);
-                parameters.Add("UpdatedAt", now, DbType.String);
-                parameters.Add("GOT", memoryZR.GOT ?? false, DbType.Boolean);
-                parameters.Add("MnemonicDeviceId", memoryZR.MnemonicDeviceId ?? 0, DbType.Int32);
-                parameters.Add("OutcoilNumber", memoryZR.OutcoilNumber ?? 0, DbType.Int32);
-
-                if (existing != null)
+                var tDeviceNumStr = device.TimerDevice.Replace("ZR", "");
+                if (int.TryParse(tDeviceNumStr, out int tDeviceNum))
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int32);
-                    connection.Execute(@"
-                        UPDATE [Memory] SET
-                            [MemoryCategory] = @MemoryCategory,
-                            [DeviceNumber] = @DeviceNumber,
-                            [DeviceNumber1] = @DeviceNumber1,
-                            [DeviceNumber2] = @DeviceNumber2,
-                            [Category] = @Category,
-                            [Row_1] = @Row_1,
-                            [Row_2] = @Row_2,
-                            [Row_3] = @Row_3,
-                            [Row_4] = @Row_4,
-                            [Direct_Input] = @Direct_Input,
-                            [Confirm] = @Confirm,
-                            [Note] = @Note,
-                            [UpdatedAt] = @UpdatedAt,
-                            [GOT] = @GOT,
-                            [MnemonicDeviceId] = @MnemonicDeviceId,
-                            [OutcoilNumber] = @OutcoilNumber
-                        WHERE [ID] = @ID",
-                    parameters, transaction);
+                    var memoryToSave = new Memory
+                    {
+                        PlcId = device.PlcId,
+                        MemoryCategory = 0, // TODO: ZR用の適切なMemoryCategory IDを決定する
+                        DeviceNumber = tDeviceNum,
+                        DeviceNumber1 = device.TimerDevice,
+                        Device = device.TimerDevice,
+                        Category = mnemonicTypeBasedCategoryString,
+                        Row_1 = mnemonicTypeBasedCategoryString,
+                        Row_2 = device.Comment1,
+                        Row_3 = device.Comment2,
+                        Row_4 = device.Comment3,
+                        Note = "",
+                        MnemonicId = device.MnemonicId,
+                        RecordId = device.RecordId,
+                    };
+
+                    existingLookup.TryGetValue(memoryToSave.Device!, out Memory? existingRecord);
+                    ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
+
+                    transaction.Commit();
+                    Debug.WriteLine($"[確認] SaveMnemonicTimerMemoriesZR 完了 (MnemonicTimerDevice ID: {device.ID}, PlcId: {device.PlcId})");
+                    return true;
                 }
                 else
                 {
-                    connection.Execute(@"
-                        INSERT INTO [Memory] (
-                            [PlcId], [MemoryCategory], [DeviceNumber],
-                            [DeviceNumber1], [DeviceNumber2], [Device],
-                            [Category], [Row_1], [Row_2], [Row_3], [Row_4],
-                            [Direct_Input], [Confirm], [Note],
-                            [CreatedAt], [UpdatedAt], [GOT],
-                            [MnemonicDeviceId], [OutcoilNumber]
-                        ) VALUES (
-                            @PlcId, @MemoryCategory, @DeviceNumber,
-                            @DeviceNumber1, @DeviceNumber2, @Device,
-                            @Category, @Row_1, @Row_2, @Row_3, @Row_4,
-                            @Direct_Input, @Confirm, @Note,
-                            @CreatedAt, @UpdatedAt, @GOT,
-                            @MnemonicDeviceId, @OutcoilNumber
-                        )",
-                    parameters, transaction);
+                    Debug.WriteLine($"[WARN] Invalid TimerDevice format for ZR: {device.TimerDevice}");
+                    transaction.Rollback(); // 不正なデータなのでロールバック
+                    return false;
                 }
-
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ERROR] Device={device.ID} 保存失敗 → {ex.Message}");
+                transaction.Rollback();
+                Debug.WriteLine($"[ERROR] MnemonicTimerDevice ID={device.ID} のMemory(ZR)保存失敗 → {ex.Message}");
                 return false;
             }
-
-            transaction.Commit();
-            Debug.WriteLine($"[確認] Memory テーブルのレコード数: {count}");
-            return true;
-
         }
 
-
-        // MnemonicDeviceのリストからメモリを登録する
         public bool SaveMnemonicTimerMemoriesT(MnemonicTimerDevice device)
         {
-            using var connection = new OleDbConnection(_connectionString);
-            var count = 0;
+            if (device?.PlcId == null || string.IsNullOrEmpty(device.ProcessTimerDevice) || !device.ProcessTimerDevice.StartsWith("T")) return false;
 
+            using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
-            var allExisting = connection.Query<Memory>("SELECT * FROM Memory", transaction: transaction).ToList();
             try
             {
-                // MnemonicDeviceの情報をMemoryに変換
-                int category = 0;
-                var memoryCategory = "";
-                switch (device.MnemonicId)
-                {
-                    case 1:
-                        memoryCategory = "工程";
-                        break;
-                    case 2:
-                        memoryCategory = "工程詳細";
-                        break;
-                    case 3:
-                        memoryCategory = "操作";
-                        break;
-                    case 4:
-                        memoryCategory = "出力";
-                        break;
-                    default:
-                        // 誰かエラー処理書いて
-                        memoryCategory = "なし";
-                        break;
-                }
+                var existingForPlcIdList = connection.Query<Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
+                var existingLookup = existingForPlcIdList.Where(m => !string.IsNullOrEmpty(m.Device))
+                                                        .ToDictionary(m => m.Device!, m => m);
 
-                // "T" を削除してから int に変換
-                var DdeviceNum = int.Parse(device.ProcessTimerDevice.Replace("T", ""));
-
-                var memoryZR = new Memory
+                string mnemonicTypeBasedCategoryString = device.MnemonicId switch
                 {
-                    PlcId = device.PlcId,
-                    MemoryCategory = category,
-                    DeviceNumber = DdeviceNum,
-                    DeviceNumber1 = device.ProcessTimerDevice,
-                    DeviceNumber2 = "",
-                    Device = device.ProcessTimerDevice,
-                    Category = memoryCategory,
-                    Row_1 = memoryCategory,
-                    Row_2 = "",
-                    Row_3 = "",
-                    Row_4 = "",
-                    Direct_Input = "",
-                    Confirm = "",
-                    Note = "",
-                    CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    GOT = false,
-                    MnemonicTimerDeviceId = (int?)device.ID,
-                    OutcoilNumber = count
+                    1 => "工程タイマT",
+                    2 => "工程詳細タイマT",
+                    3 => "操作タイマT",
+                    4 => "出力タイマT",
+                    _ => "タイマT",
                 };
 
-                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                var existing = allExisting.FirstOrDefault(m =>
-                    m.PlcId == memoryZR.PlcId && m.Device == memoryZR.Device);
-
-                var parameters = new DynamicParameters();
-                parameters.Add("PlcId", memoryZR.PlcId ?? 0, DbType.Int32);
-                parameters.Add("MemoryCategory", memoryZR.MemoryCategory ?? 0, DbType.Int32);
-                parameters.Add("DeviceNumber", memoryZR.DeviceNumber ?? 0, DbType.Int32);
-                parameters.Add("DeviceNumber1", memoryZR.DeviceNumber1 ?? "", DbType.String);
-                parameters.Add("DeviceNumber2", memoryZR.DeviceNumber2 ?? "", DbType.String);
-                parameters.Add("Device", memoryZR.Device ?? "", DbType.String);
-                parameters.Add("Category", memoryZR.Category ?? "", DbType.String);
-                parameters.Add("Row_1", memoryZR.Row_1 ?? "", DbType.String);
-                parameters.Add("Row_2", memoryZR.Row_2 ?? "", DbType.String);
-                parameters.Add("Row_3", memoryZR.Row_3 ?? "", DbType.String);
-                parameters.Add("Row_4", memoryZR.Row_4 ?? "", DbType.String);
-                parameters.Add("Direct_Input", memoryZR.Direct_Input ?? "", DbType.String);
-                parameters.Add("Confirm", memoryZR.Confirm ?? "", DbType.String);
-                parameters.Add("Note", memoryZR.Note ?? "", DbType.String);
-                parameters.Add("CreatedAt", memoryZR.CreatedAt ?? now, DbType.String);
-                parameters.Add("UpdatedAt", now, DbType.String);
-                parameters.Add("GOT", memoryZR.GOT ?? false, DbType.Boolean);
-                parameters.Add("MnemonicDeviceId", memoryZR.MnemonicDeviceId ?? 0, DbType.Int32);
-                parameters.Add("OutcoilNumber", memoryZR.OutcoilNumber ?? 0, DbType.Int32);
-
-                if (existing != null)
+                var dDeviceNumStr = device.ProcessTimerDevice.Replace("T", "");
+                if (int.TryParse(dDeviceNumStr, out int dDeviceNum))
                 {
-                    parameters.Add("ID", existing.ID, DbType.Int32);
-                    connection.Execute(@"
-                        UPDATE [Memory] SET
-                            [MemoryCategory] = @MemoryCategory,
-                            [DeviceNumber] = @DeviceNumber,
-                            [DeviceNumber1] = @DeviceNumber1,
-                            [DeviceNumber2] = @DeviceNumber2,
-                            [Category] = @Category,
-                            [Row_1] = @Row_1,
-                            [Row_2] = @Row_2,
-                            [Row_3] = @Row_3,
-                            [Row_4] = @Row_4,
-                            [Direct_Input] = @Direct_Input,
-                            [Confirm] = @Confirm,
-                            [Note] = @Note,
-                            [UpdatedAt] = @UpdatedAt,
-                            [GOT] = @GOT,
-                            [MnemonicDeviceId] = @MnemonicDeviceId,
-                            [OutcoilNumber] = @OutcoilNumber
-                        WHERE [ID] = @ID",
-                    parameters, transaction);
+                    var memoryToSave = new Memory
+                    {
+                        PlcId = device.PlcId,
+                        MemoryCategory = 0, // TODO: Tデバイス用の適切なMemoryCategory IDを決定する
+                        DeviceNumber = dDeviceNum,
+                        DeviceNumber1 = device.ProcessTimerDevice,
+                        Device = device.ProcessTimerDevice,
+                        Category = mnemonicTypeBasedCategoryString,
+                        Row_1 = mnemonicTypeBasedCategoryString,
+                        Row_2 = device.Comment1,
+                        Row_3= device.Comment2,
+                        Row_4 = device.Comment3,
+                        MnemonicId = device.MnemonicId,
+                        RecordId = device.RecordId,// MnemonicTimerDeviceのIDをMemoryのMnemonicDeviceIdにマッピング
+                                                                 // 他のフィールドは必要に応じて設定
+                    };
+
+                    existingLookup.TryGetValue(memoryToSave.Device!, out Memory? existingRecord);
+                    ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
+
+                    transaction.Commit();
+                    Debug.WriteLine($"[確認] SaveMnemonicTimerMemoriesT 完了 (MnemonicTimerDevice ID: {device.ID}, PlcId: {device.PlcId})");
+                    return true;
                 }
                 else
                 {
-                    connection.Execute(@"
-                        INSERT INTO [Memory] (
-                            [PlcId], [MemoryCategory], [DeviceNumber],
-                            [DeviceNumber1], [DeviceNumber2], [Device],
-                            [Category], [Row_1], [Row_2], [Row_3], [Row_4],
-                            [Direct_Input], [Confirm], [Note],
-                            [CreatedAt], [UpdatedAt], [GOT],
-                            [MnemonicDeviceId], [OutcoilNumber]
-                        ) VALUES (
-                            @PlcId, @MemoryCategory, @DeviceNumber,
-                            @DeviceNumber1, @DeviceNumber2, @Device,
-                            @Category, @Row_1, @Row_2, @Row_3, @Row_4,
-                            @Direct_Input, @Confirm, @Note,
-                            @CreatedAt, @UpdatedAt, @GOT,
-                            @MnemonicDeviceId, @OutcoilNumber
-                        )",
-                    parameters, transaction);
+                    Debug.WriteLine($"[WARN] Invalid ProcessTimerDevice format for T: {device.ProcessTimerDevice}");
+                    transaction.Rollback();
+                    return false;
                 }
-
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ERROR] Device={device.ID} 保存失敗 → {ex.Message}");
+                transaction.Rollback();
+                Debug.WriteLine($"[ERROR] MnemonicTimerDevice ID={device.ID} のMemory(T)保存失敗 → {ex.Message}");
                 return false;
             }
-
-            transaction.Commit();
-            Debug.WriteLine($"[確認] Memory テーブルのレコード数: {count}");
-            return true;
-
         }
-
-
     }
 }

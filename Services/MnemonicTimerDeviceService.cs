@@ -3,8 +3,12 @@
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 
+using System; // Exception, Action のために追加
+using System.Collections.Generic; // List, Dictionary のために追加
 using System.Data;
 using System.Data.OleDb;
+using System.Diagnostics;
+using System.Linq; // ToList, GroupBy, FirstOrDefault, SingleOrDefault 等のために追加
 
 namespace KdxDesigner.Services
 {
@@ -33,76 +37,196 @@ namespace KdxDesigner.Services
             return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, CycleId = cycleId, MnemonicId = mnemonicId }).ToList();
         }
 
+        /// <summary>
+        /// 共通のUPSERT（Insert or Update）処理
+        /// </summary>
+        private void UpsertMnemonicTimerDevice(OleDbConnection connection, OleDbTransaction transaction, MnemonicTimerDevice deviceToSave, MnemonicTimerDevice? existingRecord)
+        {
+            var parameters = new DynamicParameters(); // オブジェクトからパラメータを自動生成
+
+            parameters.Add("MnemonicId", deviceToSave.MnemonicId, DbType.Int32);
+            parameters.Add("RecordId", deviceToSave.RecordId, DbType.Int32);
+            parameters.Add("TimerId", deviceToSave.TimerId, DbType.Int32);
+            parameters.Add("TimerCategoryId", deviceToSave.TimerCategoryId, DbType.Int32);
+            parameters.Add("ProcessTimerDevice", deviceToSave.ProcessTimerDevice, DbType.String);
+            parameters.Add("TimerDevice", deviceToSave.TimerDevice, DbType.String);
+            parameters.Add("PlcId", deviceToSave.PlcId, DbType.Int32); // result[0]は常に安全
+            parameters.Add("CycleId", deviceToSave.CycleId, DbType.Int32); // result[1]も常に安全
+
+            if (existingRecord != null)
+            {
+                parameters.Add("ID", existingRecord.ID, DbType.Int32); // WHERE句のIDを指定
+                connection.Execute(@"
+                    UPDATE [MnemonicTimerDevice] SET
+                        [MnemonicId] = @MnemonicId,
+                        [RecordId] = @RecordId,
+                        [TimerId] = @TimerId,
+                        [TimerCategoryId] = @TimerCategoryId,
+                        [ProcessTimerDevice] = @ProcessTimerDevice,
+                        [TimerDevice] = @TimerDevice,
+                        [PlcId] = @PlcId,
+                        [CycleId] = @CycleId
+                    WHERE [ID] = @ID",
+                    parameters, transaction);
+            }
+            else
+            {
+                connection.Execute(@"
+                    INSERT INTO [MnemonicTimerDevice] (
+                        [MnemonicId], [RecordId], [TimerId], [TimerCategoryId], [ProcessTimerDevice], [TimerDevice], [PlcId], [CycleId]
+                    ) VALUES (
+                        @MnemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId
+                    )",
+                    parameters, transaction);
+            }
+        }
+
         // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         public void SaveWithOperation(
-            List<Models.Timer> timers, 
-            List<Operation> operations, 
-            int startNum, int plcId, int cycleId)
+            List<Models.Timer> timers,
+            List<Operation> operations,
+            int startNum, int plcId, int cycleId, out int count)
+        {
+            count = 0; // outパラメータの初期化
+            using var connection = new OleDbConnection(_connectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // 既存データを取得し、高速検索用に辞書に変換
+                // キー: (RecordId, TimerId) でユニークと仮定
+                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.Operation);
+                var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerId: m.TimerId), m => m);
+
+                // 修正: 'int?' 型を 'int' 型に変換して、ToDictionary のキーとして使用可能にする
+                var timersByRecordId = timers
+                    .Where(t => t.MnemonicId == (int)MnemonicType.Operation)
+                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (Operation operation in operations)
+                {
+                    if (operation == null || !timersByRecordId.TryGetValue(operation.Id, out var operationTimers))
+                    {
+                        continue; // 操作データがない、または関連するタイマーがない場合はスキップ
+                    }
+
+                    foreach (Models.Timer timer in operationTimers)
+                    {
+                        if (timer == null) continue;
+
+                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var timerDevice = "ZR" + timer.TimerNum.ToString();
+
+                        // 複合キーで既存レコードを検索
+                        existingLookup.TryGetValue((operation.Id, timer.ID), out var existingRecord);
+
+                        var deviceToSave = new MnemonicTimerDevice
+                        {
+                            // IDはUPDATE時にのみ必要。Upsertヘルパー内で処理
+                            MnemonicId = (int)MnemonicType.Operation,
+                            RecordId = operation.Id,
+                            TimerId = timer.ID,
+                            TimerCategoryId = timer.TimerCategoryId,
+                            ProcessTimerDevice = processTimerDevice,
+                            TimerDevice = timerDevice,
+                            PlcId = plcId,
+                            CycleId = cycleId
+                        };
+
+                        UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                        count++;
+                    }
+                }
+
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Console.WriteLine($"SaveWithOperation 失敗: {ex.Message}");
+                // エラーログの記録や上位への例外通知など
+                // Debug.WriteLine($"SaveWithOperation 失敗: {ex.Message}");
+                throw;
+            }
+        }
+
+        // Cylinderのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
+        // count変数を参照渡し(ref)に変更し、呼び出し元でインクリメントされた値を維持できるようにする
+        public void SaveWithCY(
+            List<Models.Timer> timers,
+            List<CY> cylinders,
+            int startNum, int plcId, int cycleId, ref int count)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
 
-            // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.Operation);
-            int count = 0;
-            foreach (Operation operation in operations)
+            try
             {
-                if (operation == null) continue;
-                var existing = allExisting.FirstOrDefault(m => m.RecordId == operation.Id);
-                var operationTimers = timers.Where(t => t.OperationId == operation.Id).ToList();
-                if (operationTimers.Count == 0) continue; // Operationに関連するタイマーがない場合はスキップ
+                // 既存データを取得し、高速検索用に辞書に変換
+                // キー: (RecordId, TimerCategoryId) でユニークと仮定
+                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.CY);
+                var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerCategoryId: m.TimerCategoryId), m => m);
 
-                foreach (Models.Timer timer in operationTimers)
+                // 処理対象のタイマーをRecordId(Cylinder.Id)でグループ化
+                var timersByRecordId = timers
+                    .Where(t => t.MnemonicId == (int)MnemonicType.Operation)
+                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                // 処理対象とするTimerCategoryIdのリスト
+                var targetTimerCategories = new[] { 6, 7, 14 }; // EBT, NBT, FLT
+
+                foreach (CY cylinder in cylinders)
                 {
-                    if (timer == null) continue;
-                    var processTimerDevice = "T" + (startNum + count).ToString() ?? string.Empty;
-                    var timerDevice = "ZR" + timer.TimerNum.ToString() ?? string.Empty;
-
-                    var parameters = new DynamicParameters();
-                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
-                    parameters.Add("RecordId", operation.Id, DbType.Int32);
-                    parameters.Add("TimerId", timer.ID, DbType.Int32);
-                    parameters.Add("TimerCategoryId", timer.TimerCategoryId, DbType.Int32);
-                    parameters.Add("ProcessTimerDevice", processTimerDevice, DbType.String);
-                    parameters.Add("TimerDevice", timerDevice, DbType.String);
-                    parameters.Add("PlcId", plcId, DbType.Int32);
-                    parameters.Add("CycleId", cycleId, DbType.Int32);
-
-                    if (existing != null)
+                    if (cylinder == null || !timersByRecordId.TryGetValue(cylinder.Id, out var cylinderTimers))
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
-                            UPDATE [MnemonicTimerDevice] SET
-                                [MnemonicId] = @MnemonicId,
-                                [RecordId] = @RecordId,
-                                [TimerId] = @TimerId,
-                                [TimerCategoryId] = @ProcessTimerNum,
-                                [ProcessTimerDevice] = @ProcessTimerDevice,
-                                [TimerDevice] = @TimerDevice,
-                                [PlcId] = @PlcId,
-                                [CycleId] = @CycleId
-                            WHERE [ID] = @ID",
-                            parameters, transaction);
+                        continue; // シリンダーデータがない、または関連するタイマーがない場合はスキップ
                     }
-                    else
+
+                    foreach (var categoryId in targetTimerCategories)
                     {
-                        connection.Execute(@"
-                            INSERT INTO [MnemonicTimerDevice] (
-                                [MnemonicId], [RecordId], [TimerId], [TimerCategoryId], [ProcessTimerDevice], [TimerDevice], [PlcId], [CycleId]
-                            ) VALUES (
-                                @NemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId
-                            )",
-                            parameters, transaction);
+                        // SingleOrDefaultで該当カテゴリのタイマーを一つだけ取得
+                        var timer = cylinderTimers.SingleOrDefault(t => t.TimerCategoryId == categoryId);
+                        if (timer == null)
+                        {
+                            continue; // このカテゴリのタイマーは存在しないのでスキップ
+                        }
+
+                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var timerDevice = "ZR" + timer.TimerNum.ToString();
+
+                        // 複合キーで既存レコードを検索
+                        existingLookup.TryGetValue((cylinder.Id, timer.TimerCategoryId), out var existingRecord);
+
+                        var deviceToSave = new MnemonicTimerDevice
+                        {
+                            MnemonicId = (int)MnemonicType.CY,
+                            RecordId = cylinder.Id,
+                            TimerId = timer.ID,
+                            TimerCategoryId = timer.TimerCategoryId,
+                            ProcessTimerDevice = processTimerDevice,
+                            TimerDevice = timerDevice,
+                            PlcId = plcId,
+                            CycleId = cycleId
+                        };
+
+                        UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                        count++;
                     }
-                    count++;
                 }
+
+                transaction.Commit();
             }
-
-            transaction.Commit();
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Console.WriteLine($"SaveWithCY 失敗: {ex.Message}");
+                // Debug.WriteLine($"SaveWithCY 失敗: {ex.Message}");
+                throw;
+            }
         }
-
-
-
     }
 }

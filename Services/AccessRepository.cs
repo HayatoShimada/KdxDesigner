@@ -91,7 +91,7 @@ namespace KdxDesigner.Services
         public List<Cycle> GetCycles()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = "SELECT Id, PlcId, CycleName FROM Cycle";
+            var sql = "SELECT * FROM Cycle";
             return connection.Query<Cycle>(sql).ToList();
         }
 
@@ -126,7 +126,7 @@ namespace KdxDesigner.Services
         public List<CY> GetCYs()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = "SELECT Id, PlcId, PUCO, CYNum, OilNum, MacineId, DriveSub, PlaceId, CYNameSub, SensorId, FlowType FROM CY";
+            var sql = "SELECT * FROM CY";
             return connection.Query<CY>(sql).ToList();
         }
         public List<Models.Timer> GetTimersByCycleId(int cycleId)
@@ -141,7 +141,7 @@ namespace KdxDesigner.Services
         {
             using var connection = new OleDbConnection(ConnectionString);
             var sql = @"
-SELECT Id, OperationName, CYId, CategoryId, Start, Finish, Valve1,
+SELECT Id, OperationName, CYId, CategoryId, GoBack, Start, Finish, Valve1,
        S1, S2, S3, S4, S5, SS1, SS2, SS3, SS4, PIL, SC, FC
 FROM Operation";
             return connection.Query<Operation>(sql).ToList();
@@ -170,7 +170,7 @@ UPDATE Operation SET
     OperationName = @OperationName,
     CYId = @CYId,
     CategoryId = @CategoryId,
- 
+    GoBack = @GoBack,
     Start = @Start,
     Finish = @Finish,
     Valve1 = @Valve1,

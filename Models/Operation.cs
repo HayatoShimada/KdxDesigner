@@ -17,6 +17,7 @@ namespace KdxDesigner.Models
         public int? CYId { get; set; }
         public int? CategoryId { get; set; }
         public string? Stay { get; set; }
+        public string? GoBack { get; set; }
         public string? Start { get; set; }
         public string? Finish { get; set; }
         public string? Valve1 { get; set; }
