@@ -5,7 +5,17 @@
         public const string LD = "\"LD\"";
         public const string LDI = "\"LDI\"";
         public const string LDP = "\"LDP\"";
+
         public const string LDE = "\"LD=\"";
+        public const string LDG = "\"LD>\"";
+        public const string LDL = "\"LD<\"";
+        public const string LDN = "\"LD<>\"";
+
+        public const string ANDE = "\"AND=\"";
+        public const string ANDG = "\"AND>\"";
+        public const string ANDL = "\"AND<\"";
+        public const string ANDN = "\"AND<>\"";
+
         public const string LDF = "\"LDF\"";
         public const string LDDE = "\"LDD=\"";
         public const string ANDDU = "\"ANDD<\"";

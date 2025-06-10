@@ -4,8 +4,8 @@ using KdxDesigner.Services;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
-namespace KdxDesigner.Utils.Operation
 
+namespace KdxDesigner.Utils.Operation
 {
     internal class BuildOperationSpeedChange
     {
@@ -104,7 +104,7 @@ namespace KdxDesigner.Utils.Operation
                 operationSpeed = FlowSpeedNumber(operationSpeed, operation, cylinders, i + 1);
 
                 // ★★★ 修正: GenerateSpeed がエラーを直接 _errorAggregator に追加するように変更 (OperationFunction側の修正も必要)
-                result.AddRange(operationFunction.GenerateSpeed(speedTimer, speedSensor, speeds, operationSpeed, i));
+                result.AddRange(operationFunction.GenerateSpeed(speedTimer!, speedSensor!, speeds, operationSpeed, i));
             }
 
             // ★★★ 修正: 各Builderがエラーを直接 _errorAggregator に追加するように変更 (各Builder側の修正も必要)

@@ -33,7 +33,9 @@ namespace KdxDesigner.Utils
         {
             LadderCsvRow.ResetKeyCounter();
             var result = new List<LadderCsvRow>();
-            var builder = new BuildCylinder(_mainViewModel, _errorAggregator, _ioService);
+            var builder = new BuildCylinderValve(_mainViewModel, _errorAggregator, _ioService);
+            var speedBuilder = new BuildCylinderSpeed(_mainViewModel, _errorAggregator, _ioService);
+
 
             foreach (var cylinder in cylinders)
             {
@@ -46,6 +48,29 @@ namespace KdxDesigner.Utils
                             operations,
                             cylinders,
                             timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList));
+                        break;
+                    case 2:                // シングルバルブ
+                        result.AddRange(builder.Valve1(
+                            cylinder,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList));
+                        break;
+                    case 3:                // シングルバルブ(スピード)
+                        result.AddRange(speedBuilder.Flow1(
+                            cylinder,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            speed,
                             mnemonicErrors,
                             prosTimes,
                             ioList));

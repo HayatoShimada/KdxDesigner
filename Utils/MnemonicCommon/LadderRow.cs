@@ -34,13 +34,21 @@ namespace KdxDesigner.Utils.MnemonicCommon
 
         public static List<LadderCsvRow> AddTimer(string source, string destination)
             => CreateMOV(Command.OUTH, source, destination);
+        public static List<LadderCsvRow> AddLDE(string source, string destination)
+            => CreateMOV(Command.LDE, source, destination);
+        public static List<LadderCsvRow> AddLDG(string source, string destination)
+            => CreateMOV(Command.LDG, source, destination);
+        public static List<LadderCsvRow> AddANDN(string source, string destination)
+           => CreateMOV(Command.ANDN, source, destination);
 
+        // 引数3
         public static List<LadderCsvRow> AddBMOVSet(string source, string destination, string count)
             => CreateBMOV(Command.BMOV, source, destination, count);
         public static List<LadderCsvRow> AddFMOVSet(string source, string destination, string count)
             => CreateBMOV(Command.FMOV, source, destination, count);
         public static List<LadderCsvRow> AddSUBP(string source, string destination, string count)
-    => CreateBMOV(Command.SUBP, source, destination, count);
+            => CreateBMOV(Command.SUBP, source, destination, count);
+        
 
         private static List<LadderCsvRow> CreateMOV(string command, string source, string destination)
         {

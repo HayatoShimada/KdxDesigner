@@ -10,12 +10,12 @@ using System.Reflection.Emit;
 
 namespace KdxDesigner.Utils.Cylinder
 {
-    internal class BuildCylinder
+    internal class BuildCylinderValve
     {
         private readonly MainViewModel _mainViewModel;
         private readonly IErrorAggregator _errorAggregator;
         private readonly IIOAddressService _ioAddressService;
-        public BuildCylinder(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService)
+        public BuildCylinderValve(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService)
         {
             _mainViewModel = mainViewModel;
             _errorAggregator = errorAggregator;
@@ -34,7 +34,7 @@ namespace KdxDesigner.Utils.Cylinder
         {
             // ここに単一工程の処理を実装  
             var result = new List<LadderCsvRow>();
-            var functions = new CylinderFunction(_mainViewModel, _errorAggregator, cylinder, _ioAddressService);
+            var functions = new CylinderFunction(_mainViewModel, _errorAggregator, cylinder, _ioAddressService, null);
 
             // CYNumを含むIOの取得
             var sensors = ioList.Where(i => i.IOName != null
@@ -96,7 +96,7 @@ namespace KdxDesigner.Utils.Cylinder
         {
             // ここに単一工程の処理を実装  
             var result = new List<LadderCsvRow>();
-            var functions = new CylinderFunction(_mainViewModel, _errorAggregator, cylinder, _ioAddressService);
+            var functions = new CylinderFunction(_mainViewModel, _errorAggregator, cylinder, _ioAddressService, null);
 
             // CYNumを含むIOの取得
             var sensors = ioList.Where(i => i.IOName != null

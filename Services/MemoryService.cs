@@ -204,6 +204,12 @@ namespace KdxDesigner.Services
                 {
                     "L" => 1,
                     "M" => 2,
+                    "B" => 3,
+                    "D" => 4,
+                    "ZR" => 5,
+                    "W" => 6,
+                    "T" => 7,
+                    "C" => 8,
                     _ => 1, // TODO: エラー処理または明確なデフォルト値
                 };
                 string mnemonicTypeBasedCategoryString = device.MnemonicId switch

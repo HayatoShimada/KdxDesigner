@@ -26,7 +26,6 @@ namespace KdxDesigner.Services
             return connection.Query<MnemonicSpeedDevice>(sql, new { PlcId = plcId }).ToList();
         }
 
-        // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         public void Save(
             List<CY> cys, 
             int startNum, int plcId)

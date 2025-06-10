@@ -250,7 +250,6 @@ namespace KdxDesigner.Services
                 foreach (CY cylinder in cylinders)
                 {
                     if (cylinder == null) continue;
-
                     existingLookup.TryGetValue(cylinder.Id, out var existing);
 
                     var parameters = new DynamicParameters();
