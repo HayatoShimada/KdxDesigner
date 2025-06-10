@@ -1,5 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.Cylinder;
 using KdxDesigner.ViewModels;
 
@@ -8,12 +10,18 @@ namespace KdxDesigner.Utils
     public class CylinderBuilder
     {
         private readonly MainViewModel _mainViewModel;
-        public CylinderBuilder(MainViewModel mainViewModel)
+        private readonly IErrorAggregator _errorAggregator;
+        private readonly IIOAddressService _ioService;
+
+
+        public CylinderBuilder(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioService)
         {
             _mainViewModel = mainViewModel;
+            _errorAggregator = errorAggregator;
+            _ioService = ioService;
         }
 
-        public List<LadderCsvRow> GenerateAllLadderCsvRows(
+        public List<LadderCsvRow> GenerateLadder(
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -21,15 +29,11 @@ namespace KdxDesigner.Utils
             List<MnemonicSpeedDevice> speed,
             List<Error> mnemonicErrors,
             List<ProsTime> prosTimes,
-            List<IO> ioList,
-            int plcId,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             LadderCsvRow.ResetKeyCounter();
-            errors = new List<OutputError>();
             var result = new List<LadderCsvRow>();
-            var builder = new BuildCylinder(_mainViewModel);
-            List<OutputError> errorsForOperation = new();
+            var builder = new BuildCylinder(_mainViewModel, _errorAggregator, _ioService);
 
             foreach (var cylinder in cylinders)
             {
@@ -44,17 +48,12 @@ namespace KdxDesigner.Utils
                             timers,
                             mnemonicErrors,
                             prosTimes,
-                            ioList,
-                            out errors,
-                            plcId));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
+                            ioList));
                         break;
                     default:
                         break;
                 }
             }
-
-            errors = errorsForOperation.Distinct().ToList(); // 重複を排除
             return result;
         }
 

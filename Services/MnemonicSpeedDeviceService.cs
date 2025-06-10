@@ -2,6 +2,7 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Access;
 
 using System.Data;
 using System.Data.OleDb;
@@ -12,7 +13,7 @@ namespace KdxDesigner.Services
     {
         private readonly string _connectionString;
 
-        public MnemonicSpeedDeviceService(AccessRepository repository)
+        public MnemonicSpeedDeviceService(IAccessRepository repository)
         {
             _connectionString = repository.ConnectionString;
         }

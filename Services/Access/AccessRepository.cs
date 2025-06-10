@@ -2,68 +2,33 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-
-using System;
-using System.Data;
-using System.Data.OleDb;
-using System.Diagnostics;
-using System.Reflection.PortableExecutable;
-using System.Transactions;
 using KdxDesigner.Utils.ini;
+
 using Microsoft.Win32; // ← ファイル選択ダイアログ用
+
+using System.Data.OleDb;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 
 
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.Access
 {
-    public class AccessRepository
+    public class AccessRepository : IAccessRepository
     {
-        public AccessRepository()
-        {
-
-            // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
-            ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" 
-                + "Data Source=C:\\Users\\y-yamada.KANAMORI-SYSTEM\\Desktop\\KDX_Designer.accdb;";
-
-            //// TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
-            //ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" 
-            //    + "Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_DesignerTest.accdb;";
-
-            string iniPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.ini");
-            string? dbPath = IniHelper.ReadValue("Database", "AccessPath", iniPath);
-
-            if (string.IsNullOrWhiteSpace(dbPath))
-            {
-                MessageBox.Show("Accessファイルのパスが設定されていません。ファイルを選択してください。");
-
-                var dialog = new OpenFileDialog
-                {
-                    Filter = "Access DBファイル (*.accdb)|*.accdb",
-                    Title = "Accessファイルを選択"
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    dbPath = dialog.FileName;
-                    IniHelper.WriteValue("Database", "AccessPath", dbPath, iniPath);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Accessファイルの選択がキャンセルされました。");
-                }
-            }
-
-            if (!File.Exists(dbPath))
-            {
-                throw new FileNotFoundException($"Accessファイルが見つかりません：{dbPath}");
-            }
-
-            ConnectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
-        }
-
+        // 接続文字列をプロパティとして公開
         public string ConnectionString { get; }
+
+        // コンストラクタで接続文字列を受け取る
+        public AccessRepository(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
+            }
+            ConnectionString = connectionString;
+        }
 
 
         public List<Company> GetCompanies()
@@ -102,11 +67,11 @@ namespace KdxDesigner.Services
             return connection.Query<Models.Process>(sql).ToList();
         }
 
-        public List<Machine> GetMachines()
+        public List<Models.Machine> GetMachines()
         {
             using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, MacineName, ShortName FROM Macine";
-            return connection.Query<Machine>(sql).ToList();
+            return connection.Query<Models.Machine>(sql).ToList();
         }
 
         public List<DriveMain> GetDriveMains()

@@ -1,5 +1,6 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
@@ -14,11 +15,13 @@ namespace KdxDesigner.Utils.Cylinder
     internal class CylinderFunction
     {
         private readonly MainViewModel _mainViewModel;
+        private readonly IErrorAggregator _errorAggregator;
 
         // コンストラクタでMainViewModelをインジェクト
-        public CylinderFunction(MainViewModel mainViewModel)
+        public CylinderFunction(MainViewModel mainViewModel, IErrorAggregator errorAggregator)
         {
             _mainViewModel = mainViewModel;
+            _errorAggregator = errorAggregator;
         }
 
         public List<LadderCsvRow> GoOperation(

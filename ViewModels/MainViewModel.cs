@@ -5,6 +5,9 @@ using CommunityToolkit.Mvvm.Input;
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
+using KdxDesigner.Services.Access;
+using KdxDesigner.Services.Error;
+
 using KdxDesigner.Utils;
 using KdxDesigner.Views;
 
@@ -17,15 +20,15 @@ namespace KdxDesigner.ViewModels
 {
 
     public partial class MainViewModel : ObservableObject
-
     {
-        private readonly AccessRepository _repository = new();
+        private readonly IAccessRepository _repository;
         private readonly MnemonicDeviceService _mnemonicService;
         private readonly MnemonicTimerDeviceService _timerService;
         private readonly ErrorService _errorService;
         private readonly ProsTimeDeviceService _prosTimeService;
         private readonly MnemonicSpeedDeviceService _speedService; // クラス名が不明なため仮定
         private readonly MemoryService _memoryService;
+        private readonly IIOAddressService _ioService;
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
@@ -62,34 +65,56 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool isProsTimeMemory = false;
         [ObservableProperty] private bool isCyTimeMemory = false;
 
-        // メモリ保存処理における進捗バーの最大値（デバイスの総件数を設定） kuni            
         [ObservableProperty] private int memoryProgressMax;
-        // メモリ保存処理における現在の進捗値（保存済みの件数）kuni
         [ObservableProperty] private int memoryProgressValue;
-        // メモリ保存処理の進行状況を表示するテキスト（例：「Process保存中」「保存完了」など）kuni
         [ObservableProperty] private string memoryStatusMessage = string.Empty;
         [ObservableProperty] private List<OutputError> outputErrors = new();
 
         private List<ProcessDetailDto> allDetails = new();
         private List<Models.Process> allProcesses = new();
-        private List<MnemonicDeviceWithProcess> joinedProcessList = new();
-        private List<MnemonicDeviceWithProcessDetail> joinedProcessDetailList = new();
-        private List<MnemonicDeviceWithOperation> joinedOperationList = new();
-        private List<MnemonicDeviceWithCylinder> joinedCylinderList = new();
-        private List<MnemonicTimerDeviceWithOperation> joinedOperationWithTimerList = new();
 
         public MainViewModel()
         {
-            _repository = new AccessRepository();
-            _mnemonicService = new MnemonicDeviceService(_repository);
-            _timerService = new MnemonicTimerDeviceService(_repository);
-            _errorService = new ErrorService(_repository);
-            _prosTimeService = new ProsTimeDeviceService(_repository);
-            _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
-            _memoryService = new MemoryService(_repository);
-            LoadInitialData();
+            try
+            {
+                // 1. パス管理クラスを使ってDBパスを取得
+                var pathManager = new DatabasePathManager();
+                string dbPath = pathManager.ResolveDatabasePath();
+
+                // 2. 接続文字列を生成
+                string connectionString = pathManager.CreateConnectionString(dbPath);
+
+                // 3. リポジトリに接続文字列を渡してインスタンス化
+                _repository = new AccessRepository(connectionString);
+                if (_repository.GetCompanies().Count == 0)
+                {
+                    MessageBox.Show("データベースに会社情報がありません。", "初期化エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Application.Current.Shutdown();
+                    return;
+                }
+                _mnemonicService = new MnemonicDeviceService(_repository);
+                _timerService = new MnemonicTimerDeviceService(_repository);
+                _errorService = new ErrorService(_repository);
+                _prosTimeService = new ProsTimeDeviceService(_repository);
+                _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
+                _memoryService = new MemoryService(_repository);
+
+
+                LoadInitialData();
+            }
+            catch (Exception ex)
+            {
+                // パス選択キャンセルなどで例外が発生した場合の処理
+                MessageBox.Show(ex.Message, "初期化エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                // アプリケーションを終了する
+                Application.Current.Shutdown();
+                return;
+            }
+            
         }
 
+        // データの更新
+        #region Properties for Selected Operations
         private void LoadInitialData()
         {
             Companies = new ObservableCollection<Company>(_repository.GetCompanies());
@@ -140,6 +165,10 @@ namespace KdxDesigner.ViewModels
             }
         }
 
+        #endregion
+
+        // その他ボタン処理
+        #region Properties for Process Details
         [RelayCommand]
         public void UpdateSelectedProcesses(List<Models.Process> selectedProcesses)
         {
@@ -180,9 +209,9 @@ namespace KdxDesigner.ViewModels
             var view = new MemoryEditorView(SelectedPlc.Id);
             view.ShowDialog();
         }
+        #endregion
 
-        // 出力処理ボタンが押されたときの処理
-        // Cycleが選択されていない場合はエラーメッセージを表示
+        // 出力処理
         #region ProcessOutput
 
         [RelayCommand]
@@ -197,49 +226,81 @@ namespace KdxDesigner.ViewModels
 
             try
             {
-                // 1. データ準備
-                MemoryStatusMessage = "データ準備中...";
-                var (data, errors) = PrepareDataForOutput();
-                OutputErrors = new List<OutputError>(errors);
+                // 1. エラー集約サービスのインスタンス化
+                var errorAggregator = new ErrorAggregator();
+                var ioAddressService = new IOAddressService(errorAggregator, _repository);
+                OutputErrors.Clear();
 
-                // 2. ラダー生成
+                // 2. データ準備
+                MemoryStatusMessage = "データ準備中...";
+                var (data, prepErrors) = PrepareDataForOutput();
+                errorAggregator.AddErrors(prepErrors);
+
+                // 3. ラダー初期化
                 MemoryStatusMessage = "ラダー生成中...";
                 var allOutputRows = new List<LadderCsvRow>();
 
-                // 各ビルダーを呼び出してラダー行を生成し、結果とエラーを集約
+                
+
+
+                // 各ビルダーに ViewModel と エラー集約サービスを渡してインスタンス化
+                // (ProcessBuilder, DetailBuilder, OperationBuilder も同様に修正されていると仮定)
+                //var processBuilder = new ProcessBuilder(errorAggregator);
+                //var detailBuilder = new ProcessDetailBuilder(errorAggregator);
+                //var operationBuilder = new OperationBuilder(this, errorAggregator);
+                var cylinderBuilder = new CylinderBuilder(this, errorAggregator, ioAddressService);
+
+
                 var processRows = ProcessBuilder.GenerateAllLadderCsvRows(SelectedCycle!, ProcessDeviceStartL!.Value, DetailDeviceStartL!.Value, data.JoinedProcessList, data.JoinedProcessDetailList, data.IoList, out var processErrors);
                 allOutputRows.AddRange(processRows);
-                OutputErrors.AddRange(processErrors);
 
                 var detailRows = ProcessDetailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, out var detailErrors);
                 allOutputRows.AddRange(detailRows);
-                OutputErrors.AddRange(detailErrors);
 
                 var operationRows = OperationBuilder.GenerateAllLadderCsvRows(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList, SelectedPlc!.Id, out var operationErrors);
                 allOutputRows.AddRange(operationRows);
-                OutputErrors.AddRange(operationErrors);
 
-                var cylinderBuilder = new CylinderBuilder(this); // 'this' を渡す必要性は要検討
-                var cylinderRows = cylinderBuilder.GenerateAllLadderCsvRows(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList, SelectedPlc!.Id, out var cylinderErrors);
+                var cylinderRows = cylinderBuilder.GenerateLadder(
+                    data.JoinedProcessDetailList, 
+                    data.JoinedOperationList, 
+                    data.JoinedCylinderList,
+                    data.JoinedOperationWithTimerList, 
+                    data.SpeedDevice, 
+                    data.MnemonicErrors, 
+                    data.ProsTime, 
+                    data.IoList);
                 allOutputRows.AddRange(cylinderRows);
-                OutputErrors.AddRange(cylinderErrors);
 
-                // 3. CSVエクスポート
-                MemoryStatusMessage = "CSVファイル出力中...";
-                string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Test.csv");
-                LadderCsvExporter.ExportLadderCsv(allOutputRows, csvPath);
+                // 4. 集約されたエラーを取得してUIに反映
+                OutputErrors = new List<OutputError>(errorAggregator.GetAllErrors());
+                if (OutputErrors.Any())
+                {
+                    MessageBox.Show("ラダー生成中にエラーが検出されました。エラーリストを確認してください。", "生成エラー");
+                }
 
-                MemoryStatusMessage = "出力処理が完了しました。";
-                MessageBox.Show(MemoryStatusMessage);
+                // 5. CSVエクスポート
+                if (!OutputErrors.Any(e => e.IsCritical)) // IsCriticalのようなプロパティをOutputErrorに追加して判断するのも良い
+                {
+                    MemoryStatusMessage = "CSVファイル出力中...";
+                    string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "KdxLadder.csv");
+                    LadderCsvExporter.ExportLadderCsv(allOutputRows, csvPath);
+                    MemoryStatusMessage = "出力処理が完了しました。";
+                    MessageBox.Show(MemoryStatusMessage);
+                }
+                else
+                {
+                    MemoryStatusMessage = "クリティカルなエラーのため、CSV出力を中止しました。";
+                }
             }
             catch (Exception ex)
             {
-                var errorMessage = $"出力処理中にエラーが発生しました: {ex.Message}";
+                var errorMessage = $"出力処理中に致命的なエラーが発生しました: {ex.Message}";
                 MemoryStatusMessage = errorMessage;
                 MessageBox.Show(errorMessage, "エラー");
                 Debug.WriteLine(ex);
             }
         }
+        
 
         private List<string> ValidateProcessOutput()
         {
@@ -297,7 +358,7 @@ namespace KdxDesigner.ViewModels
         #endregion
 
         
-
+        // メモリ設定
         #region MemorySetting
 
         [RelayCommand]

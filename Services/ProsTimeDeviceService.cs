@@ -4,7 +4,8 @@ using KdxDesigner.Models.Define; // MnemonicType を含むと仮定
 using System.Data;
 using System.Data.OleDb;
 using System.Linq; // ToList, GroupBy, Any を使用するために追加
-using System.Collections.Generic; // Dictionary を使用するために追加
+using System.Collections.Generic;
+using KdxDesigner.Services.Access; // Dictionary を使用するために追加
 
 namespace KdxDesigner.Services
 {
@@ -29,7 +30,7 @@ namespace KdxDesigner.Services
         private static readonly OperationProsTimeConfig DefaultOperationConfig =
             new() { TotalProsTimeCount = 0, SortIdToCategoryIdMap = new Dictionary<int, int>() };
 
-        public ProsTimeDeviceService(AccessRepository repository)
+        public ProsTimeDeviceService(IAccessRepository repository)
         {
             _connectionString = repository.ConnectionString;
             _loadedOperationConfigs = LoadOperationProsTimeConfigsFromDb(); // ★コンストラクタで読み込み

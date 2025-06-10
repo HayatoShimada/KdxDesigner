@@ -2,6 +2,7 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Access;
 
 using System; // Exception, Action のために追加
 using System.Collections.Generic; // List, Dictionary のために追加
@@ -16,7 +17,7 @@ namespace KdxDesigner.Services
     {
         private readonly string _connectionString;
 
-        public MnemonicTimerDeviceService(AccessRepository repository)
+        public MnemonicTimerDeviceService(IAccessRepository repository)
         {
             _connectionString = repository.ConnectionString;
         }

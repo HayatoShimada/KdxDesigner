@@ -1,6 +1,7 @@
 ﻿using Dapper;
 
 using KdxDesigner.Models;
+using KdxDesigner.Services.Access;
 
 using System.Data;
 using System.Data.OleDb;
@@ -12,7 +13,7 @@ namespace KdxDesigner.Services
     {
         private readonly string _connectionString;
 
-        public MemoryService(AccessRepository repository)
+        public MemoryService(IAccessRepository repository)
         {
             _connectionString = repository.ConnectionString;
         }

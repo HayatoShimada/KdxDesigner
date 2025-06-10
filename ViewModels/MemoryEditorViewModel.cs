@@ -11,6 +11,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using KdxDesigner.Services.Access;
 
 namespace KdxDesigner.ViewModels
 {

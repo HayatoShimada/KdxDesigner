@@ -12,5 +12,6 @@ namespace KdxDesigner.Models
         public string? Message { get; set; }      // エラーメッセージ
         public int? MnemonicId { get; set; }       // 対象ニモニックID
         public int? ProcessId { get; set; }       // 対象プロセスID
+        public bool IsCritical { get; set; } = false; // 致命的なエラーかどうか
     }
 }
