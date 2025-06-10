@@ -20,6 +20,12 @@ namespace KdxDesigner.ViewModels
 
     {
         private readonly AccessRepository _repository = new();
+        private readonly MnemonicDeviceService _mnemonicService;
+        private readonly MnemonicTimerDeviceService _timerService;
+        private readonly ErrorService _errorService;
+        private readonly ProsTimeDeviceService _prosTimeService;
+        private readonly MnemonicSpeedDeviceService _speedService; // クラス名が不明なため仮定
+        private readonly MemoryService _memoryService;
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
@@ -47,8 +53,6 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int? cyTimeStartZR = 30000;
 
         [ObservableProperty] private string? valveSearchText = "SV";
-
-
         [ObservableProperty] private bool isProcessMemory = false;
         [ObservableProperty] private bool isDetailMemory = false;
         [ObservableProperty] private bool isOperationMemory = false;
@@ -76,6 +80,13 @@ namespace KdxDesigner.ViewModels
 
         public MainViewModel()
         {
+            _repository = new AccessRepository();
+            _mnemonicService = new MnemonicDeviceService(_repository);
+            _timerService = new MnemonicTimerDeviceService(_repository);
+            _errorService = new ErrorService(_repository);
+            _prosTimeService = new ProsTimeDeviceService(_repository);
+            _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
+            _memoryService = new MemoryService(_repository);
             LoadInitialData();
         }
 
@@ -116,18 +127,6 @@ namespace KdxDesigner.ViewModels
             }
             Processes = new ObservableCollection<Models.Process>(allProcesses.Where(p => p.CycleId == value.Id));
         }
-
-        [RelayCommand]
-        public void UpdateSelectedProcesses(List<Models.Process> selectedProcesses)
-        {
-            var selectedIds = selectedProcesses.Select(p => p.Id).ToHashSet();
-            var filtered = allDetails
-                .Where(d => d.ProcessId.HasValue && selectedIds.Contains(d.ProcessId.Value))
-                .ToList();
-
-            ProcessDetails = new ObservableCollection<ProcessDetailDto>(filtered);
-        }
-
         public void OnProcessDetailSelected(ProcessDetailDto selected)
         {
             if (selected?.OperationId != null)
@@ -139,6 +138,17 @@ namespace KdxDesigner.ViewModels
                     SelectedOperations.Add(op);
                 }
             }
+        }
+
+        [RelayCommand]
+        public void UpdateSelectedProcesses(List<Models.Process> selectedProcesses)
+        {
+            var selectedIds = selectedProcesses.Select(p => p.Id).ToHashSet();
+            var filtered = allDetails
+                .Where(d => d.ProcessId.HasValue && selectedIds.Contains(d.ProcessId.Value))
+                .ToList();
+
+            ProcessDetails = new ObservableCollection<ProcessDetailDto>(filtered);
         }
 
         [RelayCommand]
@@ -158,524 +168,6 @@ namespace KdxDesigner.ViewModels
             view.ShowDialog();              // モーダルで表示
         }
 
-
-        // メモリ設定ボタンが押されたときの処理
-        // MemoryテーブルとMnemonicDeviceテーブルにデータを保存する
-        // 処理の流れ：必要事項の入力確認→MnemonicDeviceテーブルにデータを保存→Memoryテーブルにデータを保存
-        [RelayCommand]
-        private async Task MemorySetting()
-        {
-            if (SelectedCycle == null
-                || SelectedPlc == null
-                || ProcessDeviceStartL == null
-                || DetailDeviceStartL == null
-                || OperationDeviceStartM == null
-                || CylinderDeviceStartM == null
-                || DeviceStartT == null
-                || ErrorDeviceStartM == null
-                || ProsTimeStartZR == null
-                || ProsTimePreviousStartZR == null
-                || CyTimeStartZR == null
-                || CylinderDeviceStartD == null)
-            {
-                if (SelectedCycle == null)
-                    MessageBox.Show("Cycleが選択されていません。");
-                if (SelectedPlc == null)
-                    MessageBox.Show("Plcが選択されていません。");
-                if (ProcessDeviceStartL == null)
-                    MessageBox.Show("ProcessDeviceStartLが入力されていません。");
-                if (DetailDeviceStartL == null)
-                    MessageBox.Show("DetailDeviceStartLが入力されていません。");
-                if (OperationDeviceStartM == null)
-                    MessageBox.Show("OperationDeviceStartMが入力されていません。");
-                if (CylinderDeviceStartM == null)
-                    MessageBox.Show("CylinderDeviceStartMが入力されていません。");
-                if (DeviceStartT == null)
-                    MessageBox.Show("DeviceStartTが入力されていません。");
-                if (ErrorDeviceStartM == null)
-                    MessageBox.Show("ErrorStartMが入力されていません。");
-                if (ProsTimeStartZR == null)
-                    MessageBox.Show("ProsTimeStartZRが入力されていません。");
-                if (ProsTimePreviousStartZR == null)
-                    MessageBox.Show("ProsTimePreviousStartZRが入力されていません。");
-                if (CylinderDeviceStartD == null)
-                    MessageBox.Show("CylinderDeviceStartDが入力されていません。");
-            }
-            else
-            {
-                var mnemonicService = new MnemonicDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
-                var timerService = new MnemonicTimerDeviceService(_repository); // MnemonicDeviceServiceのインスタンス
-                var errorService = new ErrorService(_repository);               // MnemonicDeviceServiceのインスタンス
-                var prosTimeService = new ProsTimeDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
-                var speedService = new MnemonicSpeedDeviceService(_repository);   // MnemonicDeviceServiceのインスタンス
-
-                // 工程詳細の一覧を読み出し
-                List<ProcessDetailDto> details = _repository.GetProcessDetailDtos()
-                    .Where(d => d.CycleId == SelectedCycle.Id)
-                    .ToList();
-
-                // CYの一覧を読み出し
-                List<CY> cylinder = _repository.GetCYs()
-                    .Where(o => o.PlcId == SelectedPlc.Id)
-                    .ToList();
-
-                // Operationの一覧を読み出し
-                var operationIds = details.Select(c => c.OperationId).ToHashSet();
-                List<Operation> operations = _repository.GetOperations()
-                    .Where(o => operationIds.Contains(o.Id))
-                    .ToList();
-
-                var ioList = _repository.GetIoList();
-
-                // Timerの一覧を読み出し
-                var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
-
-                // プロセスの必要デバイスを保存
-                mnemonicService.SaveMnemonicDeviceProcess(
-                    Processes.ToList(), 
-                    ProcessDeviceStartL.Value, 
-                    SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceProcessDetail(
-                    details, 
-                    DetailDeviceStartL.Value, 
-                    SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceOperation(
-                    operations, 
-                    OperationDeviceStartM.Value, 
-                    SelectedPlc.Id);
-                mnemonicService.SaveMnemonicDeviceCY(
-                    cylinder, 
-                    CylinderDeviceStartM.Value, 
-                    SelectedPlc.Id);
-
-                int timerCount = 0;
-                timerService.SaveWithOperation(
-                    timers, 
-                    operations, 
-                    DeviceStartT.Value,
-                    SelectedPlc.Id, 
-                    SelectedCycle.Id,
-                    out timerCount);
-
-                timerService.SaveWithCY(
-                    timers,
-                    cylinder,
-                    DeviceStartT.Value,
-                    SelectedPlc.Id,
-                    SelectedCycle.Id,
-                    ref timerCount);
-
-                errorService.SaveMnemonicDeviceOperation(
-                    operations, 
-                    ioList, 
-                    ErrorDeviceStartM.Value, 
-                    SelectedPlc.Id, 
-                    SelectedCycle.Id);
-
-                prosTimeService.SaveProsTime(
-                    operations, 
-                    ProsTimeStartZR.Value, 
-                    ProsTimePreviousStartZR.Value, 
-                    CyTimeStartZR.Value,
-                    SelectedPlc.Id);
-
-                speedService.Save(cylinder, CylinderDeviceStartD.Value, SelectedPlc.Id);
-
-                // MnemonicId = 1 だとProcessニモニックのレコード
-                var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
-                var devicesP = devices
-                    .Where(m => m.MnemonicId == (int)MnemonicType.Process)
-                    .ToList();
-                var devicesD = devices
-                    .Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail)
-                    .ToList();
-                var devicesO = devices
-                    .Where(m => m.MnemonicId == (int)MnemonicType.Operation)
-                    .ToList();
-                var devicesC = devices
-                    .Where(m => m.MnemonicId == (int)MnemonicType.CY)
-                    .ToList();
-                var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
-                var errorDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
-
-                // Memoryテーブルにデータを保存
-                var memoryService = new MemoryService(_repository);
-
-
-                // 進捗バーの最大値を事前にセット（全件数） kuni
-                MemoryProgressMax = devicesP.Count + devicesD.Count + devicesO.Count + devicesC.Count;
-                MemoryProgressValue = 0;
-
-                //devices P
-                if (IsProcessMemory)
-                {
-                    MessageBox.Show("Process情報をMemoryテーブルにデータを保存します。");
-                    MemoryStatusMessage = "Process情報を保存中...";
-                    foreach (var device in devicesP)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（Process）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-                }
-
-                if (IsDetailMemory)
-                {
-                    //devices D
-                    MessageBox.Show("ProcessDetail情報をMemoryテーブルにデータを保存します。");
-                    MemoryStatusMessage = "ProcessDetail情報を保存中...";
-                    foreach (var device in devicesD)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（ProcessDetail）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-                }
-
-                if (IsOperationMemory)
-                {
-                    //devices O
-                    MessageBox.Show("Operation情報をMemoryテーブルにデータを保存します。");
-                    MemoryStatusMessage = "Operation情報を保存中...";
-                    foreach (var device in devicesO)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（Operation）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-                }
-
-                if (IsCylinderMemory)
-                {
-                    //devices C
-                    MessageBox.Show("CY情報をMemoryテーブルにデータを保存します。");
-                    MemoryStatusMessage = "CY情報を保存中...";
-                    foreach (var device in devicesC)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-                }
-
-                if (IsErrorMemory)
-                {
-                    //devices C
-                    MessageBox.Show("エラー情報をMemoryテーブルにデータを保存します。");
-                    MemoryStatusMessage = "エラー情報を保存中...";
-                    foreach (var device in devicesC)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicMemories(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（CY）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-                }
-
-                if (IsTimerMemory)
-                {
-                    //devices T
-                    MessageBox.Show("Timer情報をMemoryテーブルにデータを保存します。");
-                    MemoryStatusMessage = "Timer情報を保存中...";
-                    foreach (var device in timerDevices)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicTimerMemoriesT(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（Timer）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-
-                    foreach (var device in timerDevices)
-                    {
-                        bool result = await Task.Run(() => memoryService.SaveMnemonicTimerMemoriesZR(device));
-                        if (!result)
-                        {
-                            MemoryStatusMessage = "Memoryテーブル（Timer）の保存に失敗しました。";
-                            MessageBox.Show(MemoryStatusMessage);
-                            return;
-                        }
-                        MemoryProgressValue++;
-                    }
-                }
-
-                MemoryStatusMessage = "保存完了！";
-                MessageBox.Show("すべてのメモリ保存が完了しました。");
-
-            }
-        }
-
-
-        // 出力処理ボタンが押されたときの処理
-        // Cycleが選択されていない場合はエラーメッセージを表示
-        [RelayCommand]
-        private void ProcessOutput()
-        {
-            if (SelectedCycle == null)
-            {
-                MessageBox.Show("Cycleが選択されていません。");
-                return;
-            }
-            if (SelectedPlc == null)
-            {
-                MessageBox.Show("PLCが選択されていません。");
-                return;
-            }
-            if (ProcessDeviceStartL == null)
-            {
-                MessageBox.Show("ProcessDeviceStartLが入力されていません。");
-                return;
-            }
-            if (DetailDeviceStartL == null)
-            {
-                MessageBox.Show("DetailDeviceStartLが入力されていません。");
-                return;
-            }
-            if (Processes.Count == 0)
-            {
-                MessageBox.Show("Processが選択されていません。");
-                return;
-            }
-            if (ProcessDeviceStartL == null 
-                || DetailDeviceStartL == null
-                || CyTimeStartZR == null)
-            {
-                MessageBox.Show("ProcessDeviceStartLまたはDetailDeviceStartLが入力されていません。");
-                return;
-            }
-
-            var mnemonicService = new MnemonicDeviceService(_repository);    // MnemonicDeviceServiceのインスタンス
-
-            // detailsを取得
-            var details = _repository.GetProcessDetailDtos();
-            List<ProcessDetailDto> detailAll = new();
-            var operations = _repository.GetOperations();
-            var cylinders = _repository.GetCYs();
-
-            foreach (var pros in Processes)
-            {
-                detailAll.AddRange(details.Where(d => d.ProcessId == pros.Id));
-            }
-
-            // IO一覧を取得
-            var ioList = _repository.GetIoList();
-            var memoryService = new MemoryService(_repository);
-            var timerService = new MnemonicTimerDeviceService(_repository);
-            var prosTimeService = new ProsTimeDeviceService(_repository);
-            var speedService = new MnemonicSpeedDeviceService(_repository);
-
-
-            var memoryList = memoryService.GetMemories(SelectedPlc.Id);
-
-            // MnemonicDeviceの一覧を取得
-            var devices = mnemonicService.GetMnemonicDevice(SelectedCycle?.PlcId ?? throw new InvalidOperationException("SelectedCycle is null."));
-            var devicesP = devices
-                .Where(m => m.MnemonicId == (int)MnemonicType.Process)
-                .ToList();
-            var devicesD = devices
-                .Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail)
-                .ToList();
-            var devicesO = devices
-                .Where(m => m.MnemonicId == (int)MnemonicType.Operation)
-                .ToList();
-            var devicesC = devices
-                .Where(m => m.MnemonicId == (int)MnemonicType.CY)
-                .ToList();
-            var timerDevices = timerService.GetMnemonicTimerDevice(SelectedPlc.Id, SelectedCycle.Id);
-            var prosTime = prosTimeService.GetProsTimeByMnemonicId(SelectedPlc.Id, (int)MnemonicType.Operation);
-            var speedDevice = speedService.GetMnemonicSpeedDevice(SelectedPlc.Id);
-
-            // MnemonicDeviceとProcessのリストを結合
-            // 並び順はProcess.Idで昇順
-            joinedProcessList = devicesP
-                        .Join(
-                            Processes.ToList(),
-                            m => m.RecordId,
-                            p => p.Id,
-                            (m, p) => new MnemonicDeviceWithProcess
-                            {
-                                Mnemonic = m,
-                                Process = p
-                            })
-                        .OrderBy(m => m.Process.Id)
-                        .ToList();
-
-            // MnemonicDeviceとProcessDetailのリストを結合
-            // 並び順はProcessDetail.Idで昇順
-            joinedProcessDetailList = devicesD
-                    .Join(
-                        detailAll.ToList(),
-                        m => m.RecordId,
-                        d => d.Id,
-                        (m, d) => new MnemonicDeviceWithProcessDetail
-                        {
-                            Mnemonic = m,
-                            Detail = d
-                        })
-                    .OrderBy(m => m.Detail.Id)
-                    .ToList();
-
-            // MnemonicDeviceとOperationのリストを結合
-            // 並び順はOperation.Idで昇順
-            joinedOperationList = devicesO
-                    .Join(
-                        operations,
-                        m => m.RecordId,
-                        o => o.Id,
-                        (m, d) => new MnemonicDeviceWithOperation
-                        {
-                            Mnemonic = m,
-                            Operation = d
-                        })
-                    .OrderBy(m => m.Operation.Id)
-                    .ToList();
-
-            // MnemonicDeviceとCylinderのリストを結合
-            // 並び順はCylinder.Idで昇順
-            joinedCylinderList = devicesC
-                .Join(
-                    cylinders,
-                    m => m.RecordId,
-                    c => c.Id,
-                    (m, c) => new MnemonicDeviceWithCylinder
-                    {
-                        Mnemonic = m,
-                        Cylinder = c
-                    })
-                .OrderBy(mc => mc.Cylinder.Id)
-                .ToList();
-
-            // MnemonicTimerDeviceとOperationのリストを結合
-            // 並び順はOperation.Idで昇順
-            joinedOperationWithTimerList = timerDevices
-                .Join(
-                    operations,
-                    m => m.RecordId,
-                    o => o.Id,
-                    (m, o) => new MnemonicTimerDeviceWithOperation
-                    {
-                        Timer = m,
-                        Operation = o
-                    })
-                .OrderBy(m => m.Operation.Id)
-                .ToList();
-
-            var _errorService = new ErrorService(_repository);
-            List<Error>? mnemonicErrors = _errorService.GetErrors(SelectedPlc.Id, SelectedCycle.Id, (int)MnemonicType.Operation);
-
-            // CSV出力処理
-            // \Utils\ProcessBuilder.cs
-            var outputRows = ProcessBuilder.GenerateAllLadderCsvRows(
-                    SelectedCycle,
-                    ProcessDeviceStartL!.Value,
-                    DetailDeviceStartL!.Value,
-                    joinedProcessList,
-                    joinedProcessDetailList,
-                    ioList,
-                    out var errors
-                    );
-
-            
-            foreach (var error in errors)
-            {
-                OutputErrors.Add(error);
-            }
-
-            // CSV出力処理
-            // \Utils\ProcessDetailBuilder.cs
-            var outputDetailRows = ProcessDetailBuilder.GenerateAllLadderCsvRows(
-                joinedProcessList,
-                joinedProcessDetailList,
-                joinedOperationList,
-                joinedCylinderList,
-                    ioList,
-                    out var errorDetails
-                );
-            foreach (var error in errorDetails)
-            {
-                OutputErrors.Add(error);
-            }
-
-            // CSV出力処理
-            // \Utils\OperationBuilder.cs
-            var outputOperationRow = OperationBuilder.GenerateAllLadderCsvRows(
-                    joinedProcessDetailList,
-                    joinedOperationList,
-                    joinedCylinderList,
-                    joinedOperationWithTimerList,
-                    speedDevice,
-                    mnemonicErrors,
-                    prosTime,
-                    ioList,
-                    SelectedPlc.Id,
-                    out var errorOperation
-                );
-
-            // CSV出力処理
-            // \Utils\OperationBuilder.cs
-            List<Cycle> allCycle = _repository.GetCycles().Where(c => c.PlcId == SelectedPlc.Id).ToList();
-
-            var cylinderBuilder = new CylinderBuilder(this);
-
-            var outputCylinderRow = cylinderBuilder.GenerateAllLadderCsvRows(
-                    joinedProcessDetailList,
-                    joinedOperationList,
-                    joinedCylinderList,
-                    joinedOperationWithTimerList,
-                    speedDevice,
-                    mnemonicErrors,
-                    prosTime,
-                    ioList,
-                    SelectedPlc.Id,
-                    out var errorCylinder
-                );
-
-            foreach (var error in errorDetails)
-            {
-                OutputErrors.Add(error);
-            }
-
-            // 仮：結果をログ出力（実際にはCSVに保存などを検討）
-            /*foreach (var row in outputRows)
-            {
-                Debug.WriteLine($"{row.Command} {row.Address}");
-            }*/
-
-            // #50 CSVファイルに出力
-            string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Test.csv");
-            LadderCsvExporter.ExportLadderCsv(outputRows, csvPath);
-
-            MessageBox.Show("出力処理が完了しました。");
-            return;
-        }
-
         [RelayCommand]
         private void OpenMemoryEditor()
         {
@@ -689,6 +181,264 @@ namespace KdxDesigner.ViewModels
             view.ShowDialog();
         }
 
+        // 出力処理ボタンが押されたときの処理
+        // Cycleが選択されていない場合はエラーメッセージを表示
+        #region ProcessOutput
+
+        [RelayCommand]
+        private void ProcessOutput()
+        {
+            var errorMessages = ValidateProcessOutput();
+            if (errorMessages.Any())
+            {
+                MessageBox.Show(string.Join("\n", errorMessages), "入力エラー");
+                return;
+            }
+
+            try
+            {
+                // 1. データ準備
+                MemoryStatusMessage = "データ準備中...";
+                var (data, errors) = PrepareDataForOutput();
+                OutputErrors = new List<OutputError>(errors);
+
+                // 2. ラダー生成
+                MemoryStatusMessage = "ラダー生成中...";
+                var allOutputRows = new List<LadderCsvRow>();
+
+                // 各ビルダーを呼び出してラダー行を生成し、結果とエラーを集約
+                var processRows = ProcessBuilder.GenerateAllLadderCsvRows(SelectedCycle!, ProcessDeviceStartL!.Value, DetailDeviceStartL!.Value, data.JoinedProcessList, data.JoinedProcessDetailList, data.IoList, out var processErrors);
+                allOutputRows.AddRange(processRows);
+                OutputErrors.AddRange(processErrors);
+
+                var detailRows = ProcessDetailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, out var detailErrors);
+                allOutputRows.AddRange(detailRows);
+                OutputErrors.AddRange(detailErrors);
+
+                var operationRows = OperationBuilder.GenerateAllLadderCsvRows(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList, SelectedPlc!.Id, out var operationErrors);
+                allOutputRows.AddRange(operationRows);
+                OutputErrors.AddRange(operationErrors);
+
+                var cylinderBuilder = new CylinderBuilder(this); // 'this' を渡す必要性は要検討
+                var cylinderRows = cylinderBuilder.GenerateAllLadderCsvRows(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList, SelectedPlc!.Id, out var cylinderErrors);
+                allOutputRows.AddRange(cylinderRows);
+                OutputErrors.AddRange(cylinderErrors);
+
+                // 3. CSVエクスポート
+                MemoryStatusMessage = "CSVファイル出力中...";
+                string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Test.csv");
+                LadderCsvExporter.ExportLadderCsv(allOutputRows, csvPath);
+
+                MemoryStatusMessage = "出力処理が完了しました。";
+                MessageBox.Show(MemoryStatusMessage);
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = $"出力処理中にエラーが発生しました: {ex.Message}";
+                MemoryStatusMessage = errorMessage;
+                MessageBox.Show(errorMessage, "エラー");
+                Debug.WriteLine(ex);
+            }
+        }
+
+        private List<string> ValidateProcessOutput()
+        {
+            var errors = new List<string>();
+            if (SelectedCycle == null) errors.Add("Cycleが選択されていません。");
+            if (SelectedPlc == null) errors.Add("PLCが選択されていません。");
+            if (ProcessDeviceStartL == null) errors.Add("ProcessDeviceStartLが入力されていません。");
+            if (DetailDeviceStartL == null) errors.Add("DetailDeviceStartLが入力されていません。");
+            if (CyTimeStartZR == null) errors.Add("CyTimeStartZRが入力されていません。"); // 元のコードのチェック条件を反映
+            if (Processes.Count == 0) errors.Add("Processが選択されていません。");
+            return errors;
+        }
+
+        private ((List<MnemonicDeviceWithProcess> JoinedProcessList,
+                  List<MnemonicDeviceWithProcessDetail> JoinedProcessDetailList,
+                  List<MnemonicDeviceWithOperation> JoinedOperationList,
+                  List<MnemonicDeviceWithCylinder> JoinedCylinderList,
+                  List<MnemonicTimerDeviceWithOperation> JoinedOperationWithTimerList,
+                  List<MnemonicSpeedDevice> SpeedDevice,
+                  List<Error> MnemonicErrors,
+                  List<ProsTime> ProsTime,
+                  List<IO> IoList) Data, List<OutputError> Errors) PrepareDataForOutput()
+        {
+            var plcId = SelectedPlc!.Id;
+            var cycleId = SelectedCycle!.Id;
+
+            var devices = _mnemonicService.GetMnemonicDevice(plcId);
+            var timers = _repository.GetTimersByCycleId(cycleId);
+            var operations = _repository.GetOperations();
+            var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
+            var details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == cycleId).ToList();
+            var ioList = _repository.GetIoList();
+
+            var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
+            var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
+            var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
+            var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList();
+
+            var timerDevices = _timerService.GetMnemonicTimerDevice(plcId, cycleId);
+            var prosTime = _prosTimeService.GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
+            var speedDevice = _speedService.GetMnemonicSpeedDevice(plcId);
+            var mnemonicErrors = _errorService.GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
+
+            // JOIN処理
+            var joinedProcessList = devicesP.Join(Processes, m => m.RecordId, p => p.Id, (m, p) => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p }).OrderBy(x => x.Process.Id).ToList();
+            var joinedProcessDetailList = devicesD.Join(details, m => m.RecordId, d => d.Id, (m, d) => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d }).OrderBy(x => x.Detail.Id).ToList();
+            var joinedOperationList = devicesO.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
+            var joinedCylinderList = devicesC.Join(cylinders, m => m.RecordId, c => c.Id, (m, c) => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c }).OrderBy(x => x.Cylinder.Id).ToList();
+            var joinedOperationWithTimerList = timerDevices.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
+
+            var dataTuple = (joinedProcessList, joinedProcessDetailList, joinedOperationList, joinedCylinderList, joinedOperationWithTimerList, speedDevice, mnemonicErrors, prosTime, ioList);
+            return (dataTuple, new List<OutputError>()); // 初期エラーリスト
+        }
+
+        #endregion
+
+        
+
+        #region MemorySetting
+
+        [RelayCommand]
+        private async Task MemorySetting()
+        {
+            if (!ValidateMemorySettings()) return;
+
+            // 3. データ準備
+            var prepData = PrepareDataForMemorySetting();
+
+            // 4. Mnemonic/Timerテーブルへの事前保存
+            if (prepData == null)
+            {
+                // データ準備に失敗した場合、ユーザーに通知して処理を中断
+                MessageBox.Show("データ準備に失敗しました。CycleまたはPLCが選択されているか確認してください。", "エラー");
+                return;
+            }
+
+            SaveMnemonicAndTimerDevices(prepData.Value);
+            await SaveMemoriesToMemoryTableAsync(prepData.Value);
+        }
+
+        private bool ValidateMemorySettings()
+        {
+            var errorMessages = new List<string>();
+            if (SelectedCycle == null) errorMessages.Add("Cycleが選択されていません。");
+            if (SelectedPlc == null) errorMessages.Add("PLCが選択されていません。");
+            if (ProcessDeviceStartL == null) errorMessages.Add("ProcessDeviceStartLが入力されていません。");
+            if (DetailDeviceStartL == null) errorMessages.Add("DetailDeviceStartLが入力されていません。");
+            if (OperationDeviceStartM == null) errorMessages.Add("OperationDeviceStartMが入力されていません。");
+            if (CylinderDeviceStartM == null) errorMessages.Add("CylinderDeviceStartMが入力されていません。");
+            if (DeviceStartT == null) errorMessages.Add("DeviceStartTが入力されていません。");
+            if (ErrorDeviceStartM == null) errorMessages.Add("ErrorStartMが入力されていません。");
+            if (ProsTimeStartZR == null) errorMessages.Add("ProsTimeStartZRが入力されていません。");
+            if (ProsTimePreviousStartZR == null) errorMessages.Add("ProsTimePreviousStartZRが入力されていません。");
+            if (CyTimeStartZR == null) errorMessages.Add("CyTimeStartZRが入力されていません。");
+            if (CylinderDeviceStartD == null) errorMessages.Add("CylinderDeviceStartDが入力されていません。");
+
+            if (errorMessages.Any())
+            {
+                MessageBox.Show(string.Join("\n", errorMessages), "入力エラー");
+                return false;
+            }
+            return true;
+        }
+
+        // MemorySettingに必要なデータを準備するヘルパー
+        private (List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers)? PrepareDataForMemorySetting()
+        {
+            if (SelectedCycle == null || SelectedPlc == null) return null;
+
+            List<ProcessDetailDto> details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == SelectedCycle.Id).ToList();
+            List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
+            var operationIds = details.Select(c => c.OperationId).ToHashSet();
+            List<Operation> operations = _repository.GetOperations().Where(o => operationIds.Contains(o.Id)).ToList();
+            var ioList = _repository.GetIoList();
+            var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
+
+            return (details, cylinders, operations, ioList, timers);
+        }
+
+        // Mnemonic* と Timer* テーブルへのデータ保存をまとめたヘルパー
+        private void SaveMnemonicAndTimerDevices((List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
+        {
+            MemoryStatusMessage = "ニーモニックデバイス情報を保存中...";
+            _mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL!.Value, SelectedPlc!.Id);
+            _mnemonicService.SaveMnemonicDeviceProcessDetail(prepData.details, DetailDeviceStartL!.Value, SelectedPlc!.Id);
+            _mnemonicService.SaveMnemonicDeviceOperation(prepData.operations, OperationDeviceStartM!.Value, SelectedPlc!.Id);
+            _mnemonicService.SaveMnemonicDeviceCY(prepData.cylinders, CylinderDeviceStartM!.Value, SelectedPlc!.Id);
+
+            int timerCount = 0;
+            _timerService.SaveWithOperation(prepData.timers, prepData.operations, DeviceStartT!.Value, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
+            _timerService.SaveWithCY(prepData.timers, prepData.cylinders, DeviceStartT!.Value, SelectedPlc!.Id, SelectedCycle!.Id, ref timerCount);
+
+            _errorService.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM!.Value, SelectedPlc!.Id, SelectedCycle!.Id);
+            _prosTimeService.SaveProsTime(prepData.operations, ProsTimeStartZR!.Value, ProsTimePreviousStartZR!.Value, CyTimeStartZR!.Value, SelectedPlc!.Id);
+            _speedService.Save(prepData.cylinders, CylinderDeviceStartD!.Value, SelectedPlc!.Id);
+        }
+
+        // Memoryテーブルへの保存処理
+        private async Task SaveMemoriesToMemoryTableAsync((List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
+        {
+            var devices = _mnemonicService.GetMnemonicDevice(SelectedPlc!.Id);
+            var timerDevices = _timerService.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);
+
+            var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
+            var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
+            var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
+            var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList();
+
+            // ★注意: IsErrorMemory の処理対象が devicesC になっています。これは意図通りでしょうか？
+            // errorDevices のような別のリストを使うべきかもしれません。現状は元のコードのままにしています。
+
+            MemoryProgressMax = (IsProcessMemory ? devicesP.Count : 0) +
+                                (IsDetailMemory ? devicesD.Count : 0) +
+                                (IsOperationMemory ? devicesO.Count : 0) +
+                                (IsCylinderMemory ? devicesC.Count : 0) +
+                                (IsErrorMemory ? devicesC.Count : 0) + // ★
+                                (IsTimerMemory ? timerDevices.Count * 2 : 0);
+            MemoryProgressValue = 0;
+
+            // 汎用ヘルパーを使って繰り返しを削減
+            if (!await ProcessAndSaveMemoryAsync(IsProcessMemory, devicesP, _memoryService.SaveMnemonicMemories, "Process")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsDetailMemory, devicesD, _memoryService.SaveMnemonicMemories, "ProcessDetail")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsOperationMemory, devicesO, _memoryService.SaveMnemonicMemories, "Operation")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsCylinderMemory, devicesC, _memoryService.SaveMnemonicMemories, "CY")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService.SaveMnemonicMemories, "エラー")) return; // ★
+
+            if (IsTimerMemory)
+            {
+                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService.SaveMnemonicTimerMemoriesT, "Timer (T)")) return;
+                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService.SaveMnemonicTimerMemoriesZR, "Timer (ZR)")) return;
+            }
+
+            MemoryStatusMessage = "保存完了！";
+            MessageBox.Show("すべてのメモリ保存が完了しました。");
+        }
+
+        // Memory保存の繰り返し処理を共通化するヘルパー
+        private async Task<bool> ProcessAndSaveMemoryAsync<T>(bool shouldProcess, IEnumerable<T> devices, Func<T, bool> saveAction, string categoryName)
+        {
+            if (!shouldProcess) return true;
+
+            MessageBox.Show($"{categoryName}情報をMemoryテーブルにデータを保存します。", "確認");
+            MemoryStatusMessage = $"{categoryName}情報を保存中...";
+
+            foreach (var device in devices)
+            {
+                bool result = await Task.Run(() => saveAction(device));
+                if (!result)
+                {
+                    MemoryStatusMessage = $"Memoryテーブル（{categoryName}）の保存に失敗しました。";
+                    MessageBox.Show(MemoryStatusMessage, "エラー");
+                    return false;
+                }
+                MemoryProgressValue++;
+            }
+            return true;
+        }
+
+        #endregion
 
     }
 }

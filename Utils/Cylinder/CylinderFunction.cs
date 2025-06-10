@@ -1,6 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Utils.MnemonicCommon;
+using KdxDesigner.ViewModels;
 
 using System;
 using System.Collections.Generic;
@@ -10,15 +11,20 @@ using System.Threading.Tasks;
 
 namespace KdxDesigner.Utils.Cylinder
 {
-    internal class Common
+    internal class CylinderFunction
     {
+        private readonly MainViewModel _mainViewModel;
 
-        public static List<LadderCsvRow> GoOperation(
+        // コンストラクタでMainViewModelをインジェクト
+        public CylinderFunction(MainViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+        }
+
+        public List<LadderCsvRow> GoOperation(
             List<MnemonicDeviceWithOperation> goOperation,
             List<MnemonicDeviceWithOperation> activeOperation,
-            MnemonicDeviceWithCylinder cylinder
-
-            )
+            MnemonicDeviceWithCylinder cylinder)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -62,11 +68,9 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public static List<LadderCsvRow> BackOperation(
+        public List<LadderCsvRow> BackOperation(
             List<MnemonicDeviceWithOperation> backOperation,
-            MnemonicDeviceWithCylinder cylinder
-
-            )
+            MnemonicDeviceWithCylinder cylinder)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -95,12 +99,10 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public static List<LadderCsvRow> GoManualOperation(
+        public List<LadderCsvRow> GoManualOperation(
             List<MnemonicDeviceWithOperation> goOperation,
             List<MnemonicDeviceWithOperation> activeOperation,
-            MnemonicDeviceWithCylinder cylinder
-
-            )
+            MnemonicDeviceWithCylinder cylinder)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -144,11 +146,9 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public static List<LadderCsvRow> BackManualOperation(
+        public List<LadderCsvRow> BackManualOperation(
             List<MnemonicDeviceWithOperation> backOperation,
-            MnemonicDeviceWithCylinder cylinder
-
-            )
+            MnemonicDeviceWithCylinder cylinder)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -176,6 +176,58 @@ namespace KdxDesigner.Utils.Cylinder
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
+
+
+        public List<LadderCsvRow> CyclePulse(
+            MnemonicDeviceWithCylinder cylinder,
+            List<Cycle> cycles)
+        {
+            List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
+            bool isFirst = true; // 最初のOperationかどうかのフラグ
+
+            string label = cylinder.Mnemonic.DeviceLabel ?? ""; // ラベルの取得
+            int startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
+
+            if (cylinder.Cylinder.ProcessStartCycle != null)
+            {
+                // 修正箇所: List<int> startCycleIds の初期化部分  
+                if (cylinder.Cylinder.ProcessStartCycle != null)
+                {
+                    // ProcessStartCycle をセミコロンで分割し、各要素を整数に変換してリストに格納  
+                    List<int> startCycles = cylinder.Cylinder.ProcessStartCycle
+                        .Split(';')
+                        .Select(int.Parse)
+                        .ToList();
+
+
+                    foreach (var startCycleId in startCycles)
+                    {
+                        // 各サイクルIDに対して処理を行う  
+                        var eachCycle = cycles.FirstOrDefault(c => c.Id == startCycleId);
+                        if (eachCycle != null)
+                        {
+                            // Cycleに関連する処理をここに追加
+                            // 例: CycleのラベルをLD命令として追加
+                            result.Add(LadderRow.AddLDP(eachCycle.StartDevice));
+                            result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                            if (isFirst)
+                            {
+                                isFirst = false; // 最初のOperationの場合、フラグを更新
+                                continue;
+                            }
+                            result.Add(LadderRow.AddORB()); // 出力命令を追加
+                        }
+                    }
+
+                    result.Add(LadderRow.AddPLS(label + (startNum + 4)));
+                }
+            }
+
+            return result; // 生成されたLadderCsvRowのリストを返す
+        }
+
+
+
 
     }
 }
