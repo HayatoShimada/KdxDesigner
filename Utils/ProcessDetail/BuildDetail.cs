@@ -1,7 +1,10 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
+using KdxDesigner.ViewModels;
+
 using Windows.AI.MachineLearning;
 
 // ProcessDetail（工程プログラム）のニモニック配列を返すコード群
@@ -10,18 +13,27 @@ namespace KdxDesigner.Utils.ProcessDetail
 {
     internal class BuildDetail
     {
+        private readonly MainViewModel _mainViewModel;
+        private readonly IErrorAggregator _errorAggregator;
+        private readonly IIOAddressService _ioAddressService;
+
+        public BuildDetail(MainViewModel mainViewModel,IIOAddressService ioAddressService, IErrorAggregator errorAggregator)
+        {
+            _mainViewModel = mainViewModel; // MainViewModelのインスタンスを取得
+            _ioAddressService = ioAddressService; // IOアドレスサービスのインスタンスを取得
+            _errorAggregator = errorAggregator;   // エラーアグリゲーターのインスタンスを取得
+        }
+
         // 通常工程を出力するメソッド
-        public static List<LadderCsvRow> BuildDetailNormal(
+        public List<LadderCsvRow> BuildDetailNormal(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             var result = new List<LadderCsvRow>();
-            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
             // 行間ステートメントを追加
@@ -49,7 +61,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -63,10 +75,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.StartSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
-                var cycle = _repository.GetCycles();
-                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
-                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.StartSensor, plcId, out localErrors);
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.StartSensor, plcId);
 
                 if (ioSensor == null)
                 {
@@ -83,11 +93,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
 
                     }
                 }
@@ -129,23 +139,20 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
             // エラーをまとめて返す。
-            errors.AddRange(localErrors);
 
             return result;
 
         }
 
         // 工程まとめを出力するメソッド
-        public static List<LadderCsvRow> BuildDetailSummarize(
+        public List<LadderCsvRow> BuildDetailSummarize(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
             List<OutputError> localErrors = new();
 
@@ -174,7 +181,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -220,22 +227,19 @@ namespace KdxDesigner.Utils.ProcessDetail
 
 
             // エラーをまとめて返す。
-            errors.AddRange(localErrors);
             return result;
 
         }
 
         // センサON確認
-        public static List<LadderCsvRow> BuildDetailSensorON(
+        public List<LadderCsvRow> BuildDetailSensorON(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
             List<OutputError> localErrors = new();
 
@@ -265,7 +269,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -296,10 +300,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.FinishSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
-                var cycle = _repository.GetCycles();
-                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
-                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.FinishSensor, plcId, out localErrors);
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.FinishSensor, plcId);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
@@ -316,11 +318,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.FinishSensor.Contains("_"))    // ON工程　→　_の有無問わず　LD接点
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));//恐らく使用されない
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));//恐らく使用されない
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
 
                     }
                 }
@@ -353,22 +355,19 @@ namespace KdxDesigner.Utils.ProcessDetail
 
 
             // エラーをまとめて返す。
-            errors.AddRange(localErrors);
             return result;
 
         }
 
         // センサOFF確認
-        public static List<LadderCsvRow> BuildDetailSensorOFF(
+        public List<LadderCsvRow> BuildDetailSensorOFF(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
             List<OutputError> localErrors = new();
 
@@ -400,7 +399,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -431,10 +430,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.FinishSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
-                var cycle = _repository.GetCycles();
-                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
-                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.FinishSensor, plcId, out localErrors);
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.FinishSensor, plcId);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
@@ -451,11 +448,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.FinishSensor.Contains("_"))    // OFF工程　→　_の有無問わず　LDI接点
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));//恐らく使用されない
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));//恐らく使用されない
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
 
                     }
                 }
@@ -489,23 +486,20 @@ namespace KdxDesigner.Utils.ProcessDetail
 
 
             // エラーをまとめて返す。
-            errors.AddRange(localErrors);
             return result;
 
         }
 
         // 工程分岐
-        public static List<LadderCsvRow> BuildDetailBranch(
+        public List<LadderCsvRow> BuildDetailBranch(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             var result = new List<LadderCsvRow>();
-            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
             // 行間ステートメントを追加
@@ -533,7 +527,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -557,10 +551,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
             if (detail.Detail.StartSensor != null)
             {
-                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
-                var cycle = _repository.GetCycles();
-                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
-                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.StartSensor, plcId, out localErrors);
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.StartSensor, plcId);
 
                 if (ioSensor == null)
                 {
@@ -577,11 +569,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
 
                     }
                 }
@@ -613,25 +605,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
-            // エラーをまとめて返す。
-            errors.AddRange(localErrors);
 
             return result;
 
         }
 
         // 工程合流
-        public static List<LadderCsvRow> BuildDetailMerge(
+        public List<LadderCsvRow> BuildDetailMerge(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             var result = new List<LadderCsvRow>();
-            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
             // 行間ステートメントを追加
@@ -659,7 +647,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -695,24 +683,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
             // エラーをまとめて返す。
-            errors.AddRange(localErrors);
 
             return result;
 
         }
 
         // IL待ち
-        public static List<LadderCsvRow> BuildDetailILWait(
+        public List<LadderCsvRow> BuildDetailILWait(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             var result = new List<LadderCsvRow>();
-            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
             // 行間ステートメントを追加
@@ -740,7 +725,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -790,46 +775,39 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
-            // エラーをまとめて返す。
-            errors.AddRange(localErrors);
 
             return result;
         }
 
         // 工程OFF確認
-        public static List<LadderCsvRow> BuildDetailProcessOFF(
+        public List<LadderCsvRow> BuildDetailProcessOFF(
             MnemonicDeviceWithProcessDetail process,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var result = new List<LadderCsvRow>();
             List<OutputError> localErrors = new();
 
             // L***0 ~ L***9のDeviceリストを取得
 
             // エラーをまとめて返す。
-            errors.AddRange(localErrors);
             return result;
 
         }
 
         // 期間工程
-        public static List<LadderCsvRow> BuildDetailSeason(
+        public List<LadderCsvRow> BuildDetailSeason(
             MnemonicDeviceWithProcessDetail detail,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             var result = new List<LadderCsvRow>();
-            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> localErrors = new();
 
             // 行間ステートメントを追加
@@ -857,7 +835,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -867,7 +845,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailFinishIds = detail.Detail.FinishIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailFinishDevices = details
                 .Where(d => processDetailFinishIds.Contains(d.Mnemonic.RecordId))
@@ -882,10 +860,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.StartSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
-                var cycle = _repository.GetCycles();
-                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
-                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.StartSensor, plcId, out localErrors);
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.StartSensor, plcId);
 
                 if (ioSensor == null)
                 {
@@ -902,11 +878,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
 
                     }
                 }
@@ -938,10 +914,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.FinishSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var _repository = new AccessRepository(); // 元の設計に従いメソッド内でインスタンス化
-                var cycle = _repository.GetCycles();
-                var plcId = cycle?.FirstOrDefault(c => c.Id == detail.Detail.CycleId)?.PlcId ?? 0;
-                var ioSensor = IOAddress.FindByIOText(ioList, detail.Detail.FinishSensor, plcId, out localErrors);
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.FinishSensor, plcId);
 
                 if (ioSensor == null)
                 {
@@ -959,11 +933,11 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     if (detail.Detail.FinishSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
 
                     }
                 }
@@ -1008,8 +982,6 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
-            // エラーをまとめて返す。
-            errors.AddRange(localErrors);
 
             return result;
 

@@ -11,13 +11,19 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using KdxDesigner.Services.Access;
 
 namespace KdxDesigner.ViewModels
 {
     public partial class MemoryEditorViewModel : ObservableObject
     {
-        private readonly AccessRepository _repository;
+        private readonly IAccessRepository _repository;
         public int _plcId;
+
+        public MemoryEditorViewModel(IAccessRepository repository)
+        {
+            _repository = repository;
+        }
 
         // アプリ側でのデバイス一覧変数を一次保存する
         [ObservableProperty]
@@ -40,8 +46,6 @@ namespace KdxDesigner.ViewModels
         {
             _plcId = plcId;
             // データベースの初期化
-            _repository = new AccessRepository();
-
             // メモリカテゴリドロップダウンのリスト取得
             var memoryService = new MemoryService(_repository);
             MemoryCategories = new ObservableCollection<MemoryCategory>(memoryService.GetMemoryCategories());
@@ -100,7 +104,7 @@ namespace KdxDesigner.ViewModels
                         {
                             if(cols.ElementAtOrDefault(1) != null)
                             {
-                                device = cols.ElementAtOrDefault(1);
+                                device = cols.ElementAtOrDefault(1)!;
                             }
                             else
                             {
@@ -119,7 +123,7 @@ namespace KdxDesigner.ViewModels
                             DeviceNumber = TryParseInt(cols.ElementAtOrDefault(0)),
                             DeviceNumber1 = cols.ElementAtOrDefault(1),
                             DeviceNumber2 = cols.ElementAtOrDefault(2),
-                            Device = device,
+                            Device = device!,
                             Category = cols.ElementAtOrDefault(3),
                             Row_1 = cols.ElementAtOrDefault(4),
                             Row_2 = cols.ElementAtOrDefault(5),

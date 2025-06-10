@@ -2,6 +2,7 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Access;
 
 using System.Data;
 using System.Data.OleDb;
@@ -12,7 +13,7 @@ namespace KdxDesigner.Services
     {
         private readonly string _connectionString;
 
-        public ErrorService(AccessRepository repository)
+        public ErrorService(IAccessRepository repository)
         {
             _connectionString = repository.ConnectionString;
         }
@@ -32,16 +33,16 @@ namespace KdxDesigner.Services
             return messages;
         }
 
-        public List<Error> GetErrors(int plcId, int cycleId, int mnemonicId)
+        public List<Models.Error> GetErrors(int plcId, int cycleId, int mnemonicId)
         {
-            List<Error> errors = new();
+            List<Models.Error> errors = new();
 
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM Error " +
                 "WHERE PlcId = @PlcId " +
                 "AND CycleId = @CycleId " +
                 "AND MnemonicId = @MnemonicId";
-            errors = connection.Query<Error>(sql, new
+            errors = connection.Query<Models.Error>(sql, new
             {
                 PlcId = plcId,
                 CycleId = cycleId,
@@ -53,8 +54,8 @@ namespace KdxDesigner.Services
 
         // Operationのリストを受け取り、Errorテーブルに保存する
         public void SaveMnemonicDeviceOperation(
-            List<Operation> operations,
-            List<IO> iOs,
+            List<Models.Operation> operations,
+            List<Models.IO> iOs,
             int startNum,
             int plcId,
             int cycleId

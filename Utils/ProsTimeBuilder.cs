@@ -1,20 +1,25 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 
 namespace KdxDesigner.Utils
 {
     internal class ProsTimeBuilder
     {
-        public static List<LadderCsvRow> Common(
+        private readonly IErrorAggregator _errorAggregator;
+        public ProsTimeBuilder(IErrorAggregator errorAggregator)
+        {
+            _errorAggregator = errorAggregator;
+        }
+
+        public List<LadderCsvRow> Common(
            Models.Operation operation,
            List<ProsTime> prosTimes,
            string label,
-           int outNum,
-           out List<OutputError> errors)
+           int outNum)
         {
             List<LadderCsvRow>? result = new();
-            errors = new List<OutputError>();
             List<ProsTime> prosTimeList = prosTimes.Where(p => p.RecordId == operation.Id).OrderBy(p => p.SortId).ToList();
 
             // カウント信号の追加

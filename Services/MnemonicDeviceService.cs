@@ -2,6 +2,7 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Access;
 
 using System; // Encoding.RegisterProvider を使うために追加
 using System.Collections.Generic; // List, Dictionary のために追加
@@ -22,7 +23,7 @@ namespace KdxDesigner.Services
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
         }
 
-        public MnemonicDeviceService(AccessRepository repository)
+        public MnemonicDeviceService(IAccessRepository repository)
         {
             _connectionString = repository.ConnectionString;
         }
@@ -107,7 +108,7 @@ namespace KdxDesigner.Services
             }
         }
 
-        // ProcessDetailのリストを受け取り、MnemonicDeviceテーブルに保存する
+        // 修正: AccessRepository のインスタンス化に必要な connectionString を渡すように修正  
         public void SaveMnemonicDeviceProcessDetail(List<ProcessDetailDto> processes, int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
@@ -116,14 +117,8 @@ namespace KdxDesigner.Services
             try
             {
                 var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
-                var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
-
-                // ★パフォーマンス改善の提案:
-                // ループ内で毎回 new AccessRepository() と GetOperationById() を呼び出すのは非効率です。
-                // 本来は、必要なOperationを一括で取得するか、キャッシュする仕組みが望ましいです。
-                // このサービスが AccessRepository インスタンスをDI（依存性注入）で受け取るのが理想的な設計です。
-                // ここでは、元のロジックを維持しつつ、非効率である点をコメントで指摘します。
-                var repository = new AccessRepository(); // ★注意: 本来はループの外で一度だけ初期化すべき
+                var existingLookup = allExisting.ToDictionary(mnemonicDevice => mnemonicDevice.RecordId, mnemonicDevice => mnemonicDevice);
+                var repository = new AccessRepository(_connectionString);
 
                 int count = 0;
                 foreach (ProcessDetailDto process in processes)
@@ -132,7 +127,7 @@ namespace KdxDesigner.Services
 
                     existingLookup.TryGetValue(process.Id, out var existing);
 
-                    var operation = repository.GetOperationById(process.OperationId.Value); // ★注意: ループ内でのDBアクセス
+                    var operation = repository.GetOperationById(process.OperationId.Value);
                     var comment1 = operation?.OperationName ?? "";
                     var comment2 = process.DetailName ?? "";
 
@@ -149,22 +144,21 @@ namespace KdxDesigner.Services
                     if (existing != null)
                     {
                         parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
-                            UPDATE [MnemonicDevice] SET
-                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
-                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
-                                [Comment1] = @Comment1, [Comment2] = @Comment2
+                        connection.Execute(@"  
+                            UPDATE [MnemonicDevice] SET  
+                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,  
+                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,  
+                                [Comment1] = @Comment1, [Comment2] = @Comment2  
                             WHERE [ID] = @ID",
                             parameters, transaction);
                     }
                     else
                     {
-                        // ★修正: SQLのパラメータ名のタイプミスを修正
-                        connection.Execute(@"
-                            INSERT INTO [MnemonicDevice] (
-                                [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
-                            ) VALUES (
-                                @MnemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2
+                        connection.Execute(@"  
+                            INSERT INTO [MnemonicDevice] (  
+                                [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]  
+                            ) VALUES (  
+                                @MnemonicId, @RecordId, @DeviceLabel, @StartNum, @OutCoilCount, @PlcId, @Comment1, @Comment2  
                             )",
                             parameters, transaction);
                     }

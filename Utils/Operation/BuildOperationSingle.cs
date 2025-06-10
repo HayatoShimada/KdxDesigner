@@ -1,6 +1,9 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
+using KdxDesigner.ViewModels;
 
 using System.Diagnostics;
 
@@ -9,8 +12,19 @@ namespace KdxDesigner.Utils.Operation
 {
     internal class BuildOperationSingle
     {
+        private readonly MainViewModel _mainViewModel;
+        private readonly IErrorAggregator _errorAggregator;
+        private readonly IIOAddressService _ioAddressService;
 
-        public static List<LadderCsvRow> Retention(
+        public BuildOperationSingle(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService)
+        {
+            _mainViewModel = mainViewModel;
+            _errorAggregator = errorAggregator;
+            _ioAddressService = ioAddressService;
+        }
+
+
+        public List<LadderCsvRow> Retention(
             MnemonicDeviceWithOperation operation,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
@@ -18,19 +32,15 @@ namespace KdxDesigner.Utils.Operation
             List<MnemonicTimerDeviceWithOperation> timers,
             List<Error> mnemonicError,
             List<ProsTime> prosTimes,
-            List<IO> ioList,
-            out List<OutputError> errors,
-            int plcId)
+            List<IO> ioList)
         {
             // ここに単一工程の処理を実装
-            errors = new List<OutputError>(); // エラーリストの初期化
             var result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
-            List<OutputError> localErrors = new();
-
             var label = operation.Mnemonic.DeviceLabel; // ラベルの取得
             var outNum = operation.Mnemonic.StartNum; // スタート番号の取得
-
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
+            OperationFunction operationFunction = new(operation, operationTimers, ioList, details, _mainViewModel, _errorAggregator, _ioAddressService);
+
 
             // 実際の処理ロジックをここに追加
 
@@ -48,81 +58,58 @@ namespace KdxDesigner.Utils.Operation
             // OperationIdが一致する工程詳細のフィルタリング
             // M0
             var detailList = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
-            result.AddRange(Common.GenerateM0(detailList, label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM0());
 
             // M2
-            result.AddRange(Common.GenerateM2(label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM2());
 
             // M5
-            result.AddRange(Common.GenerateM5(label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM5());
 
             // M6
-            result.AddRange(Common.GenerateM6(operationTimers, label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM6());
 
             // M7
-            // Start信号がある場合のみ回路を生成
             if (operation.Operation.Start != null)
             {
-                result.AddRange(Common.GenerateM7(
-                    operationTimers,
-                    ioList,
-                    operation,
-                    plcId,
-                    label,
-                    outNum.Value,
-                    out localErrors));
+                result.AddRange(operationFunction.GenerateM7());
+            }
+
+            // M16
+            if (operation.Operation.Finish != null)
+            {
+                result.AddRange(operationFunction.GenerateM16());
             }
 
             // M17
-            if (operation.Operation.Finish != null)
-            {
-                result.AddRange(Common.GenerateM16(
-                    operationTimers,
-                    ioList,
-                    operation,
-                    plcId,
-                    label,
-                    outNum.Value,
-                    out localErrors));
-            }
-
-            // M18
-            result.AddRange(Common.GenerateM17(
-                operationTimers,
-                label,
-                outNum.Value
-            ));
+            result.AddRange(operationFunction.GenerateM17());
 
             // M19
-            result.AddRange(Common.GenerateM19(
-                operationTimers,
-                label,
-                outNum.Value
-            ));
+            result.AddRange(operationFunction.GenerateM19());
 
             // エラー回路の生成
-            result.AddRange(ErrorBuilder.Operation(
+            ErrorBuilder errorBuilder = new(_errorAggregator);
+
+            result.AddRange(errorBuilder.Operation(
                 operation.Operation,
                 mnemonicError,
-                label,
-                outNum.Value,
-                out localErrors
+                label!,
+                outNum!.Value
             ));
+
+            ProsTimeBuilder prosTimeBuilder = new(_errorAggregator);
 
             // 工程タイムの生成
-            result.AddRange(ProsTimeBuilder.Common(
+            result.AddRange(prosTimeBuilder.Common(
                 operation.Operation,
                 prosTimes,
-                label,
-                outNum.Value,
-                out localErrors
-            ));
+                label!,
+                outNum!.Value));
 
-            errors.AddRange(localErrors);
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public static List<LadderCsvRow> Excitation(
+        public List<LadderCsvRow> Excitation(
                 MnemonicDeviceWithOperation operation,
                 List<MnemonicDeviceWithProcessDetail> details,
                 List<MnemonicDeviceWithOperation> operations,
@@ -130,19 +117,14 @@ namespace KdxDesigner.Utils.Operation
                 List<MnemonicTimerDeviceWithOperation> timers,
                 List<Error> mnemonicError,
                 List<ProsTime> prosTimes,
-                List<IO> ioList,
-                out List<OutputError> errors,
-                int plcId)
+                List<IO> ioList)
         {
             // ここに単一工程の処理を実装
-            errors = new List<OutputError>(); // エラーリストの初期化
             var result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
-            List<OutputError> localErrors = new();
-
             var label = operation.Mnemonic.DeviceLabel; // ラベルの取得
             var outNum = operation.Mnemonic.StartNum; // スタート番号の取得
-
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
+            OperationFunction operationFunction = new(operation, operationTimers, ioList, details, _mainViewModel, _errorAggregator, _ioAddressService);
 
             // 実際の処理ロジックをここに追加
 
@@ -160,17 +142,17 @@ namespace KdxDesigner.Utils.Operation
             // OperationIdが一致する工程詳細のフィルタリング
             // M0
             var detailList = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
-            result.AddRange(Common.GenerateM0(detailList, label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM0());
 
-            //M2
+            // M2
             result.Add(LadderRow.AddLD(label + (outNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (outNum + 2).ToString()));
 
             // M5
-            result.AddRange(Common.GenerateM5(label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM5());
 
             // M6
-            result.AddRange(Common.GenerateM6(operationTimers, label, outNum.Value));
+            result.AddRange(operationFunction.GenerateM6());
 
             // M8
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
@@ -205,22 +187,17 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddOUT(label + (outNum + 18).ToString()));
 
             // M19
-            result.AddRange(Common.GenerateM19(
-                operationTimers,
-                label,
-                outNum.Value
-            ));
+            result.AddRange(operationFunction.GenerateM19());
+
+            ProsTimeBuilder prosTimeBuilder = new(_errorAggregator);
 
             // 工程タイムの生成
-            result.AddRange(ProsTimeBuilder.Common(
+            result.AddRange(prosTimeBuilder.Common(
                 operation.Operation,
                 prosTimes,
-                label,
-                outNum.Value,
-                out localErrors
-            ));
+                label!,
+                outNum!.Value));
 
-            errors.AddRange(localErrors);
             return result; // 生成されたLadderCsvRowのリストを返す
         }
     }

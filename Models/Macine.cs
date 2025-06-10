@@ -8,14 +8,10 @@ using System.Threading.Tasks;
 
 namespace KdxDesigner.Models
 {
-    [Table("Macine")]
-    public class Macine
+    public class Machine
     {
-        [Key]
         public int Id { get; set; }
-        public string? MacineName { get; set; }
-        public string? ShortName { get; set; }
+        public string MacineName { get; set; } = string.Empty;
+        public string ShortName { get; set; } = string.Empty;
     }
-    
 }
-
