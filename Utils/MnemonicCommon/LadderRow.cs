@@ -48,7 +48,7 @@ namespace KdxDesigner.Utils.MnemonicCommon
             => CreateBMOV(Command.FMOV, source, destination, count);
         public static List<LadderCsvRow> AddSUBP(string source, string destination, string count)
             => CreateBMOV(Command.SUBP, source, destination, count);
-        
+
 
         private static List<LadderCsvRow> CreateMOV(string command, string source, string destination)
         {

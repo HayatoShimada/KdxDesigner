@@ -543,10 +543,7 @@ namespace KdxDesigner.Utils.Cylinder
                     MnemonicId = (int)MnemonicType.CY,
                     ProcessId = _cylinder.Cylinder.Id
                 });
-
-
             }
-
             return result; // 生成されたLadderCsvRowのリストを返す
 
         }

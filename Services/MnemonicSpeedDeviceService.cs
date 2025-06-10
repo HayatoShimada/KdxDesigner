@@ -27,7 +27,7 @@ namespace KdxDesigner.Services
         }
 
         public void Save(
-            List<CY> cys, 
+            List<CY> cys,
             int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);

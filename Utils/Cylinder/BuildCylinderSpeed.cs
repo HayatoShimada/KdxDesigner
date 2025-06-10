@@ -28,7 +28,7 @@ namespace KdxDesigner.Utils.Cylinder
                 List<MnemonicDeviceWithOperation> operations,
                 List<MnemonicDeviceWithCylinder> cylinders,
                 List<MnemonicTimerDeviceWithOperation> timers,
-                List<MnemonicSpeedDevice>speed,
+                List<MnemonicSpeedDevice> speed,
                 List<Error> mnemonicError,
                 List<ProsTime> prosTimes,
                 List<IO> ioList)
@@ -89,10 +89,10 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 帰り方向手動指令  
             result.AddRange(functions.BackManualOperation(backOperation));
-                
+
             // Cycleスタート時の方向自動指令
             result.AddRange(functions.CyclePulse());
-           
+
             // 保持出力
             result.AddRange(functions.RetentionFlow(sensors));
 
@@ -102,7 +102,7 @@ namespace KdxDesigner.Utils.Cylinder
             // 出力OK
             result.AddRange(functions.FlowOK());
 
-            
+
             return result;
 
         }
