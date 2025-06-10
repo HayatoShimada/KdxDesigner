@@ -144,7 +144,7 @@ namespace KdxDesigner.Utils.Operation
             var detailList = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
             result.AddRange(operationFunction.GenerateM0());
 
-            //M2
+            // M2
             result.Add(LadderRow.AddLD(label + (outNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (outNum + 2).ToString()));
 

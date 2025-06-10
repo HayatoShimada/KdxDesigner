@@ -385,5 +385,127 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
 
         }
+
+        public List<LadderCsvRow> DoubleValve(List<IO> sensors)
+        {
+            var result = new List<LadderCsvRow>();
+
+            string valveSearchString = _mainViewModel.ValveSearchText;
+            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
+            string? goValve = null;
+            string? backValve = null;
+
+            switch (valveResult.State)
+            {
+                case FindIOResultState.FoundOne:
+                    _errorAggregator.AddError(new OutputError { 
+                        MnemonicId = (int)MnemonicType.CY,
+                        ProcessId = _cylinder.Cylinder.Id,
+                        Message = "出力バルブ候補が1つしかありません。", 
+                        DetailName = _cylinder.Cylinder.CYNum ?? ""
+                    });
+
+                    break;
+
+                case FindIOResultState.FoundMultiple:
+
+                    // 前進（Go）バルブの出力先が設定されているかチェック
+                    if (string.IsNullOrEmpty(_cylinder.Cylinder.Go))
+                    {
+                        _errorAggregator.AddError(new OutputError
+                        {
+                            MnemonicId = (int)MnemonicType.CY,
+                            ProcessId = _cylinder.Cylinder.Id,
+                            Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の前進（Go）バルブ出力先が設定されていません。",
+                            DetailName = _cylinder.Cylinder.CYNum ?? ""
+                        });
+                    }
+                    else
+                    {
+                        // 設定されている場合のみ、一致するアドレスを探す
+                        goValve = valveResult.MultipleMatches?
+                            .Where(m => m.IOName != null && m.IOName.EndsWith(_cylinder.Cylinder.Go))
+                            .Select(m => m.Address)
+                            .FirstOrDefault();
+                    }
+
+                    // 後退（Back）バルブの出力先が設定されているかチェック
+                    if (string.IsNullOrEmpty(_cylinder.Cylinder.Back))
+                    {
+                        _errorAggregator.AddError(new OutputError
+                        {
+                            MnemonicId = (int)MnemonicType.CY,
+                            ProcessId = _cylinder.Cylinder.Id,
+                            Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の後退（Back）バルブ出力先が設定されていません。",
+                            DetailName = _cylinder.Cylinder.CYNum ?? ""
+                        });
+                    }
+                    else
+                    {
+                        // 設定されている場合のみ、一致するアドレスを探す
+                        backValve = valveResult.MultipleMatches?
+                            .Where(m => m.IOName != null && m.IOName.EndsWith(_cylinder.Cylinder.Back))
+                            .Select(m => m.Address)
+                            .FirstOrDefault();
+                    }
+                    break;
+
+                case FindIOResultState.NotFound:
+                    break;
+            }
+
+
+            // 行き方向のバルブ出力
+            if (goValve != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
+
+                result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
+                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
+                result.Add(LadderRow.AddORB()); // 出力命令を追加
+                result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+                result.Add(LadderRow.AddOUT(goValve));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    DetailName = _cylinder.Cylinder.CYNum ?? "",
+                    Message = $"行き方向のバルブ '{_cylinder.Cylinder.Go}' が見つかりませんでした。",
+                    MnemonicId = (int)MnemonicType.CY,
+                    ProcessId = _cylinder.Cylinder.Id
+                });
+
+
+            }
+
+            if (backValve != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
+                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
+                result.Add(LadderRow.AddORB()); // 出力命令を追加
+                result.Add(LadderRow.AddOUT(backValve));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    DetailName = _cylinder.Cylinder.CYNum ?? "",
+                    Message = $"帰り方向のバルブ '{_cylinder.Cylinder.Back}' が見つかりませんでした。",
+                    MnemonicId = (int)MnemonicType.CY,
+                    ProcessId = _cylinder.Cylinder.Id
+                });
+            }
+            return result; // 生成されたLadderCsvRowのリストを返す
+        }
     }
 }
