@@ -146,20 +146,20 @@ namespace KdxDesigner.Utils.Operation
         // BuildOperationSpeedChange クラス内
         private static readonly List<SpeedChangeStepConfig> s_speedChangeConfigs = new()
         {
-            new SpeedChangeStepConfig(9,  op => op.SS1, "SS1"),
-            new SpeedChangeStepConfig(10, op => op.SS2, "SS2"),
-            new SpeedChangeStepConfig(11, op => op.SS3, "SS3"),
-            new SpeedChangeStepConfig(12, op => op.SS4, "SS4"),
+            new SpeedChangeStepConfig(9,  op => op.SS1!, "SS1"),
+            new SpeedChangeStepConfig(10, op => op.SS2!, "SS2"),
+            new SpeedChangeStepConfig(11, op => op.SS3!, "SS3"),
+            new SpeedChangeStepConfig(12, op => op.SS4!, "SS4"),
             // 必要に応じてさらに追加
         };
 
         // BuildOperationSpeedChange クラス内
         private bool TryGetSpeedChangeParameters(
-    int speedChangeIndex,
-    MnemonicDeviceWithOperation operation,
-    List<MnemonicTimerDeviceWithOperation> operationTimers,
-    out MnemonicTimerDeviceWithOperation? speedTimer,
-    out string? speedSensor)
+            int speedChangeIndex,
+            MnemonicDeviceWithOperation operation,
+            List<MnemonicTimerDeviceWithOperation> operationTimers,
+            out MnemonicTimerDeviceWithOperation? speedTimer,
+            out string? speedSensor)
         {
             speedTimer = null;
             speedSensor = null;

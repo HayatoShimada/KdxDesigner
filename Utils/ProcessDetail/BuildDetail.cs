@@ -61,7 +61,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -181,7 +181,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -269,7 +269,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -399,7 +399,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -527,7 +527,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -647,7 +647,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -725,7 +725,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -835,7 +835,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailStartIds = detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailStartDevices = details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
@@ -845,7 +845,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailFinishIds = detail.Detail.FinishIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(n => n.HasValue)
-                .Select(n => n.Value)
+                .Select(n => n!.Value)
                 .ToList() ?? new List<int>();
             var processDetailFinishDevices = details
                 .Where(d => processDetailFinishIds.Contains(d.Mnemonic.RecordId))

@@ -104,7 +104,7 @@ namespace KdxDesigner.ViewModels
                         {
                             if(cols.ElementAtOrDefault(1) != null)
                             {
-                                device = cols.ElementAtOrDefault(1);
+                                device = cols.ElementAtOrDefault(1)!;
                             }
                             else
                             {
@@ -123,7 +123,7 @@ namespace KdxDesigner.ViewModels
                             DeviceNumber = TryParseInt(cols.ElementAtOrDefault(0)),
                             DeviceNumber1 = cols.ElementAtOrDefault(1),
                             DeviceNumber2 = cols.ElementAtOrDefault(2),
-                            Device = device,
+                            Device = device!,
                             Category = cols.ElementAtOrDefault(3),
                             Row_1 = cols.ElementAtOrDefault(4),
                             Row_2 = cols.ElementAtOrDefault(5),

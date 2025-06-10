@@ -72,69 +72,14 @@ namespace KdxDesigner.Utils.Cylinder
                 
             // Cycleスタート時の方向自動指令
             result.AddRange(functions.CyclePulse());
-
            
             // 保持出力
             result.AddRange(functions.Retention(sensors));
 
-
             // 出力検索
-            string valveSearchString = _mainViewModel.ValveSearchText;
-            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
-            string? goValve = null;
-            switch (valveResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    goValve = valveResult.SingleAddress;
-                    break;
+            result.AddRange(functions.SingleValve(sensors));
 
-                case FindIOResultState.FoundMultiple:
-                    _errorAggregator.AddError(new OutputError { Message = "複数の出力バルブ候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    break;
-            }
-
-            // 帰り方向
-            result.Add(LadderRow.AddLD(label + (startNum + 20).ToString()));
-            result.Add(LadderRow.AddOR(label + (startNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddAND(label + (startNum + 16).ToString()));
-
-            result.Add(LadderRow.AddLD(label + (startNum + 3).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddAND(label + (startNum + 18).ToString()));
-            result.Add(LadderRow.AddORB()); // 出力命令を追加
-            result.Add(LadderRow.AddOUT(label + (startNum + 9).ToString()));
-
-            // 行き方向のバルブ出力
-            if (goValve != null)
-            {
-                result.Add(LadderRow.AddLD(label + (startNum + 19).ToString()));
-                result.Add(LadderRow.AddOR(label + (startNum + 0).ToString()));
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-                result.Add(LadderRow.AddAND(label + (startNum + 15).ToString()));
-
-                result.Add(LadderRow.AddLD(label + (startNum + 2).ToString()));
-                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
-                result.Add(LadderRow.AddAND(label + (startNum + 17).ToString()));
-                result.Add(LadderRow.AddORB()); // 出力命令を追加
-                result.Add(LadderRow.AddANI(label + (startNum + 9).ToString()));
-                result.Add(LadderRow.AddOUT(goValve));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    DetailName = cylinder.Cylinder.CYNum ?? "",
-                    Message = $"行き方向のバルブ '{cylinder.Cylinder.Go}' が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = cylinder.Cylinder.Id
-                });
-
-
-            }
+            
             return result;
 
         }

@@ -41,7 +41,7 @@ namespace KdxDesigner.Utils.Process
                                                     .Split(';')
                                                     .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                                                     .Where(n => n.HasValue)
-                                                    .Select(n => n.Value)
+                                                    .Select(n => n!.Value)
                                                     .ToList()
                                                 : new List<int>();
 
@@ -131,7 +131,7 @@ namespace KdxDesigner.Utils.Process
             // OUT L4 完了
             var completeContact = process.Process.FinishId;
             var completeDetailRecord = detail.FirstOrDefault(d => d.Mnemonic.RecordId == completeContact);
-            var completeMnemonic = completeDetailRecord.Mnemonic;
+            var completeMnemonic = completeDetailRecord!.Mnemonic;
             var completeLabel = completeMnemonic.DeviceLabel ?? string.Empty;
             var completeNumber = completeMnemonic.StartNum + completeMnemonic.OutCoilCount - 1;
             var completeDevice = completeNumber.ToString();
@@ -171,7 +171,7 @@ namespace KdxDesigner.Utils.Process
                                                     .Split(';')
                                                     .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                                                     .Where(n => n.HasValue)
-                                                    .Select(n => n.Value)
+                                                    .Select(n => n!.Value)
                                                     .ToList()
                                                 : new List<int>();
 
@@ -263,7 +263,7 @@ namespace KdxDesigner.Utils.Process
             // OUT L2 実行中
             var completeContact = process.Process.FinishId;
             var completeDetailRecord = detail.FirstOrDefault(d => d.Mnemonic.RecordId == completeContact);
-            var completeMnemonic = completeDetailRecord.Mnemonic;
+            var completeMnemonic = completeDetailRecord!.Mnemonic;
             var completeLabel = completeMnemonic.DeviceLabel ?? string.Empty;
             var completeNumber = completeMnemonic.StartNum + completeMnemonic.OutCoilCount - 1;
             var completeDevice = completeNumber.ToString();
@@ -307,7 +307,7 @@ namespace KdxDesigner.Utils.Process
                                                     .Split(';')
                                                     .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                                                     .Where(n => n.HasValue)
-                                                    .Select(n => n.Value)
+                                                    .Select(n => n!.Value)
                                                     .ToList()
                                                 : new List<int>();
 
