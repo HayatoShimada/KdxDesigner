@@ -1,5 +1,6 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
@@ -16,24 +17,28 @@ namespace KdxDesigner.Utils.Cylinder
     {
         private readonly MainViewModel _mainViewModel;
         private readonly IErrorAggregator _errorAggregator;
+        private readonly IIOAddressService _ioAddressService;
+        private readonly MnemonicDeviceWithCylinder _cylinder;
+        private string _label; // ラベルの取得
+        private int _startNum; // ラベルの取得
 
         // コンストラクタでMainViewModelをインジェクト
-        public CylinderFunction(MainViewModel mainViewModel, IErrorAggregator errorAggregator)
+        public CylinderFunction(MainViewModel mainViewModel, IErrorAggregator errorAggregator, MnemonicDeviceWithCylinder cylinder, IIOAddressService ioAddressService)
         {
             _mainViewModel = mainViewModel;
             _errorAggregator = errorAggregator;
+            _cylinder = cylinder;
+            _ioAddressService = ioAddressService; // IIOAddressServiceのインジェクト
+            _startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
+            _label = cylinder.Mnemonic.DeviceLabel ?? "M"; // ラベルの取得
         }
 
         public List<LadderCsvRow> GoOperation(
             List<MnemonicDeviceWithOperation> goOperation,
-            List<MnemonicDeviceWithOperation> activeOperation,
-            MnemonicDeviceWithCylinder cylinder)
+            List<MnemonicDeviceWithOperation> activeOperation)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
-
-            string label = cylinder.Mnemonic.DeviceLabel ?? ""; // ラベルの取得
-            int startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
 
             // 行き方向自動指令
             foreach (var go in goOperation)
@@ -66,20 +71,16 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
 
-            result.Add(LadderRow.AddOUT(label + (startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
         public List<LadderCsvRow> BackOperation(
-            List<MnemonicDeviceWithOperation> backOperation,
-            MnemonicDeviceWithCylinder cylinder)
+            List<MnemonicDeviceWithOperation> backOperation)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
-
-            string label = cylinder.Mnemonic.DeviceLabel ?? ""; // ラベルの取得
-            int startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
 
             // 行き方向自動指令
             foreach (var back in backOperation)
@@ -96,22 +97,18 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(label + (startNum + 0).ToString())); // ラベルのLD命令を追加
-            result.Add(LadderRow.AddOUT(label + (startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
         public List<LadderCsvRow> GoManualOperation(
             List<MnemonicDeviceWithOperation> goOperation,
-            List<MnemonicDeviceWithOperation> activeOperation,
-            MnemonicDeviceWithCylinder cylinder)
+            List<MnemonicDeviceWithOperation> activeOperation)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
-
-            string label = cylinder.Mnemonic.DeviceLabel ?? ""; // ラベルの取得
-            int startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
 
             // 行き方向自動指令
             foreach (var go in goOperation)
@@ -144,20 +141,16 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
 
-            result.Add(LadderRow.AddOUT(label + (startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
         public List<LadderCsvRow> BackManualOperation(
-            List<MnemonicDeviceWithOperation> backOperation,
-            MnemonicDeviceWithCylinder cylinder)
+            List<MnemonicDeviceWithOperation> backOperation)
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
-
-            string label = cylinder.Mnemonic.DeviceLabel ?? ""; // ラベルの取得
-            int startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
 
             // 行き方向自動指令
             foreach (var back in backOperation)
@@ -174,30 +167,57 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(label + (startNum + 0).ToString())); // ラベルのLD命令を追加
-            result.Add(LadderRow.AddOUT(label + (startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
+
+            return result; // 生成されたLadderCsvRowのリストを返す
+        }
+
+        public List<LadderCsvRow> OutputRetention()
+        {
+            List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
+
+            // 行き方向自動保持
+            result.Add(LadderRow.AddLDP(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddORP(_label + (_startNum + 2).ToString()));
+            result.Add(LadderRow.AddSET(_label + (_startNum + 5).ToString()));
+
+            // 帰り方向自動保持
+            result.Add(LadderRow.AddLDP(_label + (_startNum + 1).ToString()));
+            result.Add(LadderRow.AddORP(_label + (_startNum + 3).ToString()));
+            result.Add(LadderRow.AddSET(_label + (_startNum + 6).ToString()));
+
+            // 行き方向自動保持
+            result.Add(LadderRow.AddLDP(_label + (_startNum + 6).ToString()));
+            result.Add(LadderRow.AddORP(SettingsManager.Settings.SoftResetSignal));
+            result.Add(LadderRow.AddRST(_label + (_startNum + 5).ToString()));
+
+            // 帰り方向自動保持
+            result.Add(LadderRow.AddLDP(_label + (_startNum + 5).ToString()));
+            result.Add(LadderRow.AddORP(SettingsManager.Settings.SoftResetSignal));
+            result.Add(LadderRow.AddRST(_label + (_startNum + 6).ToString()));
+
+            // 保持出力行き
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
 
-        public List<LadderCsvRow> CyclePulse(
-            MnemonicDeviceWithCylinder cylinder,
-            List<Cycle> cycles)
+        public List<LadderCsvRow> CyclePulse()
         {
             List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
 
-            string label = cylinder.Mnemonic.DeviceLabel ?? ""; // ラベルの取得
-            int startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
 
-            if (cylinder.Cylinder.ProcessStartCycle != null)
+            if (_cylinder.Cylinder.ProcessStartCycle != null)
             {
                 // 修正箇所: List<int> startCycleIds の初期化部分  
-                if (cylinder.Cylinder.ProcessStartCycle != null)
+                if (_cylinder.Cylinder.ProcessStartCycle != null)
                 {
                     // ProcessStartCycle をセミコロンで分割し、各要素を整数に変換してリストに格納  
-                    List<int> startCycles = cylinder.Cylinder.ProcessStartCycle
+                    List<int> startCycles = _cylinder.Cylinder.ProcessStartCycle
                         .Split(';')
                         .Select(int.Parse)
                         .ToList();
@@ -206,7 +226,7 @@ namespace KdxDesigner.Utils.Cylinder
                     foreach (var startCycleId in startCycles)
                     {
                         // 各サイクルIDに対して処理を行う  
-                        var eachCycle = cycles.FirstOrDefault(c => c.Id == startCycleId);
+                        var eachCycle = _mainViewModel.Cycles.FirstOrDefault(c => c.Id == startCycleId);
                         if (eachCycle != null)
                         {
                             // Cycleに関連する処理をここに追加
@@ -221,15 +241,85 @@ namespace KdxDesigner.Utils.Cylinder
                             result.Add(LadderRow.AddORB()); // 出力命令を追加
                         }
                     }
-
-                    result.Add(LadderRow.AddPLS(label + (startNum + 4)));
+                    result.Add(LadderRow.AddPLS(_label + (_startNum + 4)));
                 }
             }
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
+        public List<LadderCsvRow> Retention(List<IO> sensors)
+        {
+            // センサーの取得
+            var findGoSensorResult = _ioAddressService.FindByIOText(sensors, "G", _mainViewModel.SelectedPlc!.Id);
+            string? goSensor = null;
+            switch (findGoSensorResult.State)
+            {
+                case FindIOResultState.FoundOne:
+                    goSensor = findGoSensorResult.SingleAddress;
+                    break;
 
+                case FindIOResultState.FoundMultiple:
+                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
+                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
+                    _errorAggregator.AddError(new OutputError { Message = "センサー 'G' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
+                    break;
+
+                case FindIOResultState.NotFound:
+                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
+                    break;
+            }
+
+            var findBackSensorResult = _ioAddressService.FindByIOText(sensors, "B", _mainViewModel.SelectedPlc!.Id);
+            string? backSensor = null;
+            switch (findBackSensorResult.State)
+            {
+                case FindIOResultState.FoundOne:
+                    backSensor = findBackSensorResult.SingleAddress;
+                    break;
+
+                case FindIOResultState.FoundMultiple:
+                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
+                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
+                    _errorAggregator.AddError(new OutputError { Message = "センサー 'B' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
+                    break;
+
+                case FindIOResultState.NotFound:
+                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
+                    break;
+            }
+
+
+            List<LadderCsvRow> result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
+            if (goSensor != null)
+            {
+                result.Add(LadderRow.AddAND(goSensor));
+            }
+            else
+            {
+            }
+            result.Add(LadderRow.AddAND(_label + (_startNum + 5).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 19).ToString()));
+
+            // 保持出力行き
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 1).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 3).ToString()));
+            if (backSensor != null)
+            {
+                result.Add(LadderRow.AddAND(backSensor));
+            }
+            else
+            {
+            }
+            result.Add(LadderRow.AddAND(_label + (_startNum + 6).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 20).ToString()));
+
+
+
+            return result; // 生成されたLadderCsvRowのリストを返す
+        }
 
 
     }

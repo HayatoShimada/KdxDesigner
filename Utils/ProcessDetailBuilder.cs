@@ -1,51 +1,58 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.ProcessDetail;
+using KdxDesigner.ViewModels;
 
 namespace KdxDesigner.Utils
 {
-    public static class ProcessDetailBuilder
+    public class ProcessDetailBuilder
     {
-        public static List<LadderCsvRow> GenerateAllLadderCsvRows(
+        private readonly MainViewModel _mainViewModel;
+        private readonly IErrorAggregator _errorAggregator;
+        private readonly IIOAddressService _ioAddressService;
+
+        public ProcessDetailBuilder(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService)
+        {
+            _mainViewModel = mainViewModel; // MainViewModelのインスタンスを取得
+            _errorAggregator = errorAggregator;
+            _ioAddressService = ioAddressService;
+        }
+
+        public List<LadderCsvRow> GenerateAllLadderCsvRows(
             List<MnemonicDeviceWithProcess> processes,
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
             var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
-            errors = new List<OutputError>();                   // エラーリストの初期化
             List<OutputError> errorsForDetail = new(); // 各工程詳細のエラーリスト
-
+            BuildDetail buildDetail = new(_mainViewModel, _ioAddressService, _errorAggregator); // BuildDetailのインスタンスを生成
+            int plcId = _mainViewModel.SelectedPlc!.Id;
             foreach (var detail in details)
             {
                 switch (detail.Detail.CategoryId)
                 {
                     case 1: // 通常工程
-                        allRows.AddRange(BuildDetail.BuildDetailNormal(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailNormal(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 2: // 工程まとめ
-                        allRows.AddRange(BuildDetail.BuildDetailSummarize(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailSummarize(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 3: // センサON確認
-                        allRows.AddRange(BuildDetail.BuildDetailSensorON(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailSensorON(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 4: // センサOFF確認
-                        allRows.AddRange(BuildDetail.BuildDetailSensorOFF(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailSensorOFF(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 5: // 工程分岐
-                        allRows.AddRange(BuildDetail.BuildDetailBranch(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailBranch(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 6: // 工程合流
-                        allRows.AddRange(BuildDetail.BuildDetailMerge(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailMerge(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 7: // サーボ座標指定
                         break;
@@ -54,8 +61,7 @@ namespace KdxDesigner.Utils
                     case 9: // INV座標指定
                         break;
                     case 10: // IL待ち
-                        allRows.AddRange(BuildDetail.BuildDetailILWait(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailILWait(detail, details, processes, operations, cylinders, ioList));
                         break;
                     case 11: // リセット工程開始
                         break;
@@ -64,15 +70,13 @@ namespace KdxDesigner.Utils
                     case 13: // 工程OFF確認
                         break;
                     case 15: // 期間工程
-                        allRows.AddRange(BuildDetail.BuildDetailSeason(detail, details, processes, operations, cylinders, ioList, out errorsForDetail));
-                        errors.AddRange(errorsForDetail); // 修正: List<OutputError> を直接追加
+                        allRows.AddRange(buildDetail.BuildDetailSeason(detail, details, processes, operations, cylinders, ioList));
                         break;
                     default:
                         break;
                 }
             }
             // プロセス詳細のニモニックを生成
-            errors = errors.Distinct().ToList(); // 重複を排除
             return allRows;
         }
 

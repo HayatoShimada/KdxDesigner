@@ -17,8 +17,13 @@ namespace KdxDesigner.ViewModels
 {
     public partial class MemoryEditorViewModel : ObservableObject
     {
-        private readonly AccessRepository _repository;
+        private readonly IAccessRepository _repository;
         public int _plcId;
+
+        public MemoryEditorViewModel(IAccessRepository repository)
+        {
+            _repository = repository;
+        }
 
         // アプリ側でのデバイス一覧変数を一次保存する
         [ObservableProperty]
@@ -41,8 +46,6 @@ namespace KdxDesigner.ViewModels
         {
             _plcId = plcId;
             // データベースの初期化
-            _repository = new AccessRepository();
-
             // メモリカテゴリドロップダウンのリスト取得
             var memoryService = new MemoryService(_repository);
             MemoryCategories = new ObservableCollection<MemoryCategory>(memoryService.GetMemoryCategories());

@@ -1,20 +1,26 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 
 namespace KdxDesigner.Utils
 {
     internal class ErrorBuilder
     {
-        public static List<LadderCsvRow> Operation(
+        private readonly IErrorAggregator _errorAggregator;
+
+        public ErrorBuilder(IErrorAggregator errorAggregator)
+        {
+            _errorAggregator = errorAggregator;
+        }
+
+        public List<LadderCsvRow> Operation(
             Models.Operation operation,
             List<Error> error,
             string label,
-            int outNum,
-            out List<OutputError> errors)
+            int outNum)
         {
             List<LadderCsvRow>? result = new();
-            errors = new List<OutputError>();
 
             List<Error> errorList = error.Where(e => e.RecordId == operation.Id).ToList();
 
@@ -25,14 +31,12 @@ namespace KdxDesigner.Utils
                 switch (each.AlarmId)
                     {
                     case 1: // 開始
-                        AddError(errors, "エラーが発生しました。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 7).ToString()));
                         break;
 
                     case 2: // 開始確認
-                        AddError(errors, "アラームが発生しました。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 7).ToString()));
@@ -40,7 +44,6 @@ namespace KdxDesigner.Utils
                         break;
 
                     case 3: // 途中TO
-                        AddError(errors, "注意が必要です。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 10 + countSpeed).ToString()));
@@ -49,7 +52,6 @@ namespace KdxDesigner.Utils
                         break;
 
                     case 4: // 取り込みTO
-                        AddError(errors, "注意が必要です。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 10 + countSpeed).ToString()));
@@ -57,13 +59,12 @@ namespace KdxDesigner.Utils
                         break;
 
                     case 5: // 完了TO
-                        AddError(errors, "注意が必要です。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 18).ToString()));
                         break;
                     default:
-                        AddError(errors, "不明なエラータイプです。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
+                        AddError("不明なエラータイプです。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         continue;
 
                 }
@@ -76,8 +77,7 @@ namespace KdxDesigner.Utils
                 else
                 {
                     result.Add(LadderRow.AddOUT(SettingsManager.Settings.OutErrorDevice));
-                    AddError(
-                        errors, $"エラーのデバイスが null または空です: '{operation.OperationName}'",
+                    AddError($"エラーのデバイスが null または空です: '{operation.OperationName}'",
                         operation.OperationName ?? "", 3, 0);
                 }
 
@@ -88,14 +88,13 @@ namespace KdxDesigner.Utils
             return result;
         }
 
-        private static void AddError(
-            List<OutputError> errors,
+        private void AddError(
             string message,
             string detailName,
             int mnemonicId,
             int processId)
         {
-            errors.Add(new OutputError
+            _errorAggregator.AddError(new OutputError
             {
                 Message = message,
                 DetailName = detailName,

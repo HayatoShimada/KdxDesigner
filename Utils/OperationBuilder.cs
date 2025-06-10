@@ -1,16 +1,29 @@
 ﻿using KdxDesigner.Models;
-using KdxDesigner.Utils.Process;
+using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
+using KdxDesigner.Services.Error;
+using KdxDesigner.Utils.Operation;
+using KdxDesigner.Utils.Process;
+using KdxDesigner.ViewModels;
 
 using System.Windows;
-using KdxDesigner.Utils.Operation;
-using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.Utils
 {
-    public static class OperationBuilder
+    public class OperationBuilder
     {
-        public static List<LadderCsvRow> GenerateAllLadderCsvRows(
+        private readonly MainViewModel _mainViewModel;
+        private readonly IErrorAggregator _errorAggregator;
+        private readonly IIOAddressService _ioAddressService;
+
+        public OperationBuilder(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService)
+        {
+            _mainViewModel = mainViewModel;
+            _errorAggregator = errorAggregator;
+            _ioAddressService = ioAddressService;
+        }
+
+        public List<LadderCsvRow> GenerateLadder(
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
@@ -18,14 +31,14 @@ namespace KdxDesigner.Utils
             List<MnemonicSpeedDevice> speed,
             List<Error> mnemonicErrors,
             List<ProsTime> prosTimes,
-            List<IO> ioList,
-            int plcId,
-            out List<OutputError> errors)
+            List<IO> ioList)
         {
             LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
-            errors = new List<OutputError>();                   // エラーリストの初期化
             var allRows = new List<LadderCsvRow>();
             List<OutputError> errorsForOperation = new(); // 各工程詳細のエラーリスト
+            BuildOperationSingle buildOperationSingle = new(_mainViewModel, _errorAggregator, _ioAddressService);
+            BuildOperationSpeedChange buildOperationSpeed = new(_mainViewModel, _errorAggregator, _ioAddressService);
+
 
 
             foreach (var operation in operations)
@@ -33,7 +46,7 @@ namespace KdxDesigner.Utils
                 switch (operation.Operation.CategoryId)
                 {
                     case 1 :                // 励磁
-                        allRows.AddRange(BuildOperationSingle.Excitation(
+                        allRows.AddRange(buildOperationSingle.Excitation(
                             operation,
                             details,
                             operations,
@@ -41,14 +54,11 @@ namespace KdxDesigner.Utils
                             timers,
                             mnemonicErrors,
                             prosTimes,
-                            ioList,
-                            out errors,
-                            plcId
+                            ioList
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
                     case 2 or 14 or 20:     // 保持
-                        allRows.AddRange(BuildOperationSingle.Retention(
+                        allRows.AddRange(buildOperationSingle.Retention(
                             operation, 
                             details, 
                             operations, 
@@ -56,14 +66,11 @@ namespace KdxDesigner.Utils
                             timers, 
                             mnemonicErrors,
                             prosTimes,
-                            ioList, 
-                            out errors,
-                            plcId
+                            ioList
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
                     case 3 or 9 or 15:      // 速度変化1回
-                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                        allRows.AddRange(buildOperationSpeed.Inverter(
                             operation,
                             details,
                             operations,
@@ -73,15 +80,12 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            out errors,
-                            plcId,
                             1
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
 
                     case 4 or 10 or 16:     // 速度変化2回
-                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                        allRows.AddRange(buildOperationSpeed.Inverter(
                             operation,
                             details,
                             operations,
@@ -91,15 +95,12 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            out errors,
-                            plcId,
                             2
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
 
                     case 5 or 11 or 17:     // 速度変化3回
-                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                        allRows.AddRange(buildOperationSpeed.Inverter(
                             operation,
                             details,
                             operations,
@@ -109,15 +110,12 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            out errors,
-                            plcId,
                             3
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
 
                     case 6 or 12 or 18:     // 速度変化4回
-                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                        allRows.AddRange(buildOperationSpeed.Inverter(
                             operation,
                             details,
                             operations,
@@ -127,15 +125,12 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            out errors,
-                            plcId,
                             4
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
 
                     case 7 or 13 or 19:     // 速度変化5回
-                        allRows.AddRange(BuildOperationSpeedChange.Inverter(
+                        allRows.AddRange(buildOperationSpeed.Inverter(
                             operation,
                             details,
                             operations,
@@ -145,11 +140,8 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            out errors,
-                            plcId,
                             5
                             ));
-                        errors.AddRange(errorsForOperation); // 修正: List<OutputError> を直接追加
                         break;
 
                     default:
@@ -157,7 +149,6 @@ namespace KdxDesigner.Utils
                 }
             }
 
-            errors = errorsForOperation.Distinct().ToList(); // 重複を排除
             return allRows;
         }
 

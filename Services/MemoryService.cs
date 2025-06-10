@@ -190,8 +190,7 @@ namespace KdxDesigner.Services
             if (device?.PlcId == null) return false; // PlcId が必須
 
             using var connection = new OleDbConnection(_connectionString);
-            AccessRepository _repository = new(); // AccessRepositoryのインスタンスを作成
-            var difinitionsService = new DifinitionsService(_repository); // DifinitionsServiceのインスタンスを作成
+            var difinitionsService = new DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
 
             connection.Open();
             using var transaction = connection.BeginTransaction();
@@ -275,8 +274,7 @@ namespace KdxDesigner.Services
             if (device?.PlcId == null || string.IsNullOrEmpty(device.TimerDevice) || !device.TimerDevice.StartsWith("ZR")) return false;
 
             using var connection = new OleDbConnection(_connectionString);
-            AccessRepository _repository = new(); // AccessRepositoryのインスタンスを作成
-            var difinitionsService = new DifinitionsService(_repository); // DifinitionsServiceのインスタンスを作成
+            var difinitionsService = new DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
             var dinitions = new List<Difinitions>();
 
             connection.Open();

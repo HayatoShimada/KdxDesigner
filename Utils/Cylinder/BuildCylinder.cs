@@ -33,9 +33,8 @@ namespace KdxDesigner.Utils.Cylinder
                 List<IO> ioList)
         {
             // ここに単一工程の処理を実装  
-            var result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト  
-            var functions = new CylinderFunction(_mainViewModel, _errorAggregator); // CylinderFunctionのインスタンスを作成
-            var cycles = _mainViewModel.Cycles;
+            var result = new List<LadderCsvRow>();
+            var functions = new CylinderFunction(_mainViewModel, _errorAggregator, cylinder, _ioAddressService);
 
             // CYNumを含むIOの取得
             var sensors = ioList.Where(i => i.IOName != null
@@ -60,119 +59,33 @@ namespace KdxDesigner.Utils.Cylinder
             var activeOperation = cylinderOperations.Where(o => o.Operation.GoBack == "A").ToList();    // 作動のOperationを取得  
 
             // 行き方向自動指令  
-            result.AddRange(functions.GoOperation(goOperation, activeOperation, cylinder));
+            result.AddRange(functions.GoOperation(goOperation, activeOperation));
 
             // 帰り方向自動指令  
-            result.AddRange(functions.BackOperation(backOperation, cylinder));
+            result.AddRange(functions.BackOperation(backOperation));
 
             // 行き方向手動指令  
-            result.AddRange(functions.GoManualOperation(goOperation, activeOperation, cylinder));
+            result.AddRange(functions.GoManualOperation(goOperation, activeOperation));
 
             // 帰り方向手動指令  
-            result.AddRange(functions.BackManualOperation(backOperation, cylinder));
-
+            result.AddRange(functions.BackManualOperation(backOperation));
+                
             // Cycleスタート時の方向自動指令
-            result.AddRange(functions.CyclePulse(cylinder, _mainViewModel.Cycles.ToList()));
+            result.AddRange(functions.CyclePulse());
 
-            // 行き方向自動保持
-            result.Add(LadderRow.AddLDP(label + (startNum + 0).ToString()));
-            result.Add(LadderRow.AddORP(label + (startNum + 2).ToString()));
-            result.Add(LadderRow.AddSET(label + (startNum + 5).ToString()));
+           
+            // 保持出力
+            result.AddRange(functions.Retention(sensors));
 
-            // 帰り方向自動保持
-            result.Add(LadderRow.AddLDP(label + (startNum + 1).ToString()));
-            result.Add(LadderRow.AddORP(label + (startNum + 3).ToString()));
-            result.Add(LadderRow.AddSET(label + (startNum + 6).ToString()));
-
-            // 行き方向自動保持
-            result.Add(LadderRow.AddLDP(label + (startNum + 6).ToString()));
-            result.Add(LadderRow.AddORP(SettingsManager.Settings.SoftResetSignal));
-            result.Add(LadderRow.AddRST(label + (startNum + 5).ToString()));
-
-            // 帰り方向自動保持
-            result.Add(LadderRow.AddLDP(label + (startNum + 5).ToString()));
-            result.Add(LadderRow.AddORP(SettingsManager.Settings.SoftResetSignal));
-            result.Add(LadderRow.AddRST(label + (startNum + 6).ToString()));
-
-            // 保持出力行き
-            result.Add(LadderRow.AddLDI(label + (startNum + 0).ToString()));
-            result.Add(LadderRow.AddANI(label + (startNum + 2).ToString()));
-
-
-            // センサーの取得
-            var findGoSensorResult = _ioAddressService.FindByIOText(sensors, "G", _mainViewModel.SelectedPlc.Id);
-            string? goSensor = null;
-            switch (findGoSensorResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    goSensor = findGoSensorResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
-                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
-                    _errorAggregator.AddError(new OutputError { Message = "センサー 'G' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
-                    break;
-            }
-
-            var findBackSensorResult = _ioAddressService.FindByIOText(sensors, "B", _mainViewModel.SelectedPlc.Id);
-            string? backSensor = null;
-            switch (findBackSensorResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    backSensor = findBackSensorResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
-                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
-                    _errorAggregator.AddError(new OutputError { Message = "センサー 'B' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
-                    break;
-            }
-
-
-            // 保持出力帰り
-            result.Add(LadderRow.AddLDI(label + (startNum + 0).ToString()));
-            result.Add(LadderRow.AddANI(label + (startNum + 2).ToString()));
-            if (goSensor != null)
-            {
-                result.Add(LadderRow.AddAND(goSensor));
-            }
-            else
-            {
-            }
-            result.Add(LadderRow.AddAND(label + (startNum + 5).ToString()));
-            result.Add(LadderRow.AddOUT(label + (startNum + 19).ToString()));
-
-            // 保持出力行き
-            result.Add(LadderRow.AddLDI(label + (startNum + 1).ToString()));
-            result.Add(LadderRow.AddANI(label + (startNum + 3).ToString()));
-            if (backSensor != null)
-            {
-                result.Add(LadderRow.AddAND(backSensor));
-            }
-            else
-            {
-            }
-            result.Add(LadderRow.AddAND(label + (startNum + 6).ToString()));
-            result.Add(LadderRow.AddOUT(label + (startNum + 20).ToString()));
 
             // 出力検索
-            string? valveSearchString = _mainViewModel.ValveSearchText;
-            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc.Id);
+            string valveSearchString = _mainViewModel.ValveSearchText;
+            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
             string? goValve = null;
             switch (valveResult.State)
             {
                 case FindIOResultState.FoundOne:
-                    goValve = findBackSensorResult.SingleAddress;
+                    goValve = valveResult.SingleAddress;
                     break;
 
                 case FindIOResultState.FoundMultiple:
@@ -182,7 +95,6 @@ namespace KdxDesigner.Utils.Cylinder
                 case FindIOResultState.NotFound:
                     break;
             }
-
 
             // 帰り方向
             result.Add(LadderRow.AddLD(label + (startNum + 20).ToString()));

@@ -77,17 +77,17 @@ namespace KdxDesigner.Services
             return new FindIOResult { State = FindIOResultState.FoundMultiple, MultipleMatches = matches };
         }
 
-        public List<IO>? FindByIORange(List<IO> ioList, string ioText)
+        public List<IO> FindByIORange(List<IO> ioList, string ioText)
         {
             if (string.IsNullOrEmpty(ioText))
             {
                 _errorAggregator.AddError(new OutputError { Message = "IOテキストが指定されていません。", DetailName = ioText });
-                return null;
+                return new List<IO>(); // Return an empty list instead of null
             }
             if (ioText.StartsWith(LengthPrefix))
             {
                 _errorAggregator.AddError(new OutputError { Message = "L-から始まるものは検索できません", DetailName = ioText });
-                return null;
+                return new List<IO>(); // Return an empty list instead of null
             }
 
             string searchText = ioText.StartsWith(UnderscorePrefix)

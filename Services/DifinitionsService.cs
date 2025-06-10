@@ -14,9 +14,9 @@ namespace KdxDesigner.Services
 
         private readonly string _connectionString;
 
-        public DifinitionsService(AccessRepository repository)
+        public DifinitionsService(string connectionString)
         {
-            _connectionString = repository.ConnectionString;
+            _connectionString = connectionString;
         }
 
         // AccessRepository.cs に以下を追加:

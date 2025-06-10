@@ -21,14 +21,13 @@ namespace KdxDesigner.ViewModels
 
     public partial class MainViewModel : ObservableObject
     {
-        private readonly IAccessRepository _repository;
-        private readonly MnemonicDeviceService _mnemonicService;
-        private readonly MnemonicTimerDeviceService _timerService;
-        private readonly ErrorService _errorService;
-        private readonly ProsTimeDeviceService _prosTimeService;
-        private readonly MnemonicSpeedDeviceService _speedService; // クラス名が不明なため仮定
-        private readonly MemoryService _memoryService;
-        private readonly IIOAddressService _ioService;
+        private readonly IAccessRepository? _repository;
+        private readonly MnemonicDeviceService? _mnemonicService;
+        private readonly MnemonicTimerDeviceService? _timerService;
+        private readonly ErrorService? _errorService;
+        private readonly ProsTimeDeviceService? _prosTimeService;
+        private readonly MnemonicSpeedDeviceService? _speedService; // クラス名が不明なため仮定
+        private readonly MemoryService? _memoryService;
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
@@ -44,18 +43,18 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private Cycle? selectedCycle;
         [ObservableProperty] private Models.Process? selectedProcess;
 
-        [ObservableProperty] private int? processDeviceStartL = 2000;
-        [ObservableProperty] private int? detailDeviceStartL = 3000;
-        [ObservableProperty] private int? operationDeviceStartM = 20000;
-        [ObservableProperty] private int? cylinderDeviceStartM = 30000;
-        [ObservableProperty] private int? cylinderDeviceStartD = 30000;
-        [ObservableProperty] private int? errorDeviceStartM = 52000;
-        [ObservableProperty] private int? deviceStartT = 2000;
-        [ObservableProperty] private int? prosTimeStartZR = 10000;
-        [ObservableProperty] private int? prosTimePreviousStartZR = 20000;
-        [ObservableProperty] private int? cyTimeStartZR = 30000;
+        [ObservableProperty] private int processDeviceStartL = 2000;
+        [ObservableProperty] private int detailDeviceStartL = 3000;
+        [ObservableProperty] private int operationDeviceStartM = 20000;
+        [ObservableProperty] private int cylinderDeviceStartM = 30000;
+        [ObservableProperty] private int cylinderDeviceStartD = 30000;
+        [ObservableProperty] private int errorDeviceStartM = 52000;
+        [ObservableProperty] private int deviceStartT = 2000;
+        [ObservableProperty] private int prosTimeStartZR = 10000;
+        [ObservableProperty] private int prosTimePreviousStartZR = 20000;
+        [ObservableProperty] private int cyTimeStartZR = 30000;
+        [ObservableProperty] private string valveSearchText = "SV";
 
-        [ObservableProperty] private string? valveSearchText = "SV";
         [ObservableProperty] private bool isProcessMemory = false;
         [ObservableProperty] private bool isDetailMemory = false;
         [ObservableProperty] private bool isOperationMemory = false;
@@ -64,6 +63,12 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool isTimerMemory = false;
         [ObservableProperty] private bool isProsTimeMemory = false;
         [ObservableProperty] private bool isCyTimeMemory = false;
+
+        [ObservableProperty] private bool isProcessOutput = false;
+        [ObservableProperty] private bool isDetailOutput = false;
+        [ObservableProperty] private bool isOperationOutput = false;
+        [ObservableProperty] private bool isCylinderOutput = false;
+
 
         [ObservableProperty] private int memoryProgressMax;
         [ObservableProperty] private int memoryProgressValue;
@@ -99,7 +104,6 @@ namespace KdxDesigner.ViewModels
                 _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
                 _memoryService = new MemoryService(_repository);
 
-
                 LoadInitialData();
             }
             catch (Exception ex)
@@ -117,7 +121,7 @@ namespace KdxDesigner.ViewModels
         #region Properties for Selected Operations
         private void LoadInitialData()
         {
-            Companies = new ObservableCollection<Company>(_repository.GetCompanies());
+            Companies = new ObservableCollection<Company>(_repository!.GetCompanies());
             allProcesses = _repository.GetProcesses();
             allDetails = _repository.GetProcessDetailDtos();
         }
@@ -125,21 +129,21 @@ namespace KdxDesigner.ViewModels
         partial void OnSelectedCompanyChanged(Company? value)
         {
             if (value == null) return;
-            Models = new ObservableCollection<Model>(_repository.GetModels().Where(m => m.CompanyId == value.Id));
+            Models = new ObservableCollection<Model>(_repository!.GetModels().Where(m => m.CompanyId == value.Id));
             SelectedModel = null;
         }
 
         partial void OnSelectedModelChanged(Model? value)
         {
             if (value == null) return;
-            Plcs = new ObservableCollection<PLC>(_repository.GetPLCs().Where(p => p.ModelId == value.Id));
+            Plcs = new ObservableCollection<PLC>(_repository!.GetPLCs().Where(p => p.ModelId == value.Id));
             SelectedPlc = null;
         }
 
         partial void OnSelectedPlcChanged(PLC? value)
         {
             if (value == null) return;
-            Cycles = new ObservableCollection<Cycle>(_repository.GetCycles().Where(c => c.PlcId == value.Id));
+            Cycles = new ObservableCollection<Cycle>(_repository!.GetCycles().Where(c => c.PlcId == value.Id));
             SelectedCycle = null;
         }
 
@@ -156,7 +160,7 @@ namespace KdxDesigner.ViewModels
         {
             if (selected?.OperationId != null)
             {
-                var op = _repository.GetOperationById(selected.OperationId.Value);
+                var op = _repository!.GetOperationById(selected.OperationId.Value);
                 if (op != null)
                 {
                     SelectedOperations.Clear();
@@ -185,7 +189,7 @@ namespace KdxDesigner.ViewModels
         {
             foreach (var op in SelectedOperations)
             {
-                _repository.UpdateOperation(op);
+                _repository!.UpdateOperation(op);
             }
             MessageBox.Show("保存しました。");
         }
@@ -228,7 +232,7 @@ namespace KdxDesigner.ViewModels
             {
                 // 1. エラー集約サービスのインスタンス化
                 var errorAggregator = new ErrorAggregator();
-                var ioAddressService = new IOAddressService(errorAggregator, _repository);
+                var ioAddressService = new IOAddressService(errorAggregator, _repository!);
                 OutputErrors.Clear();
 
                 // 2. データ準備
@@ -240,24 +244,32 @@ namespace KdxDesigner.ViewModels
                 MemoryStatusMessage = "ラダー生成中...";
                 var allOutputRows = new List<LadderCsvRow>();
 
-                
+
 
 
                 // 各ビルダーに ViewModel と エラー集約サービスを渡してインスタンス化
                 // (ProcessBuilder, DetailBuilder, OperationBuilder も同様に修正されていると仮定)
                 //var processBuilder = new ProcessBuilder(errorAggregator);
-                //var detailBuilder = new ProcessDetailBuilder(errorAggregator);
-                //var operationBuilder = new OperationBuilder(this, errorAggregator);
+                var processDetailBuilder = new ProcessDetailBuilder(this, errorAggregator, ioAddressService);
+                var operationBuilder = new OperationBuilder(this, errorAggregator, ioAddressService);
                 var cylinderBuilder = new CylinderBuilder(this, errorAggregator, ioAddressService);
 
 
-                var processRows = ProcessBuilder.GenerateAllLadderCsvRows(SelectedCycle!, ProcessDeviceStartL!.Value, DetailDeviceStartL!.Value, data.JoinedProcessList, data.JoinedProcessDetailList, data.IoList, out var processErrors);
+                var processRows = ProcessBuilder.GenerateAllLadderCsvRows(SelectedCycle!, ProcessDeviceStartL, DetailDeviceStartL, data.JoinedProcessList, data.JoinedProcessDetailList, data.IoList, out var processErrors);
                 allOutputRows.AddRange(processRows);
 
-                var detailRows = ProcessDetailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, out var detailErrors);
+                var detailRows = processDetailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList);
                 allOutputRows.AddRange(detailRows);
 
-                var operationRows = OperationBuilder.GenerateAllLadderCsvRows(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList, SelectedPlc!.Id, out var operationErrors);
+                var operationRows = operationBuilder.GenerateLadder(
+                    data.JoinedProcessDetailList, 
+                    data.JoinedOperationList, 
+                    data.JoinedCylinderList, 
+                    data.JoinedOperationWithTimerList, 
+                    data.SpeedDevice, 
+                    data.MnemonicErrors, 
+                    data.ProsTime, 
+                    data.IoList);
                 allOutputRows.AddRange(operationRows);
 
                 var cylinderRows = cylinderBuilder.GenerateLadder(
@@ -307,9 +319,6 @@ namespace KdxDesigner.ViewModels
             var errors = new List<string>();
             if (SelectedCycle == null) errors.Add("Cycleが選択されていません。");
             if (SelectedPlc == null) errors.Add("PLCが選択されていません。");
-            if (ProcessDeviceStartL == null) errors.Add("ProcessDeviceStartLが入力されていません。");
-            if (DetailDeviceStartL == null) errors.Add("DetailDeviceStartLが入力されていません。");
-            if (CyTimeStartZR == null) errors.Add("CyTimeStartZRが入力されていません。"); // 元のコードのチェック条件を反映
             if (Processes.Count == 0) errors.Add("Processが選択されていません。");
             return errors;
         }
@@ -327,8 +336,8 @@ namespace KdxDesigner.ViewModels
             var plcId = SelectedPlc!.Id;
             var cycleId = SelectedCycle!.Id;
 
-            var devices = _mnemonicService.GetMnemonicDevice(plcId);
-            var timers = _repository.GetTimersByCycleId(cycleId);
+            var devices = _mnemonicService!.GetMnemonicDevice(plcId);
+            var timers = _repository!.GetTimersByCycleId(cycleId);
             var operations = _repository.GetOperations();
             var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
             var details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == cycleId).ToList();
@@ -339,10 +348,10 @@ namespace KdxDesigner.ViewModels
             var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
             var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList();
 
-            var timerDevices = _timerService.GetMnemonicTimerDevice(plcId, cycleId);
-            var prosTime = _prosTimeService.GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
-            var speedDevice = _speedService.GetMnemonicSpeedDevice(plcId);
-            var mnemonicErrors = _errorService.GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
+            var timerDevices = _timerService!.GetMnemonicTimerDevice(plcId, cycleId);
+            var prosTime = _prosTimeService!.GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
+            var speedDevice = _speedService!.GetMnemonicSpeedDevice(plcId);
+            var mnemonicErrors = _errorService!.GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
 
             // JOIN処理
             var joinedProcessList = devicesP.Join(Processes, m => m.RecordId, p => p.Id, (m, p) => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p }).OrderBy(x => x.Process.Id).ToList();
@@ -386,16 +395,6 @@ namespace KdxDesigner.ViewModels
             var errorMessages = new List<string>();
             if (SelectedCycle == null) errorMessages.Add("Cycleが選択されていません。");
             if (SelectedPlc == null) errorMessages.Add("PLCが選択されていません。");
-            if (ProcessDeviceStartL == null) errorMessages.Add("ProcessDeviceStartLが入力されていません。");
-            if (DetailDeviceStartL == null) errorMessages.Add("DetailDeviceStartLが入力されていません。");
-            if (OperationDeviceStartM == null) errorMessages.Add("OperationDeviceStartMが入力されていません。");
-            if (CylinderDeviceStartM == null) errorMessages.Add("CylinderDeviceStartMが入力されていません。");
-            if (DeviceStartT == null) errorMessages.Add("DeviceStartTが入力されていません。");
-            if (ErrorDeviceStartM == null) errorMessages.Add("ErrorStartMが入力されていません。");
-            if (ProsTimeStartZR == null) errorMessages.Add("ProsTimeStartZRが入力されていません。");
-            if (ProsTimePreviousStartZR == null) errorMessages.Add("ProsTimePreviousStartZRが入力されていません。");
-            if (CyTimeStartZR == null) errorMessages.Add("CyTimeStartZRが入力されていません。");
-            if (CylinderDeviceStartD == null) errorMessages.Add("CylinderDeviceStartDが入力されていません。");
 
             if (errorMessages.Any())
             {
@@ -410,12 +409,12 @@ namespace KdxDesigner.ViewModels
         {
             if (SelectedCycle == null || SelectedPlc == null) return null;
 
-            List<ProcessDetailDto> details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == SelectedCycle.Id).ToList();
-            List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
+            List<ProcessDetailDto> details = _repository!.GetProcessDetailDtos().Where(d => d.CycleId == SelectedCycle.Id).ToList();
+            List<CY> cylinders = _repository!.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
             var operationIds = details.Select(c => c.OperationId).ToHashSet();
             List<Operation> operations = _repository.GetOperations().Where(o => operationIds.Contains(o.Id)).ToList();
-            var ioList = _repository.GetIoList();
-            var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
+            var ioList = _repository!.GetIoList();
+            var timers = _repository!.GetTimersByCycleId(SelectedCycle.Id);
 
             return (details, cylinders, operations, ioList, timers);
         }
@@ -424,25 +423,25 @@ namespace KdxDesigner.ViewModels
         private void SaveMnemonicAndTimerDevices((List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
             MemoryStatusMessage = "ニーモニックデバイス情報を保存中...";
-            _mnemonicService.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL!.Value, SelectedPlc!.Id);
-            _mnemonicService.SaveMnemonicDeviceProcessDetail(prepData.details, DetailDeviceStartL!.Value, SelectedPlc!.Id);
-            _mnemonicService.SaveMnemonicDeviceOperation(prepData.operations, OperationDeviceStartM!.Value, SelectedPlc!.Id);
-            _mnemonicService.SaveMnemonicDeviceCY(prepData.cylinders, CylinderDeviceStartM!.Value, SelectedPlc!.Id);
+            _mnemonicService!.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL, SelectedPlc!.Id);
+            _mnemonicService!.SaveMnemonicDeviceProcessDetail(prepData.details, DetailDeviceStartL, SelectedPlc!.Id);
+            _mnemonicService!.SaveMnemonicDeviceOperation(prepData.operations, OperationDeviceStartM, SelectedPlc!.Id);
+            _mnemonicService!.SaveMnemonicDeviceCY(prepData.cylinders, CylinderDeviceStartM, SelectedPlc!.Id);
 
             int timerCount = 0;
-            _timerService.SaveWithOperation(prepData.timers, prepData.operations, DeviceStartT!.Value, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
-            _timerService.SaveWithCY(prepData.timers, prepData.cylinders, DeviceStartT!.Value, SelectedPlc!.Id, SelectedCycle!.Id, ref timerCount);
+            _timerService!.SaveWithOperation(prepData.timers, prepData.operations, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
+            _timerService!.SaveWithCY(prepData.timers, prepData.cylinders, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, ref timerCount);
 
-            _errorService.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM!.Value, SelectedPlc!.Id, SelectedCycle!.Id);
-            _prosTimeService.SaveProsTime(prepData.operations, ProsTimeStartZR!.Value, ProsTimePreviousStartZR!.Value, CyTimeStartZR!.Value, SelectedPlc!.Id);
-            _speedService.Save(prepData.cylinders, CylinderDeviceStartD!.Value, SelectedPlc!.Id);
+            _errorService!.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM, SelectedPlc!.Id, SelectedCycle!.Id);
+            _prosTimeService!.SaveProsTime(prepData.operations, ProsTimeStartZR, ProsTimePreviousStartZR, CyTimeStartZR, SelectedPlc!.Id);
+            _speedService!.Save(prepData.cylinders, CylinderDeviceStartD, SelectedPlc!.Id);
         }
 
         // Memoryテーブルへの保存処理
         private async Task SaveMemoriesToMemoryTableAsync((List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
-            var devices = _mnemonicService.GetMnemonicDevice(SelectedPlc!.Id);
-            var timerDevices = _timerService.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);
+            var devices = _mnemonicService!.GetMnemonicDevice(SelectedPlc!.Id);
+            var timerDevices = _timerService!.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);
 
             var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
             var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
@@ -461,16 +460,16 @@ namespace KdxDesigner.ViewModels
             MemoryProgressValue = 0;
 
             // 汎用ヘルパーを使って繰り返しを削減
-            if (!await ProcessAndSaveMemoryAsync(IsProcessMemory, devicesP, _memoryService.SaveMnemonicMemories, "Process")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsDetailMemory, devicesD, _memoryService.SaveMnemonicMemories, "ProcessDetail")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsOperationMemory, devicesO, _memoryService.SaveMnemonicMemories, "Operation")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsCylinderMemory, devicesC, _memoryService.SaveMnemonicMemories, "CY")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService.SaveMnemonicMemories, "エラー")) return; // ★
+            if (!await ProcessAndSaveMemoryAsync(IsProcessMemory, devicesP, _memoryService!.SaveMnemonicMemories, "Process")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsDetailMemory, devicesD, _memoryService!.SaveMnemonicMemories, "ProcessDetail")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsOperationMemory, devicesO, _memoryService!.SaveMnemonicMemories, "Operation")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsCylinderMemory, devicesC, _memoryService!.SaveMnemonicMemories, "CY")) return;
+            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService!.SaveMnemonicMemories, "エラー")) return; // ★
 
             if (IsTimerMemory)
             {
-                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService.SaveMnemonicTimerMemoriesT, "Timer (T)")) return;
-                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService.SaveMnemonicTimerMemoriesZR, "Timer (ZR)")) return;
+                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService!.SaveMnemonicTimerMemoriesT, "Timer (T)")) return;
+                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService!.SaveMnemonicTimerMemoriesZR, "Timer (ZR)")) return;
             }
 
             MemoryStatusMessage = "保存完了！";
