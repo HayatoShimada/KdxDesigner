@@ -2,13 +2,8 @@
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KdxDesigner.Utils.Cylinder
 {
@@ -24,7 +19,7 @@ namespace KdxDesigner.Utils.Cylinder
             _ioAddressService = ioAddressService;
         }
 
-        public List<LadderCsvRow> Inverter(
+        public List<LadderCsvRow> Servo(
                 MnemonicDeviceWithCylinder cylinder,
                 List<MnemonicDeviceWithProcessDetail> details,
                 List<MnemonicDeviceWithOperation> operations,
@@ -55,6 +50,66 @@ namespace KdxDesigner.Utils.Cylinder
                 speedDevice = cySpeedDevice.Device; // スピードデバイスの取得
             }
             var functions = new CylinderFunction(_mainViewModel, _errorAggregator, cylinder, _ioAddressService, speedDevice);
+
+            // CYNumを含むIOの取得
+            var sensors = ioList.Where(i => i.IOName != null
+                                            && cylinder.Cylinder.CYNum != null
+                                            && i.IOName.Contains(cylinder.Cylinder.CYNum)).ToList();
+
+            // 行間ステートメント  
+            string id = cylinder.Cylinder.Id.ToString();
+            string cyNum = cylinder.Cylinder.CYNum ?? ""; // シリンダー名の取得  
+            string cyNumSub = cylinder.Cylinder.CYNameSub.ToString() ?? ""; // シリンダー名の取得  
+            string cyName = cyNum + cyNumSub; // シリンダー名の組み合わせ
+            result.Add(LadderRow.AddStatement(id + ":" + cyName + " サーボ"));
+
+
+            var label = cylinder.Mnemonic.DeviceLabel; // ラベルの取得  
+            var startNum = cylinder.Mnemonic.StartNum; // ラベルの取得  
+
+            // CYが一致するOperationの取得  
+            var cylinderOperations = operations.Where(o => o.Operation.CYId == cylinder.Cylinder.Id).ToList();
+            var goOperation = cylinderOperations.Where(o => o.Operation.GoBack == "G").ToList();        // 行きのOperationを取得  
+            var backOperation = cylinderOperations.Where(o => o.Operation.GoBack == "B").ToList();      // 帰りのOperationを取得  
+            var activeOperation = cylinderOperations.Where(o => o.Operation.GoBack == "A").ToList();    // 作動のOperationを取得  
+
+            // 行き方向自動指令  
+            result.AddRange(functions.GoOperation(goOperation, activeOperation));
+
+            // 帰り方向自動指令
+            result.AddRange(functions.BackOperation(backOperation));
+
+            // 行き方向手動指令
+            result.AddRange(functions.GoManualOperation(goOperation, activeOperation));
+
+            // 帰り方向手動指令  
+            result.AddRange(functions.BackManualOperation(backOperation));
+            result.Add(LadderRow.AddNOP());
+
+
+            // 行き方向自動
+            result.Add(LadderRow.AddLD(label + (startNum + 0).ToString()));
+            result.Add(LadderRow.AddOR(label + (startNum + 2).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 12).ToString()));
+
+            // 帰り方向自動
+            result.Add(LadderRow.AddLD(label + (startNum + 1).ToString()));
+            result.Add(LadderRow.AddOR(label + (startNum + 3).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 13).ToString()));
+
+            // 指令ON
+            result.Add(LadderRow.AddLD(label + (startNum + 12).ToString()));
+            result.Add(LadderRow.AddOR(label + (startNum + 13).ToString()));
+            result.Add(LadderRow.AddLD(label + (startNum + 7).ToString()));
+            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddORB());
+            result.Add(LadderRow.AddLD(label + (startNum + 8).ToString()));
+            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddORB());
+            result.Add(LadderRow.AddOUT(label + (startNum + 10).ToString()));
+            result.Add(LadderRow.AddNOP());
+
+
 
 
             return result;

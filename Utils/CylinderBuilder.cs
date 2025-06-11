@@ -84,7 +84,7 @@ namespace KdxDesigner.Utils
                             ioList));
                         break;
                     case 14:
-                        result.AddRange(positionBuilder.Position(
+                        result.AddRange(positionBuilder.Servo(
                             cylinder,
                             details,
                             operations,
@@ -96,7 +96,6 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList));
                         break;
-                    default:
                     case 17:
                         result.AddRange(speedBuilder.Inverter(
                             cylinder,

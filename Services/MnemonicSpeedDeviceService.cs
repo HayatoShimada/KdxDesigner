@@ -42,7 +42,6 @@ namespace KdxDesigner.Services
             {
                 if (cy == null) continue;
                 var existing = allExisting.SingleOrDefault(m => m.CylinderId == cy.Id);
-
                 var speedDevice = "D" + (startNum + count).ToString();
 
                 var parameters = new DynamicParameters();
