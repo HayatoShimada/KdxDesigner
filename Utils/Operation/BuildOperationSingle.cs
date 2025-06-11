@@ -93,8 +93,8 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(errorBuilder.Operation(
                 operation.Operation,
                 mnemonicError,
-                label!,
-                outNum!.Value
+                label,
+                outNum
             ));
 
             ProsTimeBuilder prosTimeBuilder = new(_errorAggregator);
@@ -103,8 +103,8 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(prosTimeBuilder.Common(
                 operation.Operation,
                 prosTimes,
-                label!,
-                outNum!.Value));
+                label,
+                outNum));
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -178,7 +178,7 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
             // 深当たりタイマがある場合
-            if (operationTimerONWait != null)
+            if (operationTimerONWait != null && operationTimerONWait.Timer.TimerDevice != null)
             {
                 result.Add(LadderRow.AddAND(operationTimerONWait.Timer.TimerDevice));
             }
@@ -196,7 +196,7 @@ namespace KdxDesigner.Utils.Operation
                 operation.Operation,
                 prosTimes,
                 label!,
-                outNum!.Value));
+                outNum));
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }

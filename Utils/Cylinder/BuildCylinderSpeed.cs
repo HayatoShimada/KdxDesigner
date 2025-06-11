@@ -43,8 +43,8 @@ namespace KdxDesigner.Utils.Cylinder
                 _errorAggregator.AddError(new OutputError
                 {
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = cylinder.Cylinder.Id,
-                    DetailName = cylinder.Cylinder.CYNum,
+                    RecordId = cylinder.Cylinder.Id,
+                    RecordName = cylinder.Cylinder.CYNum,
                     Message = $"CY{cylinder.Cylinder.CYNum}のスピードデバイスが見つかりません。",
                 });
                 speedDevice = null; // スピードデバイスが見つからない場合はnullを設定

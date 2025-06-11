@@ -97,9 +97,9 @@ namespace KdxDesigner.Utils
             _errorAggregator.AddError(new OutputError
             {
                 Message = message,
-                DetailName = detailName,
+                RecordName = detailName,
                 MnemonicId = mnemonicId,
-                ProcessId = processId
+                RecordId = processId
             });
         }
     }

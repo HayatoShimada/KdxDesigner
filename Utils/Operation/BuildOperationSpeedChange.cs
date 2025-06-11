@@ -36,13 +36,24 @@ namespace KdxDesigner.Utils.Operation
             var result = new List<LadderCsvRow>();
             OperationFunction operationFunction = new(operation, timers, ioList, details, _mainViewModel, _errorAggregator, _ioAddressService);
 
-            var label = operation.Mnemonic.DeviceLabel;
-            var outNum = operation.Mnemonic.StartNum;
+            string label = string.Empty;
+            int outNum = 0;
+
+            if (operation != null 
+                && operation.Mnemonic != null 
+                && operation.Mnemonic.DeviceLabel != null)
+            {
+                label = operation.Mnemonic.DeviceLabel;
+                outNum = operation.Mnemonic.StartNum;
+                CreateOperationError(operation, $"Mnemonicデバイスが設定されていません。");
+                return result;
+            }
+           
 
             List<MnemonicTimerDeviceWithOperation> operationTimers = timers
-                .Where(t => t.Operation.Id == operation.Operation.Id).ToList();
+                .Where(t => t.Operation.Id == operation!.Operation.Id).ToList();
 
-            string id = operation.Operation.Id.ToString();
+            string id = operation!.Operation.Id.ToString();
             if (string.IsNullOrEmpty(operation.Operation.OperationName))
             {
                 result.Add(LadderRow.AddStatement(id));
@@ -54,15 +65,8 @@ namespace KdxDesigner.Utils.Operation
 
             var detailList = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
 
-            if (!outNum.HasValue)
-            {
-                // outNum が null の場合はエラーを追加して終了
-                CreateOperationError(operation, $"操作「{operation.Operation.OperationName}」(ID: {id}) の Mnemonic StartNum が設定されていません。");
-                return result;
-            }
-
             // outNum.Value を一度変数に格納して再利用
-            var outNumValue = outNum.Value;
+            var outNumValue = outNum;
 
             result.AddRange(operationFunction.GenerateM0());
             result.AddRange(operationFunction.GenerateM2());
@@ -205,9 +209,9 @@ namespace KdxDesigner.Utils.Operation
             var error = new OutputError
             {
                 Message = message,
-                DetailName = operation.Operation?.OperationName ?? "N/A",
+                RecordName = operation.Operation?.OperationName ?? "N/A",
                 MnemonicId = (int)MnemonicType.Operation,
-                ProcessId = operation.Operation?.Id ?? 0
+                RecordId = operation.Operation?.Id ?? 0
             };
             _errorAggregator.AddError(error);
         }

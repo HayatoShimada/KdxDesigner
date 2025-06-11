@@ -97,36 +97,48 @@ namespace KdxDesigner.Utils.Process
             // OUT L1 開始
             // 試運転スル
             var debugContact = process.Process.TestMode;
-            result.Add(LadderRow.AddLDI(debugContact));
-
-            // 試運転実行処理
             var debugStartContact = process.Process.TestStart;
-            result.Add(LadderRow.AddLD(debugStartContact));
-
             var debugCondition = process.Process.TestCondition;
-            result.Add(LadderRow.AddAND(debugCondition));
-
-            result.Add(LadderRow.AddAND(debugContact));
-            result.Add(LadderRow.AddORB());
-
-            // アウトコイルまで
-            result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
-            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
-
             var startContact = process.Process.AutoStart;
-            result.Add(LadderRow.AddAND(startContact));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
 
-            // CJの実装
-            result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(debugStartContact));
-            result.Add(LadderRow.AddCJ("P0"));          // issue#11
+            if (debugContact == null 
+                || debugStartContact == null 
+                || debugCondition == null 
+                || startContact == null)
+            {
+                // エラーを追加してください   issue#10
+            }
+            else
+            {
+                result.Add(LadderRow.AddLDI(debugContact));
 
-            // OUT L2 実行中
-            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
+                // 試運転実行処理
+                result.Add(LadderRow.AddLD(debugStartContact));
+
+                result.Add(LadderRow.AddAND(debugCondition));
+
+                result.Add(LadderRow.AddAND(debugContact));
+                result.Add(LadderRow.AddORB());
+
+                // アウトコイルまで
+                result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
+                result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
+
+                result.Add(LadderRow.AddAND(startContact));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
+
+                // CJの実装
+                result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddAND(debugStartContact));
+                result.Add(LadderRow.AddCJ("P0"));          // issue#11
+
+                // OUT L2 実行中
+                result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
+            }
+                
 
             // OUT L4 完了
             var completeContact = process.Process.FinishId;
@@ -232,33 +244,41 @@ namespace KdxDesigner.Utils.Process
             // OUT L1 開始
             // 試運転スル
             var debugContact = process.Process.TestMode;
-            result.Add(LadderRow.AddLDI(debugContact));
-
-            // 試運転実行処理
             var debugStartContact = process.Process.TestStart;
-            result.Add(LadderRow.AddLD(debugStartContact));
-
-            //var debugCondition = process.Process.TestCondition;
-            //result.Add(LadderRow.AddAND(debugCondition));
-
-            result.Add(LadderRow.AddAND(debugContact));
-            result.Add(LadderRow.AddORB());
-
-            // アウトコイルまで
-            result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
-            result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 3).ToString()));
-            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
-
             var startContact = process.Process.AutoStart;
-            result.Add(LadderRow.AddAND(startContact));
-            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
 
-            // CJの実装
-            result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(debugStartContact));
-            result.Add(LadderRow.AddCJ("P0"));          // issue#11
+            if (debugContact == null 
+                || debugStartContact == null 
+                || startContact == null)
+            {
+                // エラーを追加してください   issue#10
+            }
+            else
+            {
+                result.Add(LadderRow.AddLDI(debugContact));
+
+                // 試運転実行処理
+                result.Add(LadderRow.AddLD(debugStartContact));
+                result.Add(LadderRow.AddAND(debugContact));
+                result.Add(LadderRow.AddORB());
+
+                // アウトコイルまで
+                result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
+                result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 3).ToString()));
+                result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
+
+                result.Add(LadderRow.AddAND(startContact));
+                result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
+
+                // CJの実装
+                result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddAND(debugStartContact));
+                result.Add(LadderRow.AddCJ("P0"));          // issue#11
+            }
+
+            
 
             // OUT L2 実行中
             var completeContact = process.Process.FinishId;
@@ -363,42 +383,49 @@ namespace KdxDesigner.Utils.Process
             // OUT L1 開始
             // 試運転スル
             var debugContact = process.Process.TestMode;
-            result.Add(LadderRow.AddLDI(debugContact));
-
-            // 試運転実行処理
             var debugStartContact = process.Process.TestStart;
-            result.Add(LadderRow.AddLD(debugStartContact));
-
-            //var debugCondition = process.Process.TestCondition;
-            //result.Add(LadderRow.AddAND(debugCondition));
-
-            result.Add(LadderRow.AddAND(debugContact));
-            result.Add(LadderRow.AddORB());
-
-            // アウトコイルまで
-            result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
-            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
-
             var startContact = process.Process.AutoStart;
-            result.Add(LadderRow.AddAND(startContact));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
-
-            // OUT L2 開始
-            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
-
-            // OUT L3 開始確認
             var iLStart = process.Process.ILStart;
-            result.Add(LadderRow.AddLD(iLStart));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 3).ToString()));
 
-            // OUT L4 完了
-            result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 3).ToString()));
-            result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 4).ToString()));
+            if (debugContact == null
+                || debugStartContact == null
+                || startContact == null
+                || iLStart == null)
+            {
+                // エラーを追加してください   issue#10
+            }
+            else
+            {
+                result.Add(LadderRow.AddLDI(debugContact));
 
+                // 試運転実行処理
+                result.Add(LadderRow.AddLD(debugStartContact));
+
+                result.Add(LadderRow.AddAND(debugContact));
+                result.Add(LadderRow.AddORB());
+
+                // アウトコイルまで
+                result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
+                result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
+
+                result.Add(LadderRow.AddAND(startContact));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
+
+                // OUT L2 開始
+                result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
+
+                // OUT L3 開始確認
+                result.Add(LadderRow.AddLD(iLStart));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 3).ToString()));
+
+                // OUT L4 完了
+                result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
+                result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 3).ToString()));
+                result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 4).ToString()));
+            }
             return result;
         }
 

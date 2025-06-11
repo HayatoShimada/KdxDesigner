@@ -29,8 +29,8 @@ namespace KdxDesigner.Utils.Cylinder
             _errorAggregator = errorAggregator;
             _cylinder = cylinder;
             _ioAddressService = ioAddressService; // IIOAddressServiceのインジェクト
-            _startNum = cylinder.Mnemonic.StartNum ?? 0; // ラベルの取得
-            _label = cylinder.Mnemonic.DeviceLabel ?? "M"; // ラベルの取得
+            _startNum = cylinder.Mnemonic.StartNum; // ラベルの取得
+            _label = cylinder.Mnemonic.DeviceLabel; // ラベルの取得
             _speedDevice = speedDevice;
         }
 
@@ -252,43 +252,8 @@ namespace KdxDesigner.Utils.Cylinder
         public List<LadderCsvRow> Retention(List<IO> sensors)
         {
             // センサーの取得
-            var findGoSensorResult = _ioAddressService.FindByIOText(sensors, "G", _mainViewModel.SelectedPlc!.Id);
-            string? goSensor = null;
-            switch (findGoSensorResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    goSensor = findGoSensorResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
-                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
-                    _errorAggregator.AddError(new OutputError { Message = "センサー 'G' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
-                    break;
-            }
-
-            var findBackSensorResult = _ioAddressService.FindByIOText(sensors, "B", _mainViewModel.SelectedPlc!.Id);
-            string? backSensor = null;
-            switch (findBackSensorResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    backSensor = findBackSensorResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
-                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
-                    _errorAggregator.AddError(new OutputError { Message = "センサー 'B' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
-                    break;
-            }
+            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", _mainViewModel.SelectedPlc!.Id);
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", _mainViewModel.SelectedPlc!.Id);
 
 
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
@@ -300,6 +265,15 @@ namespace KdxDesigner.Utils.Cylinder
             }
             else
             {
+                _errorAggregator.AddError(
+                    new OutputError
+                    {
+                        Message = "センサー 'G' が見つかりませんでした。",
+                        RecordName = _cylinder.Cylinder.CYNum,
+                        RecordId = _cylinder.Cylinder.Id,
+                        MnemonicId = (int)MnemonicType.CY,
+                        IsCritical = false
+                    });
             }
             result.Add(LadderRow.AddAND(_label + (_startNum + 5).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_startNum + 19).ToString()));
@@ -326,43 +300,8 @@ namespace KdxDesigner.Utils.Cylinder
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
 
             // センサーの取得
-            var findGoSensorResult = _ioAddressService.FindByIOText(sensors, "G", _mainViewModel.SelectedPlc!.Id);
-            string? goSensor = null;
-            switch (findGoSensorResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    goSensor = findGoSensorResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
-                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
-                    _errorAggregator.AddError(new OutputError { Message = "センサー 'G' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
-                    break;
-            }
-
-            var findBackSensorResult = _ioAddressService.FindByIOText(sensors, "B", _mainViewModel.SelectedPlc!.Id);
-            string? backSensor = null;
-            switch (findBackSensorResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    backSensor = findBackSensorResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    // ★ サービス内ではUIを呼ばない。代わりにエラーとして報告する。
-                    // ViewModel はこのエラーを受けて、ユーザーに選択を促すUIを表示する。
-                    _errorAggregator.AddError(new OutputError { Message = "センサー 'B' で複数の候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    // エラーはサービス内で既に追加されているので、ここでは何もしない。
-                    break;
-            }
+            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", _mainViewModel.SelectedPlc!.Id);
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", _mainViewModel.SelectedPlc!.Id);
 
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
@@ -384,10 +323,11 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
+                    RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"速度設定用のデバイスが見つかりませんでした。",
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
+                    RecordId = _cylinder.Cylinder.Id,
+                    IsCritical = false
                 });
             }
 
@@ -413,10 +353,11 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
+                    RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"速度設定用のデバイスが見つかりませんでした。",
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
+                    RecordId = _cylinder.Cylinder.Id,
+                    IsCritical = false
                 });
             }
             return result; // 生成されたLadderCsvRowのリストを返す
@@ -430,10 +371,11 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
+                    RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"速度設定用のデバイスが見つかりませんでした。",
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
+                    RecordId = _cylinder.Cylinder.Id,
+                    IsCritical = false
                 });
                 return result; // スピードデバイスがない場合は空のリストを返す
             }
@@ -491,21 +433,7 @@ namespace KdxDesigner.Utils.Cylinder
             var result = new List<LadderCsvRow>();
 
             string valveSearchString = _mainViewModel.ValveSearchText;
-            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
-            string? goValve = null;
-            switch (valveResult.State)
-            {
-                case FindIOResultState.FoundOne:
-                    goValve = valveResult.SingleAddress;
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-                    _errorAggregator.AddError(new OutputError { Message = "複数の出力バルブ候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    break;
-
-                case FindIOResultState.NotFound:
-                    break;
-            }
+            var goValve = _ioAddressService.GetSingleAddress(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
 
             // 帰り方向
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
@@ -538,10 +466,10 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
+                    RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"行き方向のバルブ '{_cylinder.Cylinder.Go}' が見つかりませんでした。",
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
+                    RecordId = _cylinder.Cylinder.Id
                 });
             }
             return result; // 生成されたLadderCsvRowのリストを返す
@@ -552,74 +480,31 @@ namespace KdxDesigner.Utils.Cylinder
         {
             var result = new List<LadderCsvRow>();
 
-            string valveSearchString = _mainViewModel.ValveSearchText;
-            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
-            string? goValve = null;
-            string? backValve = null;
+            // 1. GetAddressRange を使って、"SV" を含むすべてのバルブ候補を取得
+            string? valveSearchString = _mainViewModel.ValveSearchText;
+            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString ?? "SV", errorIfNotFound: true);
 
-            switch (valveResult.State)
+            // 2. ダブルバルブには最低2つの候補が必要なため、候補数をチェック
+            if (valveCandidates.Count < 2)
             {
-                case FindIOResultState.FoundOne:
-                    _errorAggregator.AddError(new OutputError
-                    {
-                        MnemonicId = (int)MnemonicType.CY,
-                        ProcessId = _cylinder.Cylinder.Id,
-                        Message = "出力バルブ候補が1つしかありません。",
-                        DetailName = _cylinder.Cylinder.CYNum ?? ""
-                    });
-
-                    break;
-
-                case FindIOResultState.FoundMultiple:
-
-                    // 前進（Go）バルブの出力先が設定されているかチェック
-                    if (string.IsNullOrEmpty(_cylinder.Cylinder.Go))
-                    {
-                        _errorAggregator.AddError(new OutputError
-                        {
-                            MnemonicId = (int)MnemonicType.CY,
-                            ProcessId = _cylinder.Cylinder.Id,
-                            Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の前進（Go）バルブ出力先が設定されていません。",
-                            DetailName = _cylinder.Cylinder.CYNum ?? ""
-                        });
-                    }
-                    else
-                    {
-                        // 設定されている場合のみ、一致するアドレスを探す
-                        goValve = valveResult.MultipleMatches?
-                            .Where(m => m.IOName != null && m.IOName.EndsWith(_cylinder.Cylinder.Go))
-                            .Select(m => m.Address)
-                            .FirstOrDefault();
-                    }
-
-                    // 後退（Back）バルブの出力先が設定されているかチェック
-                    if (string.IsNullOrEmpty(_cylinder.Cylinder.Back))
-                    {
-                        _errorAggregator.AddError(new OutputError
-                        {
-                            MnemonicId = (int)MnemonicType.CY,
-                            ProcessId = _cylinder.Cylinder.Id,
-                            Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の後退（Back）バルブ出力先が設定されていません。",
-                            DetailName = _cylinder.Cylinder.CYNum ?? ""
-                        });
-                    }
-                    else
-                    {
-                        // 設定されている場合のみ、一致するアドレスを探す
-                        backValve = valveResult.MultipleMatches?
-                            .Where(m => m.IOName != null && m.IOName.EndsWith(_cylinder.Cylinder.Back))
-                            .Select(m => m.Address)
-                            .FirstOrDefault();
-                    }
-                    break;
-
-                case FindIOResultState.NotFound:
-                    break;
+                _errorAggregator.AddError(new OutputError
+                {
+                    Message = $"ダブルバルブを特定できません。バルブ検索文字列 '{valveSearchString}' に一致するIOが2件未満です。",
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum ?? ""
+                });
+                // 候補が足りないが、個別のエラーを報告するために処理は続行
             }
 
+            // 3. ヘルパーメソッドを使い、Go/Backバルブをそれぞれ検索
+            var goValveAddress = FindValveAddress(valveCandidates, _cylinder.Cylinder.Go, "前進 (Go)");
+            var backValveAddress = FindValveAddress(valveCandidates, _cylinder.Cylinder.Back, "後退 (Back)");
+
+            // 4. 見つかったアドレスに基づいてラダーを生成（エラー処理はヘルパーが担当）
 
             // 行き方向のバルブ出力
-            if (goValve != null)
+            if (goValveAddress != null)
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
@@ -629,88 +514,68 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
                 result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
-                result.Add(LadderRow.AddORB()); // 出力命令を追加
-                result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
-                result.Add(LadderRow.AddOUT(goValve));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
+                result.Add(LadderRow.AddORB());
+
+                // backValveAddress が見つかっている場合、それとANDNでインターロックを組む
+                if (backValveAddress != null)
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $"行き方向のバルブ '{_cylinder.Cylinder.Go}' が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
-                });
+                    result.Add(LadderRow.AddANI(backValveAddress));
+                }
 
-
+                result.Add(LadderRow.AddOUT(goValveAddress));
             }
+            // elseの場合、エラーはFindValveAddress内で記録済み
 
-            if (backValve != null)
+            // 帰り方向のバルブ出力
+            if (backValveAddress != null)
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
+
                 result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
                 result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
-                result.Add(LadderRow.AddORB()); // 出力命令を追加
-                result.Add(LadderRow.AddOUT(backValve));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
+                result.Add(LadderRow.AddORB());
+
+                // goValveAddress が見つかっている場合、それとANDNでインターロックを組む
+                if (goValveAddress != null)
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $"帰り方向のバルブ '{_cylinder.Cylinder.Back}' が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
-                });
+                    result.Add(LadderRow.AddANI(goValveAddress));
+                }
+
+                result.Add(LadderRow.AddOUT(backValveAddress));
             }
-            return result; // 生成されたLadderCsvRowのリストを返す
+            // elseの場合、エラーはFindValveAddress内で記録済み
+
+            return result;
         }
 
 
         public List<LadderCsvRow> FlowValve(List<IO> sensors)
         {
             var result = new List<LadderCsvRow>();
+            const string valveSearchString = "IN";
 
-            string valveSearchString = "IN";
-            var valveResult = _ioAddressService.FindByIOText(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id);
-            string? valve1 = null;
-            string? valve2 = null;
-            string? valve3 = null;
-            string? valve4 = null;
-            string? valve5 = null;
-            string? valve6 = null;
+            // 1. "IN" を含むIO候補を全て取得する。見つからない場合はサービスがエラーを報告する。
+            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString, errorIfNotFound: true);
 
-            switch (valveResult.State)
+            // 2. 見つかった候補を、末尾の番号をキーとする辞書に変換する
+            var valveMap = new Dictionary<int, string>();
+            foreach (var candidate in valveCandidates)
             {
-                case FindIOResultState.FoundOne:
-                    _errorAggregator.AddError(new OutputError { Message = "複数の出力バルブ候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    return result;
+                if (string.IsNullOrEmpty(candidate.IOName)) continue;
 
-                case FindIOResultState.FoundMultiple:
-                    valveResult.MultipleMatches?.ForEach(m =>
-                    {
-                        if (m.IOName != null)
-                        {
-                            if (m.IOName.EndsWith("1")) valve1 = m.Address;
-                            else if (m.IOName.EndsWith("2")) valve2 = m.Address;
-                            else if (m.IOName.EndsWith("3")) valve3 = m.Address;
-                            else if (m.IOName.EndsWith("4")) valve4 = m.Address;
-                            else if (m.IOName.EndsWith("5")) valve5 = m.Address;
-                            else if (m.IOName.EndsWith("6")) valve6 = m.Address;
-                        }
-                    });
-                    break;
-                case FindIOResultState.NotFound:
-                    _errorAggregator.AddError(new OutputError { Message = "複数の出力バルブ候補が見つかりました。手動での選択が必要です。", DetailName = "G" });
-                    return result;
+                // IONameの末尾が1-6の数字であるものを抽出
+                char lastChar = candidate.IOName.Last();
+                if (int.TryParse(lastChar.ToString(), out int valveNum) && valveNum >= 1 && valveNum <= 6)
+                {
+                    valveMap[valveNum] = candidate.Address!;
+                }
             }
 
-            // 帰り方向
+            // 2. 共通のラダーロジックを生成
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -719,119 +584,106 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
             result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
-            result.Add(LadderRow.AddORB()); // 出力命令を追加
+            result.Add(LadderRow.AddORB());
             result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString()));
 
-            // IN1の出力
-            if (valve1 != null && _speedDevice != null)
+            // 3. ループを使って、IN1～IN6のラダー生成とエラー処理を共通化
+            for (int i = 1; i <= 6; i++)
             {
-                result.AddRange(LadderRow.AddLDG(_speedDevice, "K5"));
-                result.AddRange(LadderRow.AddANDN(_speedDevice, "K0"));
-                result.Add(LadderRow.AddOUT(valve1));
+                // 辞書にバルブが存在するか確認
+                if (valveMap.TryGetValue(i, out string? valveAddress))
+                {
+                    // バルブが見つかった場合：ラダーを生成
+                    if (i == 1) // IN1 のみ特殊なロジック
+                    {
+                        if (_speedDevice != null)
+                        {
+                            result.AddRange(LadderRow.AddLDG(_speedDevice, "K5"));
+                            result.AddRange(LadderRow.AddANDN(_speedDevice, "K0"));
+                            result.Add(LadderRow.AddOUT(valveAddress));
+                        }
+                        else
+                        {
+                            // speedDevice がない場合のエラー
+                            _errorAggregator.AddError(new OutputError
+                            {
+                                RecordName = _cylinder.Cylinder.CYNum ?? "",
+                                Message = $"流量バルブIN1のロジック生成に失敗しました。速度制御デバイスが見つかりません。",
+                                MnemonicId = (int)MnemonicType.CY,
+                                RecordId = _cylinder.Cylinder.Id
+                            });
+                        }
+                    }
+                    else // IN2 から IN6 までの共通ロジック
+                    {
+                        // ラダーアドレスのオフセットを計算
+                        // IN2 -> 21, 26 | IN3 -> 22, 27 ...
+                        int ldOffset = 19 + i;
+                        int orOffset = 24 + i;
+                        result.Add(LadderRow.AddLD(_label + (_startNum + ldOffset).ToString()));
+                        result.Add(LadderRow.AddOR(_label + (_startNum + orOffset).ToString()));
+                        result.Add(LadderRow.AddOUT(valveAddress));
+                    }
+                }
+                else
+                {
+                    // バルブが見つからなかった場合：エラーを追加
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        RecordName = _cylinder.Cylinder.CYNum ?? "",
+                        Message = $"'{_cylinder.Cylinder.CYNum}' の流量バルブIN{i}がIOリストに見つかりませんでした。",
+                        MnemonicId = (int)MnemonicType.CY,
+                        RecordId = _cylinder.Cylinder.Id
+                    });
+                }
             }
-            else
+
+            return result;
+        }
+
+        /// <summary>
+        /// 指定された候補リストから、設定に基づいた特定のバルブアドレスを検索します。
+        /// </summary>
+        /// <param name="valveCandidates">検索対象のIO候補リスト。</param>
+        /// <param name="configuredSuffix">Cylinderに設定されているバルブのSuffix(GoまたはBackの値)。</param>
+        /// <param name="valveTypeForErrorMessage">エラーメッセージに表示するためのバルブ種別（例：「前進 (Go)」）。</param>
+        /// <returns>見つかった場合はアドレス文字列。見つからない、または設定がない場合はnull。</returns>
+        private string? FindValveAddress(
+            List<IO> valveCandidates,
+            string? configuredSuffix,
+            string valveTypeForErrorMessage)
+        {
+            // 1. シリンダにバルブの設定自体が存在するかチェック
+            if (string.IsNullOrEmpty(configuredSuffix))
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $" '{_cylinder.Cylinder.CYNum}'流量バルブIN1 が見つかりませんでした。",
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
+                    RecordId = _cylinder.Cylinder.Id,
+                    Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の{valveTypeForErrorMessage}バルブ出力先が設定されていません。",
+                    RecordName = _cylinder.Cylinder.CYNum ?? ""
                 });
+                return null;
             }
 
-            // IN2の出力
-            if (valve2 != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_startNum + 21).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 26).ToString()));
-                result.Add(LadderRow.AddOUT(valve2));
-            }
-            else
+            // 2. 候補リストから一致するものを探す
+            var foundValve = valveCandidates
+                .FirstOrDefault(m => m.IOName != null && m.IOName.EndsWith(configuredSuffix));
+
+            // 3. IOリスト内に見つかったかチェック
+            if (foundValve == null)
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $" '{_cylinder.Cylinder.CYNum}'流量バルブIN2 が見つかりませんでした。",
                     MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
+                    RecordId = _cylinder.Cylinder.Id,
+                    Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{configuredSuffix}' が見つかりませんでした。",
+                    RecordName = _cylinder.Cylinder.CYNum ?? ""
                 });
+                return null;
             }
 
-            // IN3の出力
-            if (valve3 != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_startNum + 22).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 27).ToString()));
-                result.Add(LadderRow.AddOUT(valve3));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $" '{_cylinder.Cylinder.CYNum}'流量バルブIN3 が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
-                });
-            }
-
-            // IN4の出力
-            if (valve4 != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_startNum + 23).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 28).ToString()));
-                result.Add(LadderRow.AddOUT(valve4));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $" '{_cylinder.Cylinder.CYNum}'流量バルブIN4 が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
-                });
-            }
-
-            // IN5の出力
-            if (valve5 != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_startNum + 24).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 29).ToString()));
-                result.Add(LadderRow.AddOUT(valve5));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $" '{_cylinder.Cylinder.CYNum}'流量バルブIN5 が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
-                });
-            }
-
-            // IN6の出力
-            if (valve6 != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_startNum + 25).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 30).ToString()));
-                result.Add(LadderRow.AddOUT(valve6));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    DetailName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $" '{_cylinder.Cylinder.CYNum}'流量バルブIN6 が見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
-                    ProcessId = _cylinder.Cylinder.Id
-                });
-            }
-
-            return result; // 生成されたLadderCsvRowのリストを返す
-
+            return foundValve.Address;
         }
 
 

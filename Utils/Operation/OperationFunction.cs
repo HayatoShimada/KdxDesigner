@@ -42,7 +42,7 @@ namespace KdxDesigner.Utils.Operation
             _ioAddressService = ioAddressService;
             _operation = operation;
             _label = operation.Mnemonic.DeviceLabel!; // ラベルの取得
-            _outNum = operation.Mnemonic.StartNum ?? 0; // ラベルの取得
+            _outNum = operation.Mnemonic.StartNum; // ラベルの取得
         }
 
         public List<LadderCsvRow> GenerateM0(
@@ -143,7 +143,7 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
             // ioの取得を共通コンポーネント化すること
-            var ioSensor = _ioAddressService.FindByIOText(_ioList, _operation.Operation.Start!, _mainViewModel.SelectedPlc!.Id);
+            var ioSensor = _ioAddressService.GetSingleAddress(_ioList, _operation.Operation.Start!, _mainViewModel.SelectedPlc!.Id);
 
             if (ioSensor == null)
             {
@@ -153,11 +153,11 @@ namespace KdxDesigner.Utils.Operation
             {
                 if (_operation.Operation.Start!.Contains("_"))    // Containsではなく、先頭一文字
                 {
-                    result.Add(LadderRow.AddAND(ioSensor.SingleAddress ?? ""));
+                    result.Add(LadderRow.AddAND(ioSensor));
                 }
                 else
                 {
-                    result.Add(LadderRow.AddANI(ioSensor.SingleAddress ?? ""));
+                    result.Add(LadderRow.AddANI(ioSensor));
 
                 }
             }
@@ -177,7 +177,7 @@ namespace KdxDesigner.Utils.Operation
             )
         {
             var result = new List<LadderCsvRow>();
-            var ioSensor = _ioAddressService.FindByIOText(_ioList, speedSensor, _mainViewModel.SelectedPlc!.Id);
+            var ioSensor = _ioAddressService.GetSingleAddress(_ioList, speedSensor, _mainViewModel.SelectedPlc!.Id);
 
             if (ioSensor == null)
             {
@@ -187,11 +187,11 @@ namespace KdxDesigner.Utils.Operation
             {
                 if (speedSensor.Contains("_"))    // Containsではなく、先頭一文字
                 {
-                    result.Add(LadderRow.AddLD(ioSensor.SingleAddress));
+                    result.Add(LadderRow.AddLD(ioSensor));
                 }
                 else
                 {
-                    result.Add(LadderRow.AddLD(ioSensor.SingleAddress));
+                    result.Add(LadderRow.AddLD(ioSensor));
 
                 }
             }
@@ -206,7 +206,7 @@ namespace KdxDesigner.Utils.Operation
             // M10 + sppeedCount
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
-            result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice));
+            result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
             result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
@@ -224,7 +224,7 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
             // ioの取得を共通コンポーネント化すること
-            var ioSensor = _ioAddressService.FindByIOText(_ioList, _operation.Operation.Finish!, _mainViewModel.SelectedPlc!.Id);
+            var ioSensor = _ioAddressService.GetSingleAddress(_ioList, _operation.Operation.Finish!, _mainViewModel.SelectedPlc!.Id);
 
             if (ioSensor == null)
             {
@@ -234,11 +234,11 @@ namespace KdxDesigner.Utils.Operation
             {
                 if (_operation.Operation.Finish!.Contains("_"))    // Containsではなく、先頭一文字
                 {
-                    result.Add(LadderRow.AddANI(ioSensor.SingleAddress ?? ""));
+                    result.Add(LadderRow.AddANI(ioSensor));
                 }
                 else
                 {
-                    result.Add(LadderRow.AddAND(ioSensor.SingleAddress ?? ""));
+                    result.Add(LadderRow.AddAND(ioSensor));
                 }
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 16).ToString()));
@@ -269,7 +269,7 @@ namespace KdxDesigner.Utils.Operation
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.TimerDevice));
+                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.TimerDevice!));
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 17).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 16).ToString()));

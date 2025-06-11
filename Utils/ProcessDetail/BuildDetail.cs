@@ -76,28 +76,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.StartSensor, plcId);
+                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.StartSensor, plcId);
 
                 if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddLD(""));
-                    localErrors.Add(new OutputError
-                    {
-                        Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
-                        DetailName = detail.Detail.ProcessName,
-                        MnemonicId = (int)MnemonicType.ProcessDetail,
-                        ProcessId = detail.Detail.Id
-                    });
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 }
                 else
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor));
 
                     }
                 }
@@ -301,28 +294,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.FinishSensor, plcId);
+                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.FinishSensor, plcId);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
-                    result.Add(LadderRow.AddLD(""));
-                    localErrors.Add(new OutputError
-                    {
-                        Message = $"FinishSensor '{detail.Detail.FinishSensor}' が見つかりませんでした。",
-                        DetailName = detail.Detail.ProcessName,
-                        MnemonicId = (int)MnemonicType.ProcessDetail,
-                        ProcessId = detail.Detail.Id
-                    });
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 }
                 else
                 {
                     if (detail.Detail.FinishSensor.Contains("_"))    // ON工程　→　_の有無問わず　LD接点
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));//恐らく使用されない
+                        result.Add(LadderRow.AddLDI(ioSensor));//恐らく使用されない
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor));
 
                     }
                 }
@@ -431,28 +417,22 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.FinishSensor, plcId);
+                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.FinishSensor, plcId);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
-                    result.Add(LadderRow.AddLD(""));
-                    localErrors.Add(new OutputError
-                    {
-                        Message = $"FinishSensor '{detail.Detail.FinishSensor}' が見つかりませんでした。",
-                        DetailName = detail.Detail.ProcessName,
-                        MnemonicId = (int)MnemonicType.ProcessDetail,
-                        ProcessId = detail.Detail.Id
-                    });
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
+
                 }
                 else
                 {
                     if (detail.Detail.FinishSensor.Contains("_"))    // OFF工程　→　_の有無問わず　LDI接点
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));//恐らく使用されない
+                        result.Add(LadderRow.AddLDI(ioSensor));//恐らく使用されない
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor));
 
                     }
                 }
@@ -552,44 +532,37 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.StartSensor != null)
             {
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.StartSensor, plcId);
+                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.StartSensor, plcId);
 
                 if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddLD(""));
-                    localErrors.Add(new OutputError
-                    {
-                        Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
-                        DetailName = detail.Detail.ProcessName,
-                        MnemonicId = (int)MnemonicType.ProcessDetail,
-                        ProcessId = detail.Detail.Id
-                    });
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 }
                 else
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor));
 
                     }
                 }
-                //result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
 
             }
             else
             {
                 // StartSensornの設定ナシ
-                result.Add(LadderRow.AddLD(""));
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 localErrors.Add(new OutputError
                 {
                     Message = "StartSensor が設定されていません。",
-                    DetailName = detail.Detail.ProcessName,
+                    RecordName = detail.Detail.ProcessName,
                     MnemonicId = (int)MnemonicType.ProcessDetail,
-                    ProcessId = detail.Detail.Id
+                    RecordId = detail.Detail.Id,
+                    IsCritical = false
                 });
             }
 
@@ -754,13 +727,14 @@ namespace KdxDesigner.Utils.ProcessDetail
             else
             {
                 // StartSensornの設定ナシ
-                result.Add(LadderRow.AddLD(""));
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 localErrors.Add(new OutputError
                 {
                     Message = "StartSensor が設定されていません。",
-                    DetailName = detail.Detail.ProcessName,
+                    RecordName = detail.Detail.ProcessName,
                     MnemonicId = (int)MnemonicType.ProcessDetail,
-                    ProcessId = detail.Detail.Id
+                    RecordId = detail.Detail.Id,
+                    IsCritical = false
                 });
             }
 
@@ -861,28 +835,22 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.StartSensor, plcId);
+                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.StartSensor, plcId);
 
                 if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddLD(""));
-                    localErrors.Add(new OutputError
-                    {
-                        Message = $"StartSensor '{detail.Detail.StartSensor}' が見つかりませんでした。",
-                        DetailName = detail.Detail.ProcessName,
-                        MnemonicId = (int)MnemonicType.ProcessDetail,
-                        ProcessId = detail.Detail.Id
-                    });
+                    // StartSensornの設定ナシ
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 }
                 else
                 {
                     if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
 
                     }
                 }
@@ -915,29 +883,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.FindByIOText(ioList, detail.Detail.FinishSensor, plcId);
+                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.FinishSensor, plcId);
 
                 if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddLD(""));
-                    localErrors.Add(new OutputError
-                    {
-                        Message = $"" +
-                        $"FinishSensor '{detail.Detail.FinishSensor}' が見つかりませんでした。",
-                        DetailName = detail.Detail.ProcessName,
-                        MnemonicId = (int)MnemonicType.ProcessDetail,
-                        ProcessId = detail.Detail.Id
-                    });
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 }
                 else
                 {
                     if (detail.Detail.FinishSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
-                        result.Add(LadderRow.AddLDI(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddLD(ioSensor.SingleAddress ?? ""));
+                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
 
                     }
                 }
