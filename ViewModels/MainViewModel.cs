@@ -244,9 +244,6 @@ namespace KdxDesigner.ViewModels
                 MemoryStatusMessage = "ラダー生成中...";
                 var allOutputRows = new List<LadderCsvRow>();
 
-
-
-
                 // 各ビルダーに ViewModel と エラー集約サービスを渡してインスタンス化
                 // (ProcessBuilder, DetailBuilder, OperationBuilder も同様に修正されていると仮定)
                 //var processBuilder = new ProcessBuilder(errorAggregator);
@@ -277,6 +274,7 @@ namespace KdxDesigner.ViewModels
                     data.JoinedOperationList, 
                     data.JoinedCylinderList,
                     data.JoinedOperationWithTimerList, 
+                    data.JoinedCylinderWithTimerList,
                     data.SpeedDevice, 
                     data.MnemonicErrors, 
                     data.ProsTime, 
@@ -328,6 +326,7 @@ namespace KdxDesigner.ViewModels
                   List<MnemonicDeviceWithOperation> JoinedOperationList,
                   List<MnemonicDeviceWithCylinder> JoinedCylinderList,
                   List<MnemonicTimerDeviceWithOperation> JoinedOperationWithTimerList,
+                  List<MnemonicTimerDeviceWithCylinder> JoinedCylinderWithTimerList,
                   List<MnemonicSpeedDevice> SpeedDevice,
                   List<Error> MnemonicErrors,
                   List<ProsTime> ProsTime,
@@ -359,8 +358,9 @@ namespace KdxDesigner.ViewModels
             var joinedOperationList = devicesO.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
             var joinedCylinderList = devicesC.Join(cylinders, m => m.RecordId, c => c.Id, (m, c) => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c }).OrderBy(x => x.Cylinder.Id).ToList();
             var joinedOperationWithTimerList = timerDevices.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
+            var joinedCylinderWithTimerList = timerDevices.Join(cylinders, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o }).OrderBy(x => x.Cylinder.Id).ToList();
 
-            var dataTuple = (joinedProcessList, joinedProcessDetailList, joinedOperationList, joinedCylinderList, joinedOperationWithTimerList, speedDevice, mnemonicErrors, prosTime, ioList);
+            var dataTuple = (joinedProcessList, joinedProcessDetailList, joinedOperationList, joinedCylinderList, joinedOperationWithTimerList, joinedCylinderWithTimerList,speedDevice, mnemonicErrors, prosTime, ioList);
             return (dataTuple, new List<OutputError>()); // 初期エラーリスト
         }
 

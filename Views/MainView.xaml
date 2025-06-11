@@ -172,7 +172,7 @@
                 <GroupBox 
                         Header="出力エラー一覧" 
                         Margin="0,0,0,0" 
-                        Width="1800px">
+                        Width="1020">
                     <DataGrid
                             ItemsSource="{Binding OutputErrors}"
                             AutoGenerateColumns="False"
