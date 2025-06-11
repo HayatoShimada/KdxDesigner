@@ -24,6 +24,12 @@ namespace KdxDesigner.Utils.MnemonicCommon
         public static LadderCsvRow AddPLS(string address) => CreateRow(Command.PLS, address);
         public static LadderCsvRow AddORB() => CreateRow(Command.ORB);
         public static LadderCsvRow AddANB() => CreateRow(Command.ANB);
+        public static LadderCsvRow AddNOP() => CreateRow(Command.NOP);
+        public static LadderCsvRow AddMPS() => CreateRow(Command.MPS);
+        public static LadderCsvRow AddMPP() => CreateRow(Command.MPP);
+        public static LadderCsvRow AddMEP() => CreateRow(Command.MEP);
+
+
 
         // ソースとデスティネーションを入力すると、MOV命令等を生成する
         public static List<LadderCsvRow> AddMOVSet(string source, string destination)
@@ -38,6 +44,14 @@ namespace KdxDesigner.Utils.MnemonicCommon
             => CreateMOV(Command.LDE, source, destination);
         public static List<LadderCsvRow> AddLDG(string source, string destination)
             => CreateMOV(Command.LDG, source, destination);
+        public static List<LadderCsvRow> AddLDL(string source, string destination)
+            => CreateMOV(Command.LDL, source, destination);
+        public static List<LadderCsvRow> AddLDN(string source, string destination)
+            => CreateMOV(Command.LDN, source, destination);
+        public static List<LadderCsvRow> AddANDG(string source, string destination)
+            => CreateMOV(Command.ANDG, source, destination);
+        public static List<LadderCsvRow> AddANDL(string source, string destination)
+            => CreateMOV(Command.ANDL, source, destination);
         public static List<LadderCsvRow> AddANDN(string source, string destination)
            => CreateMOV(Command.ANDN, source, destination);
 

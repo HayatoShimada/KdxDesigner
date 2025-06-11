@@ -110,5 +110,10 @@ namespace KdxDesigner.Services.Access
         /// 全てのIOリスト情報を取得します。
         /// </summary>
         List<IO> GetIoList();
+
+        /// <summary>
+        /// 全てのタイマーカテゴリ情報を取得します。
+        /// </summary>
+        List<TimerCategory> GetTimerCategory();
     }
 }

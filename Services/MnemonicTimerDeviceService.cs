@@ -169,54 +169,46 @@ namespace KdxDesigner.Services
                 // 既存データを取得し、高速検索用に辞書に変換
                 // キー: (RecordId, TimerCategoryId) でユニークと仮定
                 var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.CY);
-                var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerCategoryId: m.TimerCategoryId), m => m);
 
                 // 処理対象のタイマーをRecordId(Cylinder.Id)でグループ化
-                var timersByRecordId = timers
-                    .Where(t => t.MnemonicId == (int)MnemonicType.Operation)
-                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
-                    .ToDictionary(g => g.Key, g => g.ToList());
+                var timersCylinder = timers
+                    .Where(t => t.MnemonicId == (int)MnemonicType.CY)
+                    .Where(t => t.CycleId == cycleId) // CycleIdでフィルタリング
+                    .ToList();
+                var repository = new AccessRepository(_connectionString);
+                var timerCategory = repository.GetTimerCategory();
 
-                // 処理対象とするTimerCategoryIdのリスト
-                var targetTimerCategories = new[] { 6, 7, 14 }; // EBT, NBT, FLT
-
-                foreach (CY cylinder in cylinders)
+                foreach (var timer in timersCylinder)
                 {
-                    if (cylinder == null || !timersByRecordId.TryGetValue(cylinder.Id, out var cylinderTimers))
+                    if (timer == null)
                     {
-                        continue; // シリンダーデータがない、または関連するタイマーがない場合はスキップ
+                        continue; // このカテゴリのタイマーは存在しないのでスキップ
                     }
 
-                    foreach (var categoryId in targetTimerCategories)
+                    var existingRecord = allExisting
+                        .FirstOrDefault(m => m.RecordId == timer.RecordId
+                        && m.TimerCategoryId == timer.TimerCategoryId);
+
+                    var category = timerCategory.FirstOrDefault(c => c.ID == timer.TimerCategoryId);
+                    var processTimerDevice = "T" + (startNum + count).ToString();
+                    var timerDevice = "ZR" + timer.TimerNum.ToString();
+
+                    if (timer.RecordId == null) continue; // RecordIdがnullの場合はスキップ
+
+                    var deviceToSave = new MnemonicTimerDevice
                     {
-                        // SingleOrDefaultで該当カテゴリのタイマーを一つだけ取得
-                        var timer = cylinderTimers.SingleOrDefault(t => t.TimerCategoryId == categoryId);
-                        if (timer == null)
-                        {
-                            continue; // このカテゴリのタイマーは存在しないのでスキップ
-                        }
+                        MnemonicId = (int)MnemonicType.CY,
+                        RecordId = timer.RecordId.Value,
+                        TimerId = timer.ID,
+                        TimerCategoryId = timer.TimerCategoryId,
+                        ProcessTimerDevice = processTimerDevice,
+                        TimerDevice = timerDevice,
+                        PlcId = plcId,
+                        CycleId = cycleId
+                    };
 
-                        var processTimerDevice = "T" + (startNum + count).ToString();
-                        var timerDevice = "ZR" + timer.TimerNum.ToString();
-
-                        // 複合キーで既存レコードを検索
-                        existingLookup.TryGetValue((cylinder.Id, timer.TimerCategoryId), out var existingRecord);
-
-                        var deviceToSave = new MnemonicTimerDevice
-                        {
-                            MnemonicId = (int)MnemonicType.CY,
-                            RecordId = cylinder.Id,
-                            TimerId = timer.ID,
-                            TimerCategoryId = timer.TimerCategoryId,
-                            ProcessTimerDevice = processTimerDevice,
-                            TimerDevice = timerDevice,
-                            PlcId = plcId,
-                            CycleId = cycleId
-                        };
-
-                        UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
-                        count++;
-                    }
+                    UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                    count++;
                 }
 
                 transaction.Commit();
@@ -225,7 +217,6 @@ namespace KdxDesigner.Services
             {
                 transaction.Rollback();
                 Console.WriteLine($"SaveWithCY 失敗: {ex.Message}");
-                // Debug.WriteLine($"SaveWithCY 失敗: {ex.Message}");
                 throw;
             }
         }

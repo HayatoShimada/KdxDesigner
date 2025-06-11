@@ -26,6 +26,7 @@ namespace KdxDesigner.Utils
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
             List<MnemonicTimerDeviceWithOperation> timers,
+            List<MnemonicTimerDeviceWithCylinder> cylinderTymers,
             List<MnemonicSpeedDevice> speed,
             List<Error> mnemonicErrors,
             List<ProsTime> prosTimes,
@@ -41,7 +42,9 @@ namespace KdxDesigner.Utils
             {
                 switch (cylinder.Cylinder.DriveSub)
                 {
-                    case 1:                // 励磁
+                    case 1:
+                    case 4:
+                    case 10:
                         result.AddRange(builder.Valve1(
                             cylinder,
                             details,
@@ -52,8 +55,11 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList));
                         break;
-                    case 2:                // シングルバルブ
-                        result.AddRange(builder.Valve1(
+                    case 2:
+                    case 3:
+                    case 5:
+                    case 6:
+                        result.AddRange(builder.Valve2(
                             cylinder,
                             details,
                             operations,
@@ -63,13 +69,28 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList));
                         break;
-                    case 3:                // シングルバルブ(スピード)
+                    case 7:
+                    case 8:
+                    case 9:
                         result.AddRange(speedBuilder.Flow1(
                             cylinder,
                             details,
                             operations,
                             cylinders,
                             timers,
+                            speed,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList));
+                        break;
+                    case 17:
+                        result.AddRange(speedBuilder.Inverter(
+                            cylinder,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            cylinderTymers,
                             speed,
                             mnemonicErrors,
                             prosTimes,

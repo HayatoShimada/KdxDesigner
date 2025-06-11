@@ -238,6 +238,13 @@ VALUES
             return connection.Query<IO>(sql).ToList();
         }
 
+        public List<TimerCategory> GetTimerCategory()
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM TimerCategory";
+            return connection.Query<TimerCategory>(sql).ToList();
+        }
+
     }
 
 }

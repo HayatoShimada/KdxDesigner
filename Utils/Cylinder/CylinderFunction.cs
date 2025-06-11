@@ -209,8 +209,6 @@ namespace KdxDesigner.Utils.Cylinder
         public List<LadderCsvRow> CyclePulse()
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
-            bool isFirst = true; // 最初のOperationかどうかのフラグ
-
 
             if (!string.IsNullOrWhiteSpace(_cylinder.Cylinder.ProcessStartCycle))
             {

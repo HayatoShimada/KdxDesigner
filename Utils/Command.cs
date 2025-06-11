@@ -51,6 +51,10 @@
         public const string OUTH = "\"OUTH\"";
         public const string CJ = "\"CJ\"";
 
+        public const string MPS = "\"MPS\"";
+        public const string MPP = "\"MPP\"";
+
+
         public const string ZR = "\"ZR\"";
         public const string T = "\"T\"";
         public const string D = "\"D\"";
