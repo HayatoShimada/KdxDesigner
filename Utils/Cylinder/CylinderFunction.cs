@@ -212,36 +212,43 @@ namespace KdxDesigner.Utils.Cylinder
             bool isFirst = true; // 最初のOperationかどうかのフラグ
 
 
-            if (_cylinder.Cylinder.ProcessStartCycle != null)
+            if (!string.IsNullOrWhiteSpace(_cylinder.Cylinder.ProcessStartCycle))
             {
-                // 修正箇所: List<int> startCycleIds の初期化部分  
-                if (_cylinder.Cylinder.ProcessStartCycle != null)
+                // ★ 1. Split と int.Parse を安全に行う
+                List<int> startCycles = _cylinder.Cylinder.ProcessStartCycle
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries) // 空の要素を自動で削除
+                    .Select(idString => {
+                        int.TryParse(idString.Trim(), out int id); // 空白を除去し、変換を試みる
+                        return id;
+                    })
+                    .Where(id => id != 0) // 変換に失敗した(0になった)要素を除外
+                    .ToList();
+
+                // ★ 2. isFirst のロジックを foreach ループの外側で扱う方がシンプル
+                bool isFirstCycleInLoop = true;
+                foreach (var startCycleId in startCycles)
                 {
-                    // ProcessStartCycle をセミコロンで分割し、各要素を整数に変換してリストに格納  
-                    List<int> startCycles = _cylinder.Cylinder.ProcessStartCycle
-                        .Split(';')
-                        .Select(int.Parse)
-                        .ToList();
-
-
-                    foreach (var startCycleId in startCycles)
+                    // 各サイクルIDに対して処理を行う  
+                    var eachCycle = _mainViewModel.Cycles.FirstOrDefault(c => c.Id == startCycleId);
+                    if (eachCycle != null)
                     {
-                        // 各サイクルIDに対して処理を行う  
-                        var eachCycle = _mainViewModel.Cycles.FirstOrDefault(c => c.Id == startCycleId);
-                        if (eachCycle != null)
+                        if (!isFirstCycleInLoop)
                         {
-                            // Cycleに関連する処理をここに追加
-                            // 例: CycleのラベルをLD命令として追加
-                            result.Add(LadderRow.AddLDP(eachCycle.StartDevice));
-                            result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
-                            if (isFirst)
-                            {
-                                isFirst = false; // 最初のOperationの場合、フラグを更新
-                                continue;
-                            }
-                            result.Add(LadderRow.AddORB()); // 出力命令を追加
+                            // 2つ目以降のサイクルの場合はORBを追加
+                            result.Add(LadderRow.AddORB());
                         }
+
+                        // Cycleに関連する処理をここに追加
+                        result.Add(LadderRow.AddLDP(eachCycle.StartDevice));
+                        result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+
+                        isFirstCycleInLoop = false; // フラグを更新
                     }
+                }
+
+                // ★ 3. ループで有効なサイクルが1つでも処理された場合にのみ、PLSを出力
+                if (!isFirstCycleInLoop)
+                {
                     result.Add(LadderRow.AddPLS(_label + (_startNum + 4)));
                 }
             }

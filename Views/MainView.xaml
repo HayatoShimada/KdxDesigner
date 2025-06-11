@@ -172,11 +172,12 @@
                 <GroupBox 
                         Header="出力エラー一覧" 
                         Margin="0,0,0,0" 
-                        Width="600px">
+                        Width="1800px">
                     <DataGrid
                             ItemsSource="{Binding OutputErrors}"
                             AutoGenerateColumns="False"
-                            IsReadOnly="True">
+                            IsReadOnly="True"
+                            MaxHeight="300px">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="工程名" Binding="{Binding DetailName}" />
                             <DataGridTextColumn Header="ニモニックID" Binding="{Binding MnemonicId}" />

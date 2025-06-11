@@ -300,7 +300,7 @@ namespace KdxDesigner.Utils.Operation
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.TimerDevice!));
+                result.Add(LadderRow.AddAND(operationTimerONWait!.Timer.TimerDevice!));
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 19).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 18).ToString()));

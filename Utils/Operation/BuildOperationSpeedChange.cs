@@ -34,7 +34,8 @@ namespace KdxDesigner.Utils.Operation
             int speedChangeCount)
         {
             var result = new List<LadderCsvRow>();
-            OperationFunction operationFunction = new(operation, timers, ioList, details, _mainViewModel, _errorAggregator, _ioAddressService);
+            var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
+            OperationFunction operationFunction = new(operation, timers, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
 
             string label = string.Empty;
             int outNum = 0;

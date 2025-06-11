@@ -39,7 +39,8 @@ namespace KdxDesigner.Utils.Operation
             var label = operation.Mnemonic.DeviceLabel; // ラベルの取得
             var outNum = operation.Mnemonic.StartNum; // スタート番号の取得
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
-            OperationFunction operationFunction = new(operation, operationTimers, ioList, details, _mainViewModel, _errorAggregator, _ioAddressService);
+            var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
+            OperationFunction operationFunction = new(operation, operationTimers, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
 
 
             // 実際の処理ロジックをここに追加
@@ -124,7 +125,8 @@ namespace KdxDesigner.Utils.Operation
             var label = operation.Mnemonic.DeviceLabel; // ラベルの取得
             var outNum = operation.Mnemonic.StartNum; // スタート番号の取得
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
-            OperationFunction operationFunction = new(operation, operationTimers, ioList, details, _mainViewModel, _errorAggregator, _ioAddressService);
+            var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
+            OperationFunction operationFunction = new(operation, operationTimers, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
 
             // 実際の処理ロジックをここに追加
 

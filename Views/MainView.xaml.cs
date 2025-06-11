@@ -17,7 +17,7 @@ namespace KdxDesigner.Views
         public MainView()
         {
             InitializeComponent();
-            DataContext = App.Services.GetRequiredService<MainViewModel>(); // 修正: 'App.Services' を型名でアクセス  
+            DataContext = App.Services!.GetRequiredService<MainViewModel>(); // 修正: 'App.Services' を型名でアクセス  
         }
 
         private void ProcessGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
