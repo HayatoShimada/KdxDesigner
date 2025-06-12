@@ -5,18 +5,13 @@ using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace KdxDesigner.Utils.Operation
 {
     internal class OperationFunction
     {
         private readonly MnemonicDeviceWithOperation _operation;
         private readonly List<MnemonicTimerDeviceWithOperation> _timers;
+        private readonly List<MnemonicDeviceWithCylinder> _cylinders;
         private readonly List<IO> _ioList;
         private readonly MainViewModel _mainViewModel;
         private readonly IErrorAggregator _errorAggregator;
@@ -28,14 +23,16 @@ namespace KdxDesigner.Utils.Operation
         public OperationFunction(
             MnemonicDeviceWithOperation operation,
             List<MnemonicTimerDeviceWithOperation> timers,
+            List<MnemonicDeviceWithCylinder> cylinders,
             List<IO> ioList,
             List<MnemonicDeviceWithProcessDetail> detailList,
-            MainViewModel mainViewModel, 
-            IErrorAggregator errorAggregator, 
+            MainViewModel mainViewModel,
+            IErrorAggregator errorAggregator,
             IIOAddressService ioAddressService)
         {
             _mainViewModel = mainViewModel;
             _timers = timers;
+            _cylinders = cylinders;
             _ioList = ioList;
             _detailList = detailList;
             _errorAggregator = errorAggregator;
@@ -282,7 +279,6 @@ namespace KdxDesigner.Utils.Operation
         {
             var result = new List<LadderCsvRow>();
             var operationTimerStable = _timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
-            var operationTimerONWait = _timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
 
             if (operationTimerStable != null)
             {
@@ -298,9 +294,9 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
             // 深当たりタイマがある場合
-            if (operationTimerONWait != null)
+            if (operationTimerStable != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerONWait!.Timer.TimerDevice!));
+                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.TimerDevice!));
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 19).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 18).ToString()));
@@ -308,5 +304,52 @@ namespace KdxDesigner.Utils.Operation
 
             return result;
         }
+
+        public List<LadderCsvRow> SpeedCheck(
+            List<MnemonicSpeedDevice> speeds,
+            int speedChangeCount,
+            List<MnemonicTimerDeviceWithOperation> operationTimers)
+        {
+            var result = new List<LadderCsvRow>();
+            var helper = new OperationHelper(_mainViewModel, _errorAggregator, _ioAddressService);
+
+            for (int i = 0; i < speedChangeCount; i++)
+            {
+                if (i >= helper.s_speedChangeConfigs.Count) continue;
+
+                if (!helper.TryGetSpeedChangeParameters(
+                    i, _operation, operationTimers, out var speedTimer, out var speedSensor))
+                {
+                    // TryGet内でエラーが追加されるため、ここでは何もしない
+                    continue;
+                }
+
+                string? operationSpeed = string.Empty;
+
+                // 速度変化ステップごとの処理
+                switch (i)
+                {
+                    case 0: operationSpeed = _operation.Operation.S1; break;
+                    case 1: operationSpeed = _operation.Operation.S2; break;
+                    case 2: operationSpeed = _operation.Operation.S3; break;
+                    case 3: operationSpeed = _operation.Operation.S4; break;
+                    default:
+                        // このケースは speedChangeConfigs.Count のチェックで基本的に到達しない
+                        continue;
+                }
+
+                operationSpeed = helper.FlowSpeedNumber(
+                    operationSpeed,
+                    _operation,
+                    _cylinders, i + 1);
+
+                result.AddRange(GenerateSpeed(speedTimer!, speedSensor!, speeds, operationSpeed, i));
+            }
+            return result;
+        }
+
+
+
+
     }
 }

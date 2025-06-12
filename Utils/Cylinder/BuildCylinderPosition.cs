@@ -139,8 +139,70 @@ namespace KdxDesigner.Utils.Cylinder
 
             result.Add(LadderRow.AddNOP());
 
+            // サーボ作動時エラー発生
+            result.Add(LadderRow.AddLD(servo.Prefix + servo.Status + ".D"));
+            result.Add(LadderRow.AddAND(label + (startNum + 10).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 41).ToString()));
 
+            // JOG正転OK
+            result.Add(LadderRow.AddLD(label + (startNum + 7).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 17).ToString()));
+            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddANI(label + (startNum + 41).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 42).ToString()));
 
+            // JOG逆転OK
+            result.Add(LadderRow.AddLD(label + (startNum + 8).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 18).ToString()));
+            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddANI(label + (startNum + 41).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 43).ToString()));
+
+            // 行きOK 35
+            result.Add(LadderRow.AddLD(label + (startNum + 12).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 15).ToString()));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (startNum + 42).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 35).ToString()));
+
+            // 帰りOK 36
+            result.Add(LadderRow.AddLD(label + (startNum + 13).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 16).ToString()));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (startNum + 43).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 36).ToString()));
+
+            // 指令OK 37
+            result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
+            result.Add(LadderRow.AddOR(label + (startNum + 36).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 37).ToString()));
+
+            // JOGバッファメモリ指定正転
+            result.Add(LadderRow.AddLD(label + (startNum + 42).ToString()));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.PositioningStartNum));
+            result.AddRange(LadderRow.AddMOVSet("K1", servo.Prefix + servo.StartFowardJog));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.StartReverseJog));
+
+            // JOGバッファメモリ指定逆転
+            result.Add(LadderRow.AddLD(label + (startNum + 43).ToString()));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.PositioningStartNum));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.StartFowardJog));
+            result.AddRange(LadderRow.AddMOVSet("K1", servo.Prefix + servo.StartReverseJog));
+
+            // 位置決め始動
+            result.Add(LadderRow.AddLD(label + (startNum + 12).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 35).ToString()));
+            result.Add(LadderRow.AddLD(label + (startNum + 13).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 36).ToString()));
+            result.Add(LadderRow.AddORB());
+            result.AddRange(LadderRow.AddMOVSet(speedDevice!, servo.Prefix + servo.PositioningStartNum));
+            result.Add(LadderRow.AddOUT(servo.PositioningStart));
+
+            // JOG停止
+            result.Add(LadderRow.AddLDI(label + (startNum + 42).ToString()));
+            result.Add(LadderRow.AddANI(label + (startNum + 43).ToString()));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.StartFowardJog));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.StartReverseJog));
 
             return result;
         }
