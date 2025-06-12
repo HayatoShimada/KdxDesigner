@@ -77,6 +77,7 @@ namespace KdxDesigner.ViewModels
 
         private List<ProcessDetailDto> allDetails = new();
         private List<Models.Process> allProcesses = new();
+        public List<Servo> selectedServo = new(); // 選択されたサーボのリスト
 
         public MainViewModel()
         {
@@ -341,6 +342,8 @@ namespace KdxDesigner.ViewModels
             var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
             var details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == cycleId).ToList();
             var ioList = _repository.GetIoList();
+            selectedServo = _repository.GetServos(null, null);
+
 
             var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
             var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();

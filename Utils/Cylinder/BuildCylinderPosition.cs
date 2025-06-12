@@ -32,6 +32,19 @@ namespace KdxDesigner.Utils.Cylinder
                 List<IO> ioList)
         {
             var result = new List<LadderCsvRow>();
+            var servo = _mainViewModel.selectedServo.FirstOrDefault(s => s.CylinderId == cylinder.Cylinder.Id); // 選択されたサーボの取得
+            if(servo == null)
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = cylinder.Cylinder.Id,
+                    RecordName = cylinder.Cylinder.CYNum,
+                    Message = $"CY{cylinder.Cylinder.CYNum}のサーボが見つかりません。",
+                });
+                return result; // サーボが見つからない場合は空のリストを返す
+            }
+
             var cySpeedDevice = speed.Where(s => s.CylinderId == cylinder.Cylinder.Id).SingleOrDefault(); // スピードデバイスの取得
             string? speedDevice;
             if (cySpeedDevice == null)
@@ -86,7 +99,6 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.BackManualOperation(backOperation));
             result.Add(LadderRow.AddNOP());
 
-
             // 行き方向自動
             result.Add(LadderRow.AddLD(label + (startNum + 0).ToString()));
             result.Add(LadderRow.AddOR(label + (startNum + 2).ToString()));
@@ -107,6 +119,24 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddORB());
             result.Add(LadderRow.AddOUT(label + (startNum + 10).ToString()));
+            result.Add(LadderRow.AddNOP());
+
+            // サーボ軸停止
+            result.Add(LadderRow.AddLD(label + (startNum + 10).ToString()));
+            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddLDI(label + (startNum + 7).ToString()));
+            result.Add(LadderRow.AddANI(label + (startNum + 8).ToString()));
+            result.Add(LadderRow.AddORB());
+            result.Add(LadderRow.AddAND(servo.Busy));
+            result.Add(LadderRow.AddANI(servo.OriginalPosition));
+            result.Add(LadderRow.AddOUT(label + (startNum + 40).ToString()));
+
+            result.Add(LadderRow.AddLDI(label + (startNum + 40).ToString()));
+            result.AddRange(LadderRow.AddMOVSet("K0", servo.Prefix + servo.AxisStop));
+
+            result.Add(LadderRow.AddLD(label + (startNum + 40).ToString()));
+            result.AddRange(LadderRow.AddMOVSet("K1", servo.Prefix + servo.AxisStop));
+
             result.Add(LadderRow.AddNOP());
 
 
