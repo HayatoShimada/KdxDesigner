@@ -3,10 +3,7 @@ using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.Operation;
-using KdxDesigner.Utils.Process;
 using KdxDesigner.ViewModels;
-
-using System.Windows;
 
 namespace KdxDesigner.Utils
 {
@@ -38,6 +35,7 @@ namespace KdxDesigner.Utils
             List<OutputError> errorsForOperation = new(); // 各工程詳細のエラーリスト
             BuildOperationSingle buildOperationSingle = new(_mainViewModel, _errorAggregator, _ioAddressService);
             BuildOperationSpeedChange buildOperationSpeed = new(_mainViewModel, _errorAggregator, _ioAddressService);
+            BuildOperationPositioning buildOperationPositioning = new(_mainViewModel, _errorAggregator, _ioAddressService);
 
 
 
@@ -45,7 +43,7 @@ namespace KdxDesigner.Utils
             {
                 switch (operation.Operation.CategoryId)
                 {
-                    case 1 :                // 励磁
+                    case 1:                // 励磁
                         allRows.AddRange(buildOperationSingle.Excitation(
                             operation,
                             details,
@@ -59,11 +57,11 @@ namespace KdxDesigner.Utils
                         break;
                     case 2 or 14 or 20:     // 保持
                         allRows.AddRange(buildOperationSingle.Retention(
-                            operation, 
-                            details, 
-                            operations, 
-                            cylinders, 
-                            timers, 
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
                             mnemonicErrors,
                             prosTimes,
                             ioList
@@ -144,6 +142,77 @@ namespace KdxDesigner.Utils
                             ));
                         break;
 
+                    case 31:
+                        allRows.AddRange(buildOperationPositioning.ServoPositioning(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            speed,
+                            ioList,
+                            1
+                            ));
+                        break;
+                    case 32:
+                        allRows.AddRange(buildOperationPositioning.ServoPositioning(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            speed,
+                            ioList,
+                            2
+                            ));
+                        break;
+                    case 33:
+                        allRows.AddRange(buildOperationPositioning.ServoPositioning(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            speed,
+                            ioList,
+                            3
+                            ));
+                        break;
+                    case 34:
+                        allRows.AddRange(buildOperationPositioning.ServoPositioning(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            speed,
+                            ioList,
+                            4
+                            ));
+                        break;
+
+                    case 35:
+                        allRows.AddRange(buildOperationPositioning.ServoPositioning(
+                            operation,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            speed,
+                            ioList,
+                            5
+                            ));
+                        break;
                     default:
                         break;
                 }
