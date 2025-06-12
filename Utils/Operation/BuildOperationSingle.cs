@@ -40,7 +40,7 @@ namespace KdxDesigner.Utils.Operation
             var outNum = operation.Mnemonic.StartNum; // スタート番号の取得
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
             var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
-            OperationFunction operationFunction = new(operation, operationTimers, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
+            OperationFunction operationFunction = new(operation, operationTimers, cylinders, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
             OperationHelper helper = new(_mainViewModel, _errorAggregator, _ioAddressService);
 
 
@@ -89,6 +89,9 @@ namespace KdxDesigner.Utils.Operation
             // M19
             result.AddRange(operationFunction.GenerateM19());
 
+            // Reset信号の生成
+            result.AddRange(operationFunction.GenerateReset());
+
             // エラー回路の生成
             ErrorBuilder errorBuilder = new(_errorAggregator);
 
@@ -127,7 +130,7 @@ namespace KdxDesigner.Utils.Operation
             var outNum = operation.Mnemonic.StartNum; // スタート番号の取得
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
             var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
-            OperationFunction operationFunction = new(operation, operationTimers, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
+            OperationFunction operationFunction = new(operation, operationTimers, cylinders, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
 
             // 実際の処理ロジックをここに追加
 
@@ -191,6 +194,9 @@ namespace KdxDesigner.Utils.Operation
 
             // M19
             result.AddRange(operationFunction.GenerateM19());
+
+            // Reset信号の生成
+            result.AddRange(operationFunction.GenerateReset());
 
             ProsTimeBuilder prosTimeBuilder = new(_errorAggregator);
 

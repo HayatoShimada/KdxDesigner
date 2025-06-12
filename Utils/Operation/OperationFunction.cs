@@ -305,6 +305,17 @@ namespace KdxDesigner.Utils.Operation
             return result;
         }
 
+        public List<LadderCsvRow> GenerateReset()
+        {
+            var result = new List<LadderCsvRow>();
+
+            result.Add(LadderRow.AddLD(_label + (_outNum + 19).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_outNum + 2).ToString()));
+            result.Add(LadderRow.AddPLS(_label + (_outNum + 4).ToString()));
+
+            return result;
+        }
+
         public List<LadderCsvRow> SpeedCheck(
             List<MnemonicSpeedDevice> speeds,
             int speedChangeCount,
