@@ -174,15 +174,14 @@ namespace KdxDesigner.Utils.Cylinder
             // 行き方向自動指令  
             result.AddRange(functions.GoOperation(goOperation, activeOperation));
 
-            // 帰り方向自動指令  
+            // 帰り方向自動指令
             result.AddRange(functions.BackOperation(backOperation));
 
-            // 行き方向手動指令  
+            // 行き方向手動指令
             result.AddRange(functions.GoManualOperation(goOperation, activeOperation));
 
             // 帰り方向手動指令  
             result.AddRange(functions.BackManualOperation(backOperation));
-
             result.Add(LadderRow.AddNOP());
 
             // 行き方向自動
@@ -259,7 +258,6 @@ namespace KdxDesigner.Utils.Cylinder
                         Message = $"CY{cylinder.Cylinder.CYNum}のスピードデバイスが見つかりません。",
                     });
                 }
-
             }
 
             result.Add(LadderRow.AddNOP());

@@ -41,6 +41,7 @@ namespace KdxDesigner.Utils.Operation
             var operationTimers = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
             var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
             OperationFunction operationFunction = new(operation, operationTimers, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
+            OperationHelper helper = new(_mainViewModel, _errorAggregator, _ioAddressService);
 
 
             // 実際の処理ロジックをここに追加

@@ -36,7 +36,7 @@ namespace KdxDesigner.Utils
             var result = new List<LadderCsvRow>();
             var builder = new BuildCylinderValve(_mainViewModel, _errorAggregator, _ioService);
             var speedBuilder = new BuildCylinderSpeed(_mainViewModel, _errorAggregator, _ioService);
-
+            var positionBuilder = new BuildCylinderPosition(_mainViewModel, _errorAggregator, _ioService);
 
             foreach (var cylinder in cylinders)
             {
@@ -78,6 +78,19 @@ namespace KdxDesigner.Utils
                             operations,
                             cylinders,
                             timers,
+                            speed,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList));
+                        break;
+                    case 14:
+                        result.AddRange(positionBuilder.Servo(
+                            cylinder,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            cylinderTymers,
                             speed,
                             mnemonicErrors,
                             prosTimes,

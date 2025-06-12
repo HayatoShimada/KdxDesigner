@@ -115,5 +115,11 @@ namespace KdxDesigner.Services.Access
         /// 全てのタイマーカテゴリ情報を取得します。
         /// </summary>
         List<TimerCategory> GetTimerCategory();
+
+        /// <summary>
+        /// 情報を取得します。
+        /// </summary>
+        List<Servo> GetServos(int? plcId, int? cylinderId);
+
     }
 }

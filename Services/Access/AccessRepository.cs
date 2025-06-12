@@ -2,14 +2,8 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Utils.ini;
-
-using Microsoft.Win32; // ← ファイル選択ダイアログ用
 
 using System.Data.OleDb;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
-using System.Windows;
 
 
 
@@ -245,6 +239,26 @@ VALUES
             return connection.Query<TimerCategory>(sql).ToList();
         }
 
-    }
+        public List<Servo> GetServos(int? plcId, int? cylinderId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = string.Empty;
+            if (plcId == null && cylinderId == null)
+            {
+                sql = "SELECT * FROM Servo";
 
+            }
+            else if (plcId != null && cylinderId == null)
+            {
+                sql = "SELECT * FROM Servo WHERE PlcId = @PlcId";
+            }
+            else
+            {
+                sql = plcId == null && cylinderId != null
+                    ? "SELECT * FROM Servo WHERE CylinderId = @CylinderId"
+                    : "SELECT * FROM Servo WHERE PlcId = @PlcId AND CylinderId = @CylinderId";
+            }
+            return connection.Query<Servo>(sql, new { PlcId = plcId, CycleId = cylinderId }).ToList();
+        }
+    }
 }

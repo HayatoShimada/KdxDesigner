@@ -1,7 +1,6 @@
 ﻿using Dapper;
 
 using KdxDesigner.Models;
-using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Access;
 
 using System.Data;
@@ -42,7 +41,6 @@ namespace KdxDesigner.Services
             {
                 if (cy == null) continue;
                 var existing = allExisting.SingleOrDefault(m => m.CylinderId == cy.Id);
-
                 var speedDevice = "D" + (startNum + count).ToString();
 
                 var parameters = new DynamicParameters();
