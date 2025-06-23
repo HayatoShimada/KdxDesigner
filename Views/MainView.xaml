@@ -179,9 +179,9 @@
                             IsReadOnly="True"
                             MaxHeight="300px">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="工程名" Binding="{Binding DetailName}" />
+                            <DataGridTextColumn Header="工程名" Binding="{Binding RecordName}" />
                             <DataGridTextColumn Header="ニモニックID" Binding="{Binding MnemonicId}" />
-                            <DataGridTextColumn Header="プロセスID" Binding="{Binding ProcessId}" />
+                            <DataGridTextColumn Header="プロセスID" Binding="{Binding RecordId}" />
                             <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>

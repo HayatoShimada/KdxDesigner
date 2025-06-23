@@ -63,7 +63,12 @@ namespace KdxDesigner.Utils.Operation
                 var valve1Address = _ioAddressService.GetSingleAddress(
                     _ioList,
                     _operation.Operation.Valve1,
-                    selectedPlcId.Value);
+                    selectedPlcId.Value,
+                    true,
+                    _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                    );
 
                 if (valve1Address != null)
                 {
@@ -83,7 +88,12 @@ namespace KdxDesigner.Utils.Operation
                 var startSensorAddress = _ioAddressService.GetSingleAddress(
                     _ioList,
                     _operation.Operation.Start,
-                    selectedPlcId.Value);
+                    selectedPlcId.Value,
+                    false,
+                    _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                    );
                 if (startSensorAddress != null)
                 {
                     result.Add(LadderRow.AddRST(startSensorAddress));
@@ -96,7 +106,12 @@ namespace KdxDesigner.Utils.Operation
                     var ss1Address = _ioAddressService.GetSingleAddress(
                         _ioList,
                         _operation.Operation.SS1,
-                        selectedPlcId.Value);
+                        selectedPlcId.Value,
+                        false,
+                        _operation.Operation.OperationName,
+                        (int)MnemonicType.Operation,
+                        _operation.Operation.Id
+                        );
                     if (ss1Address != null)
                     {
                         result.Add(LadderRow.AddMPS());
@@ -116,7 +131,12 @@ namespace KdxDesigner.Utils.Operation
                         var ss2Address = _ioAddressService.GetSingleAddress(
                             _ioList,
                             _operation.Operation.SS2,
-                            selectedPlcId.Value);
+                            selectedPlcId.Value, false,
+                                                _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+
+                            );
                         if (ss2Address != null)
                         {
                             result.Add(LadderRow.AddMRD());
@@ -134,7 +154,11 @@ namespace KdxDesigner.Utils.Operation
                             var ss3Address = _ioAddressService.GetSingleAddress(
                                 _ioList,
                                 _operation.Operation.SS3,
-                                selectedPlcId.Value);
+                                selectedPlcId.Value, false,
+                                                    _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                                );
                             if (ss3Address != null)
                             {
                                 result.Add(LadderRow.AddMRD());
@@ -152,7 +176,11 @@ namespace KdxDesigner.Utils.Operation
                                 var ss4Address = _ioAddressService.GetSingleAddress(
                                     _ioList,
                                     _operation.Operation.SS4,
-                                    selectedPlcId.Value);
+                                    selectedPlcId.Value, false,
+                                                        _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                                    );
                                 if (ss4Address != null)
                                 {
                                     result.Add(LadderRow.AddMRD());
@@ -173,7 +201,11 @@ namespace KdxDesigner.Utils.Operation
                     var finishSensorAddress = _ioAddressService.GetSingleAddress(
                         _ioList,
                         _operation.Operation.Finish,
-                        selectedPlcId.Value);
+                        selectedPlcId.Value, false,
+                                            _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                        );
                     if (finishSensorAddress != null)
                     {
                         switch (speedCount)
@@ -226,7 +258,11 @@ namespace KdxDesigner.Utils.Operation
                     var finishSensorAddress = _ioAddressService.GetSingleAddress(
                         _ioList,
                         _operation.Operation.Finish,
-                        selectedPlcId.Value);
+                        selectedPlcId.Value, false,
+                                            _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                        );
                     if (finishSensorAddress != null)
                     {
 

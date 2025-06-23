@@ -140,7 +140,13 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
             // ioの取得を共通コンポーネント化すること
-            var ioSensor = _ioAddressService.GetSingleAddress(_ioList, _operation.Operation.Start!, _mainViewModel.SelectedPlc!.Id);
+            var ioSensor = _ioAddressService.GetSingleAddress(
+                _ioList, _operation.Operation.Start!, _mainViewModel.SelectedPlc!.Id, false,
+                                    _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+
+                );
 
             if (ioSensor == null)
             {
@@ -174,7 +180,12 @@ namespace KdxDesigner.Utils.Operation
             )
         {
             var result = new List<LadderCsvRow>();
-            var ioSensor = _ioAddressService.GetSingleAddress(_ioList, speedSensor, _mainViewModel.SelectedPlc!.Id);
+            var ioSensor = _ioAddressService.GetSingleAddress(
+                _ioList, speedSensor, _mainViewModel.SelectedPlc!.Id, false,
+                                    _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+                );
 
             if (ioSensor == null)
             {
@@ -221,7 +232,14 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
             // ioの取得を共通コンポーネント化すること
-            var ioSensor = _ioAddressService.GetSingleAddress(_ioList, _operation.Operation.Finish!, _mainViewModel.SelectedPlc!.Id);
+            var ioSensor = _ioAddressService.GetSingleAddress(
+                _ioList, _operation.Operation.Finish!, _mainViewModel.SelectedPlc!.Id, false,
+                                    _operation.Operation.OperationName,
+                    (int)MnemonicType.Operation,
+                    _operation.Operation.Id
+
+
+                );
 
             if (ioSensor == null)
             {

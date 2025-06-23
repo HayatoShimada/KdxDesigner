@@ -17,7 +17,14 @@ namespace KdxDesigner.Services
         /// <param name="ioText">検索するIOテキスト（例: "G", "B", "L-LENGTH1"）。</param>
         /// <param name="plcId">"L-"プレフィックス検索時に使用するPLCのID。</param>
         /// <returns>一意に特定できた場合はIOアドレス文字列。それ以外の場合はnull。</returns>
-        string? GetSingleAddress(List<IO> ioList, string ioText, int plcId);
+        string? GetSingleAddress(
+            List<IO> ioList, 
+            string ioText, 
+            int plcId, 
+            bool isOutput, 
+            string processName, 
+            int mnemonicId, 
+            int recordId);
 
         /// <summary>
         /// 指定されたテキストを含むIOオブジェクトのリストを取得します。
@@ -26,6 +33,12 @@ namespace KdxDesigner.Services
         /// <param name="ioText">検索するIOテキスト（例: "SV"）。</param>
         /// <param name="errorIfNotFound">trueの場合、一致するIOが見つからなければエラーとして報告します。</param>
         /// <returns>一致したIOオブジェクトのリスト。見つからない場合は空のリストを返します。</returns>
-        List<IO> GetAddressRange(List<IO> ioList, string ioText, bool errorIfNotFound = false);
+        List<IO> GetAddressRange(
+            List<IO> ioList, 
+            string ioText, 
+            string processName,
+            int mnemonicId,
+            int recordId,
+            bool errorIfNotFound = false);
     }
 }
