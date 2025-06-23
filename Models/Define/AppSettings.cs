@@ -45,5 +45,7 @@ namespace KdxDesigner.Models.Define
 
         [Description("出力エラーデバイス")]
         public string OutErrorDevice { get; set; } = "M9999";
+        [Description("デバッグパルス信号")]
+        public string DebugPulse { get; set; } = "M9999";
     }
 }

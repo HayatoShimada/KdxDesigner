@@ -174,7 +174,6 @@ namespace KdxDesigner.Services
         @ErrorTime,
         @ErrorTimeDevice)",
     parameters, transaction);
-
                     }
                     alarmCount++;
                 }

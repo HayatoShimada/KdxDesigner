@@ -52,6 +52,7 @@
         public const string CJ = "\"CJ\"";
 
         public const string MPS = "\"MPS\"";
+        public const string MRD = "\"MRD\"";
         public const string MPP = "\"MPP\"";
 
 

@@ -5,8 +5,6 @@ using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System.Diagnostics;
-
 namespace KdxDesigner.Utils.Operation
 
 {
@@ -42,9 +40,6 @@ namespace KdxDesigner.Utils.Operation
             var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
             OperationFunction operationFunction = new(operation, operationTimers, cylinders, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
             OperationHelper helper = new(_mainViewModel, _errorAggregator, _ioAddressService);
-
-
-            // 実際の処理ロジックをここに追加
 
             // 行間ステートメント
             string id = operation.Operation.Id.ToString();
@@ -110,6 +105,9 @@ namespace KdxDesigner.Utils.Operation
                 prosTimes,
                 label,
                 outNum));
+
+            IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
+            result.AddRange(iODebug.GenerateCommon(0));
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }

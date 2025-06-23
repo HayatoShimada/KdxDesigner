@@ -68,7 +68,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool isDetailOutput = false;
         [ObservableProperty] private bool isOperationOutput = false;
         [ObservableProperty] private bool isCylinderOutput = false;
-
+        [ObservableProperty] private bool isDebug = false;
 
         [ObservableProperty] private int memoryProgressMax;
         [ObservableProperty] private int memoryProgressValue;

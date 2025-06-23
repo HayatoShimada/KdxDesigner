@@ -26,6 +26,7 @@ namespace KdxDesigner.Utils.MnemonicCommon
         public static LadderCsvRow AddANB() => CreateRow(Command.ANB);
         public static LadderCsvRow AddNOP() => CreateRow(Command.NOP);
         public static LadderCsvRow AddMPS() => CreateRow(Command.MPS);
+        public static LadderCsvRow AddMRD() => CreateRow(Command.MRD);
         public static LadderCsvRow AddMPP() => CreateRow(Command.MPP);
         public static LadderCsvRow AddMEP() => CreateRow(Command.MEP);
 
