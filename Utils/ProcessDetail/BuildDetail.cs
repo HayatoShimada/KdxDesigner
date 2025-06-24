@@ -76,12 +76,12 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.StartSensor, plcId, false,
-                                        detail.Detail.DetailName,
-                    (int)MnemonicType.ProcessDetail,
-                    detail.Detail.Id
-
-                    );
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList, 
+                    detail.Detail.StartSensor,
+                    false,
+                    detail.Detail.DetailName,
+                    detail.Detail.Id);
 
                 if (ioSensor == null)
                 {
@@ -299,12 +299,12 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.FinishSensor, plcId, false,
-                                                            detail.Detail.DetailName,
-                    (int)MnemonicType.ProcessDetail,
-                    detail.Detail.Id
-
-                    );
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList, 
+                    detail.Detail.FinishSensor, 
+                    false,
+                    detail.Detail.DetailName,
+                    detail.Detail.Id);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
@@ -427,9 +427,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.FinishSensor, plcId, false,
-                                                            detail.Detail.DetailName,
-                    (int)MnemonicType.ProcessDetail,
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList, 
+                    detail.Detail.FinishSensor, 
+                    false,
+                    detail.Detail.DetailName,
                     detail.Detail.Id
                     );
 
@@ -545,9 +547,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
             if (detail.Detail.StartSensor != null)
             {
-                var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.StartSensor, plcId, false, detail.Detail.DetailName,
-                    (int)MnemonicType.ProcessDetail,
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList, 
+                    detail.Detail.StartSensor, 
+                    false, 
+                    detail.Detail.DetailName,
                     detail.Detail.Id
 
                     );
@@ -853,8 +857,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.StartSensor, plcId, false, detail.Detail.DetailName,
-                    (int)MnemonicType.ProcessDetail,
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList, 
+                    detail.Detail.StartSensor, 
+                    false, 
+                    detail.Detail.DetailName,
                     detail.Detail.Id);
 
                 if (ioSensor == null)
@@ -902,9 +909,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (detail.Detail.FinishSensor != null)
             {
                 // ioの取得を共通コンポーネント化すること
-                var plcId = _mainViewModel.SelectedPlc!.Id;
-                var ioSensor = _ioAddressService.GetSingleAddress(ioList, detail.Detail.FinishSensor, plcId, false, detail.Detail.DetailName,
-                    (int)MnemonicType.ProcessDetail,
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList, 
+                    detail.Detail.FinishSensor, 
+                    false, 
+                    detail.Detail.DetailName,
                     detail.Detail.Id);
 
                 if (ioSensor == null)

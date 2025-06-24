@@ -260,8 +260,19 @@ namespace KdxDesigner.Utils.Cylinder
         public List<LadderCsvRow> Retention(List<IO> sensors)
         {
             // センサーの取得
-            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", _mainViewModel.SelectedPlc!.Id, false, _cylinder.Cylinder.CYNum , mnemonicId: (int)MnemonicType.CY, _cylinder.Cylinder.Id);
-            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", _mainViewModel.SelectedPlc!.Id, false, _cylinder.Cylinder.CYNum, mnemonicId: (int)MnemonicType.CY, _cylinder.Cylinder.Id);
+            var goSensor = _ioAddressService.GetSingleAddress(
+                sensors, "G", 
+                false, 
+                _cylinder.Cylinder.CYNum,
+                _cylinder.Cylinder.Id);
+            
+            
+            
+            
+            
+            
+            
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
 
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
@@ -307,8 +318,8 @@ namespace KdxDesigner.Utils.Cylinder
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
 
             // センサーの取得
-            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", _mainViewModel.SelectedPlc!.Id, false, _cylinder.Cylinder.CYNum, mnemonicId: (int)MnemonicType.CY, _cylinder.Cylinder.Id);
-            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", _mainViewModel.SelectedPlc!.Id, false, _cylinder.Cylinder.CYNum, mnemonicId: (int)MnemonicType.CY, _cylinder.Cylinder.Id);
+            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
 
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
@@ -440,7 +451,7 @@ namespace KdxDesigner.Utils.Cylinder
             var result = new List<LadderCsvRow>();
 
             string valveSearchString = _mainViewModel.ValveSearchText;
-            var goValve = _ioAddressService.GetSingleAddress(sensors, valveSearchString, _mainViewModel.SelectedPlc!.Id, true, _cylinder.Cylinder.CYNum, mnemonicId: (int)MnemonicType.CY, _cylinder.Cylinder.Id);
+            var goValve = _ioAddressService.GetSingleAddress(sensors, valveSearchString, true, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
 
             // 帰り方向
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
@@ -489,7 +500,7 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 1. GetAddressRange を使って、"SV" を含むすべてのバルブ候補を取得
             string? valveSearchString = _mainViewModel.ValveSearchText;
-            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString ?? "SV", _cylinder.Cylinder.CYNum, mnemonicId: (int)MnemonicType.CY, _cylinder.Cylinder.Id, errorIfNotFound: true);
+            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString ?? "SV", _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, errorIfNotFound: true);
 
             // 2. ダブルバルブには最低2つの候補が必要なため、候補数をチェック
             if (valveCandidates.Count < 2)
@@ -566,7 +577,7 @@ namespace KdxDesigner.Utils.Cylinder
             const string valveSearchString = "IN";
 
             // 1. "IN" を含むIO候補を全て取得する。見つからない場合はサービスがエラーを報告する。
-            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString, _cylinder.Cylinder.CYNum, (int)MnemonicType.CY, _cylinder.Cylinder.Id, errorIfNotFound: true);
+            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, errorIfNotFound: true);
 
             // 2. 見つかった候補を、末尾の番号をキーとする辞書に変換する
             var valveMap = new Dictionary<int, string>();

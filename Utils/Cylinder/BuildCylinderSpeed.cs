@@ -348,10 +348,9 @@ namespace KdxDesigner.Utils.Cylinder
             var breakeIO = _ioAddressService.
                 GetSingleAddress(
                 ioListCylinder, 
-                "S", _mainViewModel.SelectedPlc!.Id, 
+                "S", 
                 true,
                 cylinder.Cylinder.CYNum!, 
-                mnemonicId: (int)MnemonicType.CY, 
                 recordId: cylinder.Cylinder.Id
                 );
 
@@ -398,8 +397,8 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 正転指令
             var stfIO = _ioAddressService.GetSingleAddress(
-                ioList, "STF", _mainViewModel.SelectedPlc!.Id, true, cylinder.Cylinder.CYNum, 
-                mnemonicId: (int)MnemonicType.CY, cylinder.Cylinder.Id);
+                ioList, "STF", true, cylinder.Cylinder.CYNum, 
+                cylinder.Cylinder.Id);
             if (stfIO !=null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
@@ -418,7 +417,7 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // 逆転指令
-            var strIO = _ioAddressService.GetSingleAddress(ioList, "STR", _mainViewModel.SelectedPlc!.Id, true, cyNum + cyName, mnemonicId: (int)MnemonicType.CY, cylinder.Cylinder.Id);
+            var strIO = _ioAddressService.GetSingleAddress(ioList, "STR", true, cyNum + cyName, cylinder.Cylinder.Id);
             if (strIO != null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
@@ -439,10 +438,9 @@ namespace KdxDesigner.Utils.Cylinder
             // 逆転指令
             var rlIO = _ioAddressService.GetSingleAddress(
                 ioList, "RL", 
-                _mainViewModel.SelectedPlc!.Id, 
-                true, cyNum+cyName, mnemonicId: (int)MnemonicType.CY, cylinder.Cylinder.Id);
-            var rmIO = _ioAddressService.GetSingleAddress(ioList, "RM", _mainViewModel.SelectedPlc!.Id, true, cyNum + cyName, mnemonicId: (int)MnemonicType.CY, cylinder.Cylinder.Id);
-            var rhIO = _ioAddressService.GetSingleAddress(ioList, "RH", _mainViewModel.SelectedPlc!.Id, true, cyNum + cyName, mnemonicId: (int)MnemonicType.CY, cylinder.Cylinder.Id);
+                true, cyNum+cyName, cylinder.Cylinder.Id);
+            var rmIO = _ioAddressService.GetSingleAddress(ioList, "RM", true, cyNum + cyName, cylinder.Cylinder.Id);
+            var rhIO = _ioAddressService.GetSingleAddress(ioList, "RH", true, cyNum + cyName, cylinder.Cylinder.Id);
 
             if (rlIO != null && rmIO != null && rhIO != null)
             {

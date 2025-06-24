@@ -20,10 +20,8 @@ namespace KdxDesigner.Services
         string? GetSingleAddress(
             List<IO> ioList, 
             string ioText, 
-            int plcId, 
-            bool isOutput, 
+            bool isOutput,
             string processName, 
-            int mnemonicId, 
             int recordId);
 
         /// <summary>
@@ -37,7 +35,6 @@ namespace KdxDesigner.Services
             List<IO> ioList, 
             string ioText, 
             string processName,
-            int mnemonicId,
             int recordId,
             bool errorIfNotFound = false);
     }

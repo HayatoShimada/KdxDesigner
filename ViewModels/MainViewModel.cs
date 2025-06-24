@@ -115,7 +115,6 @@ namespace KdxDesigner.ViewModels
                 Application.Current.Shutdown();
                 return;
             }
-            
         }
 
         // データの更新
@@ -231,117 +230,65 @@ namespace KdxDesigner.ViewModels
 
             try
             {
-                // 1. エラー集約サービスのインスタンス化
-                var errorAggregator = new ErrorAggregator();
-                var ioAddressService = new IOAddressService(errorAggregator, _repository!);
+                MemoryStatusMessage = "処理を開始します...";
                 OutputErrors.Clear();
-
-                // 2. データ準備
-                MemoryStatusMessage = "データ準備中...";
-                var (data, prepErrors) = PrepareDataForOutput();
-                errorAggregator.AddErrors(prepErrors);
-
-                // 3. ラダー初期化
-                MemoryStatusMessage = "ラダー生成中...";
+                var allGeneratedErrors = new List<OutputError>();
                 var allOutputRows = new List<LadderCsvRow>();
 
-                // 各ビルダーに ViewModel と エラー集約サービスを渡してインスタンス化
-                // (ProcessBuilder, DetailBuilder, OperationBuilder も同様に修正されていると仮定)
-                //var processBuilder = new ProcessBuilder(errorAggregator);
-                var processDetailBuilder = new ProcessDetailBuilder(this, errorAggregator, ioAddressService);
-                var operationBuilder = new OperationBuilder(this, errorAggregator, ioAddressService);
-                var cylinderBuilder = new CylinderBuilder(this, errorAggregator, ioAddressService);
+                // --- 1. データ準備 ---
+                MemoryStatusMessage = "データ準備中...";
+                var (data, prepErrors) = PrepareDataForOutput();
+                allGeneratedErrors.AddRange(prepErrors);
 
+                // --- 2. 各ビルダーによるラダー生成 ---
+                MemoryStatusMessage = "ラダー生成中...";
 
+                // ProcessBuilder (out パラメータ方式を維持、または新しい方式に修正)
                 var processRows = ProcessBuilder.GenerateAllLadderCsvRows(SelectedCycle!, ProcessDeviceStartL, DetailDeviceStartL, data.JoinedProcessList, data.JoinedProcessDetailList, data.IoList, out var processErrors);
                 allOutputRows.AddRange(processRows);
+                allGeneratedErrors.AddRange(processErrors);
 
-                var detailRows = processDetailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList);
+                // ProcessDetailBuilder
+                var pdErrorAggregator = new ErrorAggregator((int)MnemonicType.ProcessDetail);
+                var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, selectedPlc.Id);
+                var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService);
+                var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList);
                 allOutputRows.AddRange(detailRows);
+                allGeneratedErrors.AddRange(pdErrorAggregator.GetAllErrors());
 
-                var operationRows = operationBuilder.GenerateLadder(
-                    data.JoinedProcessDetailList, 
-                    data.JoinedOperationList, 
-                    data.JoinedCylinderList, 
-                    data.JoinedOperationWithTimerList, 
-                    data.SpeedDevice, 
-                    data.MnemonicErrors, 
-                    data.ProsTime, 
-                    data.IoList);
+                // OperationBuilder
+                var opErrorAggregator = new ErrorAggregator((int)MnemonicType.Operation);
+                var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, selectedPlc.Id);
+                var operationBuilder = new OperationBuilder(this, opErrorAggregator, opIoAddressService);
+                var operationRows = operationBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
                 allOutputRows.AddRange(operationRows);
+                allGeneratedErrors.AddRange(opErrorAggregator.GetAllErrors());
 
-                var cylinderRows = cylinderBuilder.GenerateLadder(
-                    data.JoinedProcessDetailList, 
-                    data.JoinedOperationList, 
-                    data.JoinedCylinderList,
-                    data.JoinedOperationWithTimerList, 
-                    data.JoinedCylinderWithTimerList,
-                    data.SpeedDevice, 
-                    data.MnemonicErrors, 
-                    data.ProsTime, 
-                    data.IoList);
+                // CylinderBuilder
+                var cyErrorAggregator = new ErrorAggregator((int)MnemonicType.CY);
+                var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, selectedPlc.Id);
+                var cylinderBuilder = new CylinderBuilder(this, cyErrorAggregator, cyIoAddressService);
+                var cylinderRows = cylinderBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.JoinedCylinderWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
                 allOutputRows.AddRange(cylinderRows);
+                allGeneratedErrors.AddRange(cyErrorAggregator.GetAllErrors());
 
-                // 4. 集約されたエラーを取得してUIに反映
-                OutputErrors = new List<OutputError>(errorAggregator.GetAllErrors());
+                // --- 3. 全てのエラーをUIに一度に反映 ---
+                OutputErrors = allGeneratedErrors.Distinct().ToList(); // 重複するエラーを除く場合
                 if (OutputErrors.Any())
                 {
                     MessageBox.Show("ラダー生成中にエラーが検出されました。エラーリストを確認してください。", "生成エラー");
                 }
 
-                // 5. CSVエクスポート
-                if (!OutputErrors.Any(e => e.IsCritical)) // IsCriticalのようなプロパティをOutputErrorに追加して判断するのも良い
+                // --- 4. CSVエクスポート ---
+                if (OutputErrors.Any(e => e.IsCritical))
                 {
-                    MemoryStatusMessage = "Process CSVファイル出力中...";
-                    string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Process.csv");
-                    LadderCsvExporter.ExportLadderCsv(processRows, csvPath);
-                    MemoryStatusMessage = "出力処理が完了しました。";
-                    MessageBox.Show(MemoryStatusMessage);
-                }
-                else
-                {
-                    MemoryStatusMessage = "クリティカルなエラーのため、CSV出力を中止しました。";
+                    MemoryStatusMessage = "致命的なエラーのため、CSV出力を中止しました。";
+                    MessageBox.Show(MemoryStatusMessage, "エラー");
+                    return;
                 }
 
-                if (!OutputErrors.Any(e => e.IsCritical)) // IsCriticalのようなプロパティをOutputErrorに追加して判断するのも良い
-                {
-                    MemoryStatusMessage = "ProcessDetail CSVファイル出力中...";
-                    string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ProcessDetail.csv");
-                    LadderCsvExporter.ExportLadderCsv(detailRows, csvPath);
-                    MemoryStatusMessage = "出力処理が完了しました。";
-                    MessageBox.Show(MemoryStatusMessage);
-                }
-                else
-                {
-                    MemoryStatusMessage = "クリティカルなエラーのため、CSV出力を中止しました。";
-                }
-
-                if (!OutputErrors.Any(e => e.IsCritical)) // IsCriticalのようなプロパティをOutputErrorに追加して判断するのも良い
-                {
-                    MemoryStatusMessage = "Operation CSVファイル出力中...";
-                    string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Operation.csv");
-                    LadderCsvExporter.ExportLadderCsv(operationRows, csvPath);
-                    MemoryStatusMessage = "出力処理が完了しました。";
-                    MessageBox.Show(MemoryStatusMessage);
-                }
-                else
-                {
-                    MemoryStatusMessage = "クリティカルなエラーのため、CSV出力を中止しました。";
-                }
-
-                if (!OutputErrors.Any(e => e.IsCritical)) // IsCriticalのようなプロパティをOutputErrorに追加して判断するのも良い
-                {
-                    MemoryStatusMessage = "Operation CSVファイル出力中...";
-                    string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cylinder.csv");
-                    LadderCsvExporter.ExportLadderCsv(cylinderRows, csvPath);
-                    MemoryStatusMessage = "出力処理が完了しました。";
-                    MessageBox.Show(MemoryStatusMessage);
-                }
-                else
-                {
-                    MemoryStatusMessage = "クリティカルなエラーのため、CSV出力を中止しました。";
-                }
-
+                ExportLadderCsvFile(allOutputRows, "KdxLadder_All.csv", "全ラダー");
+                MessageBox.Show("出力処理が完了しました。", "完了");
             }
             catch (Exception ex)
             {
@@ -351,7 +298,27 @@ namespace KdxDesigner.ViewModels
                 Debug.WriteLine(ex);
             }
         }
-        
+
+        /// <summary>
+        /// CSVファイルのエクスポート処理を共通化するヘルパーメソッド
+        /// </summary>
+        private void ExportLadderCsvFile(List<LadderCsvRow> rows, string fileName, string categoryName)
+        {
+            if (!rows.Any()) return; // 出力する行がなければ何もしない
+
+            try
+            {
+                MemoryStatusMessage = $"{categoryName} CSVファイル出力中...";
+                string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+                LadderCsvExporter.ExportLadderCsv(rows, csvPath);
+            }
+            catch (Exception ex)
+            {
+
+                Debug.WriteLine(ex);
+            }
+        }
+
 
         private List<string> ValidateProcessOutput()
         {

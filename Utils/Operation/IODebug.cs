@@ -6,16 +6,17 @@ using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KdxDesigner.Utils.Operation
 {
+    /// <summary>
+    /// OperationのIOデバッグに関連するラダーロジックを生成します。
+    /// </summary>
     internal class IODebug
     {
+        private readonly MainViewModel _mainViewModel;
         private readonly MnemonicDeviceWithOperation _operation;
         private readonly List<IO> _ioList;
         private readonly IErrorAggregator _errorAggregator;
@@ -23,7 +24,6 @@ namespace KdxDesigner.Utils.Operation
         private readonly string _label;
         private readonly int _outNum;
         private readonly List<MnemonicDeviceWithCylinder> _cylinders;
-        private readonly MainViewModel _mainViewModel;
 
         public IODebug(
             MainViewModel mainViewModel,
@@ -34,246 +34,268 @@ namespace KdxDesigner.Utils.Operation
             IIOAddressService ioAddressService)
         {
             _mainViewModel = mainViewModel;
-            _ioList = ioList;
+            _operation = operation;
             _cylinders = cylinders;
+            _ioList = ioList;
             _errorAggregator = errorAggregator;
             _ioAddressService = ioAddressService;
-            _operation = operation;
-            _label = operation.Mnemonic.DeviceLabel!; // ラベルの取得
-            _outNum = operation.Mnemonic.StartNum; // ラベルの取得
+
+            _label = operation.Mnemonic.DeviceLabel ?? "";
+            _outNum = operation.Mnemonic.StartNum;
         }
 
+        /// <summary>
+        /// IOデバッグ用の共通ラダー回路を生成します。
+        /// </summary>
         public List<LadderCsvRow> GenerateCommon(int speedCount)
         {
             var result = new List<LadderCsvRow>();
+
+            // --- デバッグパルスによる基本条件 ---
             result.Add(LadderRow.AddLDP(SettingsManager.Settings.DebugPulse));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
-            result.Add(LadderRow.AddANI(_label + (_outNum + 18).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_outNum + 6)));
+            result.Add(LadderRow.AddANI(_label + (_outNum + 18)));
 
-            // Valve1の処理
-            if (_operation.Operation.Valve1 != null)
+            // --- Valve1 の処理 ---
+            if (!string.IsNullOrEmpty(_operation.Operation.Valve1))
             {
-                var selectedPlcId = _mainViewModel.SelectedPlc?.Id;
-                if (selectedPlcId == null)
-                {
-                    throw new InvalidOperationException("Selected PLC is null.");
-                }
-
+                // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
                 var valve1Address = _ioAddressService.GetSingleAddress(
-                    _ioList,
-                    _operation.Operation.Valve1,
-                    selectedPlcId.Value,
-                    true,
-                    _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                    );
-
+                    _ioList, 
+                    _operation.Operation.Valve1, 
+                    true, 
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id);
                 if (valve1Address != null)
                 {
                     result.Add(LadderRow.AddAND(valve1Address));
                 }
             }
 
+            // --- Startセンサーの処理 ---
+            HandleStartSensor(result);
 
-            // Startセンサーの処理
-            if (_operation.Operation.Start != null)
+            // --- 速度(SS1-4) と Finishセンサーの処理 ---
+            if (!string.IsNullOrEmpty(_operation.Operation.Start))
             {
-                var selectedPlcId = _mainViewModel.SelectedPlc?.Id;
-                if (selectedPlcId == null)
-                {
-                    throw new InvalidOperationException("Selected PLC is null.");
-                }
-                var startSensorAddress = _ioAddressService.GetSingleAddress(
-                    _ioList,
+                HandleSpeedAndFinishWithStart(result, speedCount);
+            }
+            else
+            {
+                HandleFinishWithoutStart(result);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// StartセンサーのSET/RSTロジックを生成します。
+        /// </summary>
+        private void HandleStartSensor(List<LadderCsvRow> result)
+        {
+            if (string.IsNullOrEmpty(_operation.Operation.Start)) return;
+
+            if (_operation.Operation.SC != null && _operation.Operation.SC != 0)
+            {
+                // SCあり: 複数センサーをRST
+                // ★修正: GetAddressRange の引数を新しいI/Fに合わせる
+                var ioSensors = _ioAddressService.GetAddressRange(
+                    _ioList, 
                     _operation.Operation.Start,
-                    selectedPlcId.Value,
-                    false,
-                    _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                    );
-                if (startSensorAddress != null)
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id,
+                    errorIfNotFound: true);
+                foreach (var io in ioSensors)
                 {
-                    result.Add(LadderRow.AddRST(startSensorAddress));
-                }
-
-                // 速度処理
-                // SS1の処理
-                if (_operation.Operation.SS1 != null)
-                {
-                    var ss1Address = _ioAddressService.GetSingleAddress(
-                        _ioList,
-                        _operation.Operation.SS1,
-                        selectedPlcId.Value,
-                        false,
-                        _operation.Operation.OperationName,
-                        (int)MnemonicType.Operation,
-                        _operation.Operation.Id
-                        );
-                    if (ss1Address != null)
+                    if (!string.IsNullOrEmpty(io.Address))
                     {
-                        result.Add(LadderRow.AddMPS());
-                        result.Add(LadderRow.AddAND(_label + (_outNum + 7).ToString()));
-                        result.Add(LadderRow.AddANI(_label + (_outNum + 10).ToString()));
-                        result.Add(LadderRow.AddSET(ss1Address));
-
-                        result.Add(LadderRow.AddMPS());
-                        result.Add(LadderRow.AddAND(_label + (_outNum + 10).ToString()));
-                        result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                        result.Add(LadderRow.AddRST(ss1Address));
-                    }
-
-                    // SS2の処理
-                    if (_operation.Operation.SS2 != null)
-                    {
-                        var ss2Address = _ioAddressService.GetSingleAddress(
-                            _ioList,
-                            _operation.Operation.SS2,
-                            selectedPlcId.Value, false,
-                                                _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-
-                            );
-                        if (ss2Address != null)
-                        {
-                            result.Add(LadderRow.AddMRD());
-                            result.Add(LadderRow.AddAND(_label + (_outNum + 10).ToString()));
-                            result.Add(LadderRow.AddANI(_label + (_outNum + 11).ToString()));
-                            result.Add(LadderRow.AddSET(ss2Address));
-                            result.Add(LadderRow.AddMRD());
-                            result.Add(LadderRow.AddAND(_label + (_outNum + 11).ToString()));
-                            result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                            result.Add(LadderRow.AddRST(ss2Address));
-                        }
-                        // SS3の処理
-                        if (_operation.Operation.SS3 != null)
-                        {
-                            var ss3Address = _ioAddressService.GetSingleAddress(
-                                _ioList,
-                                _operation.Operation.SS3,
-                                selectedPlcId.Value, false,
-                                                    _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                                );
-                            if (ss3Address != null)
-                            {
-                                result.Add(LadderRow.AddMRD());
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 11).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 12).ToString()));
-                                result.Add(LadderRow.AddSET(ss3Address));
-                                result.Add(LadderRow.AddMRD());
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 12).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                result.Add(LadderRow.AddRST(ss3Address));
-                            }
-                            // SS4の処理
-                            if (_operation.Operation.SS4 != null)
-                            {
-                                var ss4Address = _ioAddressService.GetSingleAddress(
-                                    _ioList,
-                                    _operation.Operation.SS4,
-                                    selectedPlcId.Value, false,
-                                                        _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                                    );
-                                if (ss4Address != null)
-                                {
-                                    result.Add(LadderRow.AddMRD());
-                                    result.Add(LadderRow.AddAND(_label + (_outNum + 12).ToString()));
-                                    result.Add(LadderRow.AddANI(_label + (_outNum + 13).ToString()));
-                                    result.Add(LadderRow.AddSET(ss4Address));
-                                    result.Add(LadderRow.AddMRD());
-                                    result.Add(LadderRow.AddAND(_label + (_outNum + 13).ToString()));
-                                    result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                    result.Add(LadderRow.AddRST(ss4Address));
-                                }
-                            }
-                        }
-                    }
-                }
-                if (_operation.Operation.Finish != null)
-                {
-                    var finishSensorAddress = _ioAddressService.GetSingleAddress(
-                        _ioList,
-                        _operation.Operation.Finish,
-                        selectedPlcId.Value, false,
-                                            _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                        );
-                    if (finishSensorAddress != null)
-                    {
-                        switch (speedCount)
-                        {
-                            case 0:
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 7).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                result.Add(LadderRow.AddSET(finishSensorAddress));
-                                break;
-                            case 1:
-                                result.Add(LadderRow.AddMPP());
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 10).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                result.Add(LadderRow.AddSET(finishSensorAddress));
-                                break;
-                            case 2:
-                                result.Add(LadderRow.AddMPP());
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 11).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                result.Add(LadderRow.AddSET(finishSensorAddress));
-                                break;
-                            case 3:
-                                result.Add(LadderRow.AddMPP());
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 12).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                result.Add(LadderRow.AddSET(finishSensorAddress));
-                                break;
-                            case 4:
-                                result.Add(LadderRow.AddMPP());
-                                result.Add(LadderRow.AddAND(_label + (_outNum + 13).ToString()));
-                                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                                result.Add(LadderRow.AddSET(finishSensorAddress));
-                                break;
-                            default:
-                                throw new InvalidOperationException("Invalid speed operation.");
-                        }
+                        result.Add(LadderRow.AddRST(io.Address));
                     }
                 }
             }
             else
             {
-                // Finishセンサーの処理
-                if (_operation.Operation.Finish != null)
+                // SCなし: 単一センサーをSET/RST
+                // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    _ioList, 
+                    _operation.Operation.Start,
+                    false,
+                    _operation.Operation.OperationName,
+                    _operation.Operation.Id);
+                if (ioSensor == null)
                 {
-                    var selectedPlcId = _mainViewModel.SelectedPlc?.Id;
-                    if (selectedPlcId == null)
+                    result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                }
+                else
+                {
+                    if (_operation.Operation.Start.StartsWith("_"))
                     {
-                        throw new InvalidOperationException("Selected PLC is null.");
+                        result.Add(LadderRow.AddSET(ioSensor));
                     }
-                    var finishSensorAddress = _ioAddressService.GetSingleAddress(
-                        _ioList,
-                        _operation.Operation.Finish,
-                        selectedPlcId.Value, false,
-                                            _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                        );
-                    if (finishSensorAddress != null)
+                    else
                     {
-
-                        result.Add(LadderRow.AddSET(finishSensorAddress));
+                        result.Add(LadderRow.AddRST(ioSensor));
                     }
                 }
             }
-
-            return result; // 生成されたLadderCsvRowのリストを返す
-
         }
 
+        /// <summary>
+        /// Startセンサーがある場合の、速度信号(SS)とFinishセンサーのロジックを生成します。
+        /// </summary>
+        private void HandleSpeedAndFinishWithStart(List<LadderCsvRow> result, int speedCount)
+        {
+            result.Add(LadderRow.AddMPS());
+
+            HandleSpeedSensor(result, _operation.Operation.SS1, 7, 10);
+            HandleSpeedSensor(result, _operation.Operation.SS2, 10, 11);
+            HandleSpeedSensor(result, _operation.Operation.SS3, 11, 12);
+            HandleSpeedSensor(result, _operation.Operation.SS4, 12, 13);
+
+            HandleFinishWithStart(result, speedCount);
+
+            result.Add(LadderRow.AddMPP());
+        }
+
+        /// <summary>
+        /// 速度センサー(SS)のSET/RSTロジックを生成するヘルパーメソッド。
+        /// </summary>
+        private void HandleSpeedSensor(List<LadderCsvRow> result, string? ssSignal, int andOffset, int aniOffset)
+        {
+            if (string.IsNullOrEmpty(ssSignal)) return;
+
+            // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
+            var ssAddress = _ioAddressService.GetSingleAddress(
+                _ioList, 
+                ssSignal,
+                false,
+                _operation.Operation.OperationName,
+                _operation.Operation.Id);
+            if (ssAddress == null) return;
+
+            result.Add(LadderRow.AddMRD());
+            result.Add(LadderRow.AddAND(_label + (_outNum + andOffset)));
+            result.Add(LadderRow.AddANI(_label + (_outNum + aniOffset)));
+            result.Add(LadderRow.AddSET(ssAddress));
+
+            result.Add(LadderRow.AddMRD());
+            result.Add(LadderRow.AddAND(_label + (_outNum + aniOffset)));
+            result.Add(LadderRow.AddANI(_label + (_outNum + 17)));
+            result.Add(LadderRow.AddRST(ssAddress));
+        }
+
+
+        /// <summary>
+        /// Start信号がある場合のFinishセンサーをSETするためのラダー命令を生成します。
+        /// </summary>
+        private void HandleFinishWithStart(List<LadderCsvRow> result, int speedCount)
+        {
+            if (string.IsNullOrEmpty(_operation.Operation.Finish)) return;
+
+            var conditionAndOffset = speedCount switch
+            {
+                0 => 7,
+                1 => 10,
+                2 => 11,
+                3 => 12,
+                4 => 13,
+                _ => -1
+            };
+
+            if (conditionAndOffset == -1)
+            {
+                _errorAggregator.AddError(new OutputError { Message = $"無効な speedCount ({speedCount}) が指定されました。", RecordId = _operation.Operation.Id });
+                return;
+            }
+
+            List<string> addressesToSet = new();
+            if (_operation.Operation.FC != null && _operation.Operation.FC != 0)
+            {
+                // ★修正: GetAddressRange の引数を新しいI/Fに合わせる
+                var finishSensors = _ioAddressService.GetAddressRange(
+                    _ioList, 
+                    _operation.Operation.Finish,
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id,
+                    errorIfNotFound: true);
+                addressesToSet.AddRange(finishSensors.Select(s => s.Address).Where(a => !string.IsNullOrEmpty(a))!);
+            }
+            else
+            {
+                // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
+                var addr = _ioAddressService.GetSingleAddress(
+                    _ioList, 
+                    _operation.Operation.Finish,
+                    false,
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id);
+                if (addr != null) addressesToSet.Add(addr);
+            }
+
+            if (addressesToSet.Any())
+            {
+                result.Add(LadderRow.AddMRD());
+                result.Add(LadderRow.AddAND(_label + (_outNum + conditionAndOffset)));
+                result.Add(LadderRow.AddANI(_label + (_outNum + 17)));
+
+                foreach (var address in addressesToSet)
+                {
+                    result.Add(LadderRow.AddSET(address));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Startセンサーがない場合の、Finishセンサーのロジックを生成します。
+        /// </summary>
+        private void HandleFinishWithoutStart(List<LadderCsvRow> result)
+        {
+            if (string.IsNullOrEmpty(_operation.Operation.Finish)) return;
+
+            if (_operation.Operation.FC != null && _operation.Operation.FC != 0)
+            {
+                // ★修正: GetAddressRange の引数を新しいI/Fに合わせる
+                var finishSensors = _ioAddressService.GetAddressRange(
+                    _ioList, 
+                    _operation.Operation.Finish,
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id,
+                    errorIfNotFound: true);
+                foreach (var sensor in finishSensors)
+                {
+                    if (!string.IsNullOrEmpty(sensor.Address))
+                    {
+                        result.Add(LadderRow.AddSET(sensor.Address));
+                    }
+                }
+            }
+            else
+            {
+                // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
+                var finishSensorAddress = _ioAddressService.GetSingleAddress(
+                    _ioList, 
+                    _operation.Operation.Finish,
+                    false,
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id);
+                if (finishSensorAddress != null)
+                {
+                    if (_operation.Operation.Finish.StartsWith("_"))
+                    {
+                        result.Add(LadderRow.AddANI(finishSensorAddress));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddAND(finishSensorAddress));
+                    }
+                }
+                else
+                {
+                    result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                }
+            }
+        }
     }
 }

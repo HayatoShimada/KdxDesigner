@@ -139,31 +139,52 @@ namespace KdxDesigner.Utils.Operation
             // 開始待ちタイマがある場合
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
-            // ioの取得を共通コンポーネント化すること
-            var ioSensor = _ioAddressService.GetSingleAddress(
-                _ioList, _operation.Operation.Start!, _mainViewModel.SelectedPlc!.Id, false,
-                                    _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
 
-                );
-
-            if (ioSensor == null)
+            // SCが設定されている場合
+            if (_operation.Operation.SC != null && _operation.Operation.SC != 0)
             {
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                var ioSensorMulti = _ioAddressService.GetAddressRange(
+                    _ioList, 
+                    _operation.Operation.Start!,
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id);
+
+                if (ioSensorMulti! == null)
+                {
+                    foreach (var io in ioSensorMulti)
+                    {
+                        result.Add(LadderRow.AddANI(io.Address!));
+                    }
+                }
             }
             else
             {
-                if (_operation.Operation.Start!.Contains("_"))    // Containsではなく、先頭一文字
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                        _ioList,
+                        _operation.Operation.Start!,
+                        false,
+                        _operation.Operation.OperationName!,
+                        _operation.Operation.Id);
+
+                // SCが設定されていない場合は常にON
+                if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddAND(ioSensor));
+                    result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
                 }
                 else
                 {
-                    result.Add(LadderRow.AddANI(ioSensor));
+                    if (_operation.Operation.Start!.Contains("_"))    // Containsではなく、先頭一文字
+                    {
+                        result.Add(LadderRow.AddAND(ioSensor));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddANI(ioSensor));
 
+                    }
                 }
             }
+            
             result.Add(LadderRow.AddOR(_label + (_outNum + 6).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 5).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 7).ToString()));
@@ -181,11 +202,11 @@ namespace KdxDesigner.Utils.Operation
         {
             var result = new List<LadderCsvRow>();
             var ioSensor = _ioAddressService.GetSingleAddress(
-                _ioList, speedSensor, _mainViewModel.SelectedPlc!.Id, false,
-                                    _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-                );
+                _ioList, 
+                speedSensor, 
+                false,
+                _operation.Operation.OperationName,
+                _operation.Operation.Id);
 
             if (ioSensor == null)
             {
@@ -232,28 +253,48 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
             // ioの取得を共通コンポーネント化すること
-            var ioSensor = _ioAddressService.GetSingleAddress(
-                _ioList, _operation.Operation.Finish!, _mainViewModel.SelectedPlc!.Id, false,
-                                    _operation.Operation.OperationName,
-                    (int)MnemonicType.Operation,
-                    _operation.Operation.Id
-
-
-                );
-
-            if (ioSensor == null)
+            // SCが設定されている場合
+            if (_operation.Operation.FC != null && _operation.Operation.FC != 0)
             {
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                var ioSensorMulti = _ioAddressService.GetAddressRange(
+                    _ioList,
+                    _operation.Operation.Finish!,
+                    _operation.Operation.OperationName!,
+                    _operation.Operation.Id);
+
+                if (ioSensorMulti! == null)
+                {
+                    foreach (var io in ioSensorMulti)
+                    {
+                        result.Add(LadderRow.AddAND(io.Address!));
+                    }
+                }
             }
             else
             {
-                if (_operation.Operation.Finish!.Contains("_"))    // Containsではなく、先頭一文字
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                        _ioList,
+                        _operation.Operation.Finish!,
+                        false,
+                        _operation.Operation.OperationName!,
+                        _operation.Operation.Id);
+
+                // SCが設定されていない場合は常にON
+                if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddANI(ioSensor));
+                    result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
                 }
                 else
                 {
-                    result.Add(LadderRow.AddAND(ioSensor));
+                    if (_operation.Operation.Finish!.Contains("_"))    // Containsではなく、先頭一文字
+                    {
+                        result.Add(LadderRow.AddANI(ioSensor));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddAND(ioSensor));
+
+                    }
                 }
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 16).ToString()));
@@ -267,7 +308,7 @@ namespace KdxDesigner.Utils.Operation
         {
             var operationTimerONWait = _timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
             var result = new List<LadderCsvRow>();
-            // 開始待ちタイマがある場合
+            // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {
                 result.Add(LadderRow.AddLD(_label + (_outNum + 16).ToString()));
@@ -376,9 +417,5 @@ namespace KdxDesigner.Utils.Operation
             }
             return result;
         }
-
-
-
-
     }
 }

@@ -30,7 +30,22 @@ namespace KdxDesigner.Utils.MnemonicCommon
         public static LadderCsvRow AddMPP() => CreateRow(Command.MPP);
         public static LadderCsvRow AddMEP() => CreateRow(Command.MEP);
 
-
+        public static LadderCsvRow MPCreate(string mp)
+        {
+            switch (mp)
+            {
+                case "MPS":
+                    return AddMPS();
+                case "MRD":
+                    return AddMRD();
+                case "MPP":
+                    return AddMPP();
+                case "MEP":
+                    return AddMEP();
+                default:
+                    throw new ArgumentException($"Invalid MP command: {mp}");
+            }
+        }
 
         // ソースとデスティネーションを入力すると、MOV命令等を生成する
         public static List<LadderCsvRow> AddMOVSet(string source, string destination)
