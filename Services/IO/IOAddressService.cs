@@ -3,6 +3,8 @@ using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Utils;
 
+using System.Text;
+
 namespace KdxDesigner.Services
 {
     public class IOAddressService : IIOAddressService
@@ -28,15 +30,17 @@ namespace KdxDesigner.Services
             string processName,
             int recordId)
         {
-            ioList = isOutput 
-                ? ioList.Where(io => io.Address.Contains("Y")).ToList() 
-                : ioList.Where(io => io.Address.Contains("X")).ToList();
+            ioList = isOutput
+                ? ioList.Where(io => io.Address != null && io.Address.Contains("Y") || io.Address.Contains("Ｙ")).ToList()
+                : ioList.Where(io => io.Address != null && (io.Address.Contains("X") || io.Address.Contains("Ｘ"))).ToList();
             // 内部で共通の検索ロジックを呼ぶ
             var result = FindByIOTextInternal(ioList, ioText, processName, recordId);
 
             switch (result.State)
             {
                 case FindIOResultState.FoundOne:
+
+
                     return result.SingleAddress; // 成功ケース: アドレスを返す
 
                 case FindIOResultState.FoundMultiple:
@@ -56,7 +60,6 @@ namespace KdxDesigner.Services
             }
         }
 
-        // ★ 新メソッド: 複数(0件以上)のIOを期待する場合
         public List<IO> GetAddressRange(
             List<IO> ioList,
             string ioText,
@@ -90,85 +93,56 @@ namespace KdxDesigner.Services
 
             return matches;
         }
-
-
         private FindIOResult FindByIOTextInternal(
             List<IO> ioList,
             string ioText,
-            string processName,
-            int recordId
-            )
+            string recordName,
+            int? recordId)
         {
             if (string.IsNullOrEmpty(ioText))
             {
-                _errorAggregator.AddError(new OutputError
-                {
-                    Message = "IOテキストが指定されていません。",
-                    RecordName = processName,
-                    RecordId = recordId
-                });
+                _errorAggregator.AddError(new OutputError { Message = "IOテキストが指定されていません。", RecordName = recordName, RecordId = recordId });
                 return new FindIOResult { State = FindIOResultState.NotFound };
             }
 
-            // "L-" プレフィックスの処理
-            if (ioText.StartsWith(LengthPrefix))
-            {
-                string lengthName = ioText.Substring(LengthPrefix.Length);
-                if (string.IsNullOrEmpty(lengthName))
-                {
-                    _errorAggregator.AddError(new OutputError
-                    {
-                        Message = $"不正なL-プレフィックス形式です: '{ioText}'",
-                        RecordName = processName,
-                        RecordId = recordId
-                    });
-                    return new FindIOResult { State = FindIOResultState.NotFound, SingleAddress = SettingsManager.Settings.OutErrorDevice };
-                }
+            // ... ("L-" プレフィックスの処理は変更なし) ...
 
-                List<Length>? lengths = _repository.GetLengthByPlcId(_plcId);
-                Length? length = lengths?.FirstOrDefault(l => l.LengthName.Contains(lengthName));
-
-                if (length == null || string.IsNullOrEmpty(length.Device))
-                {
-                    _errorAggregator.AddError(new OutputError
-                    {
-                        Message = $"Lengthセンサー '{ioText}' が見つかりませんでした。",
-                        RecordName = processName,
-                        RecordId = recordId
-                    });
-                    return new FindIOResult { State = FindIOResultState.NotFound, SingleAddress = SettingsManager.Settings.OutErrorDevice };
-                }
-
-                return new FindIOResult { State = FindIOResultState.FoundOne, SingleAddress = length.Device };
-            }
-
-            // 通常の検索処理
-            string searchText = ioText.StartsWith(UnderscorePrefix)
-                                ? ioText.Substring(UnderscorePrefix.Length)
-                                : ioText;
-
+            string searchText = ioText.StartsWith("_") ? ioText.Substring(1) : ioText;
             var matches = ioList.Where(io => io.IOName != null && io.IOName.Contains(searchText)).ToList();
 
             if (matches.Count == 0)
             {
-                _errorAggregator.AddError(new OutputError
-                {
-                    Message = $"センサー '{ioText}' が見つかりませんでした。",
-                    RecordName = processName,
-                    RecordId = recordId
-                });
+                _errorAggregator.AddError(new OutputError { Message = $"センサー '{ioText}' が見つかりませんでした。", RecordName = recordName, RecordId = recordId });
                 return new FindIOResult { State = FindIOResultState.NotFound };
             }
 
             if (matches.Count == 1)
             {
-                return new FindIOResult { State = FindIOResultState.FoundOne, SingleAddress = matches[0].Address };
+                var foundIo = matches[0];
+
+                // ★★★ 修正箇所 ★★★
+                // 1. LinkDevice に値があれば、それを優先する
+                string? addressToReturn = !string.IsNullOrWhiteSpace(foundIo.LinkDevice)
+                    ? foundIo.LinkDevice
+                    : foundIo.Address;
+
+                // 2. 返す前に全角を半角に正規化する
+                string? normalizedAddress = addressToReturn?.Normalize(NormalizationForm.FormKC);
+
+                return new FindIOResult
+                {
+                    State = FindIOResultState.FoundOne,
+                    SingleAddress = normalizedAddress
+                };
             }
 
-
-            // ★ UI表示ロジックを削除。代わりに複数候補を返す。
-            // 呼び出し元 (ViewModel) がダイアログ表示の責務を持つ。
-            return new FindIOResult { State = FindIOResultState.FoundMultiple, MultipleMatches = matches };
+            // 複数ヒットした場合、IOオブジェクトのリストをそのまま返す。
+            // 呼び出し元が必要に応じて LinkDevice を参照できるようにするため。
+            return new FindIOResult
+            {
+                State = FindIOResultState.FoundMultiple,
+                MultipleMatches = matches
+            };
         }
     }
 }

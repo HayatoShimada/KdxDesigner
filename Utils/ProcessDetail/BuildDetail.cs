@@ -130,14 +130,13 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
-            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 49).ToString()));
+            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
             // エラーをまとめて返す。
-
             return result;
 
         }
@@ -973,9 +972,226 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
+            return result;
+
+        }
+
+
+        // タイマ工程
+        public List<LadderCsvRow> BuildDetailTimerProcess(
+            MnemonicDeviceWithProcessDetail detail,
+            List<MnemonicDeviceWithProcessDetail> details,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            List<MnemonicTimerDeviceWithDetail> detailTimers)
+        {
+            var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
+
+            // 行間ステートメントを追加
+            string id = detail.Detail.Id.ToString();
+            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            {
+                result.Add(LadderRow.AddStatement(id));
+            }
+            else
+            {
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+            }
+
+            // L0 の初期値を設定
+            var deviceNum = detail.Mnemonic.StartNum;
+            var label = detail.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessIdからデバイスを取得
+            var process = processes.FirstOrDefault(p => p.Mnemonic.RecordId == detail.Detail.ProcessId);
+            var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
+            var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessDetailの開始条件
+            // この辺の処理がややこしいので共通コンポーネント化すること
+            var processDetailStartIds = detail.Detail.StartIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
+            var processDetailStartDevices = details
+                .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+            // ProcessDetailの終了条件
+            var processDetailFinishIds = detail.Detail.FinishIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
+            var processDetailFinishDevices = details
+                .Where(d => processDetailFinishIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+
+            // L0 工程開始
+            // 設定値を使う場合の構文 SettingsManager.Settings.""
+            // 設定値の初期値は\Model\AppSettings.csに定義
+
+            // StartSensorが設定されている場合は、IOリストからセンサーを取得
+            if (detail.Detail.StartSensor != null)
+            {
+                // ioの取得を共通コンポーネント化すること
+                var plcId = _mainViewModel.SelectedPlc!.Id;
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    ioList,
+                    detail.Detail.StartSensor,
+                    false,
+                    detail.Detail.DetailName,
+                    detail.Detail.Id);
+
+                if (ioSensor == null)
+                {
+                    // StartSensornの設定ナシ
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
+                }
+                else
+                {
+                    if (detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
+                    {
+                        result.Add(LadderRow.AddLDI(ioSensor ?? ""));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddLD(ioSensor ?? ""));
+
+                    }
+                }
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
+            }
+            else
+            {
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            }
+
+            result.Add(LadderRow.AddOR(label + (deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddAND(processDeviceLabel + (processDeviceStartNum + 1).ToString()));
+
+            foreach (var d in processDetailStartDevices)
+            {
+                result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
+            }
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 0).ToString()));
+
+            // L1 操作開始
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 1).ToString()));
+
+            // L2 タイマ開始
+            var stopTimer = detailTimers.FirstOrDefault(t => t.Timer.RecordId == detail.Detail.Id);
+            
+            result.Add(LadderRow.AddLD(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddANI(label + (deviceNum + 2).ToString()));
+            result.AddRange(LadderRow.AddTimer(stopTimer.Timer.ProcessTimerDevice, stopTimer.Timer.TimerDevice));
+            result.Add(LadderRow.AddLD(stopTimer.Timer.ProcessTimerDevice));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 2).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 2).ToString()));
+
+            // L9 工程完了
+            // detailのoperationIdからOperationの先頭デバイスを取得
+            var operationFinish = operations.FirstOrDefault(o => o.Mnemonic.RecordId == detail.Detail.OperationId);
+            var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
+            var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
 
             return result;
 
         }
+
+
+        // タイマ工程
+        public List<LadderCsvRow> BuildDetailTimer(
+            MnemonicDeviceWithProcessDetail detail,
+            List<MnemonicDeviceWithProcessDetail> details,
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList,
+            List<MnemonicTimerDeviceWithDetail> detailTimers)
+        {
+            var result = new List<LadderCsvRow>();
+            List<OutputError> localErrors = new();
+
+            // 行間ステートメントを追加
+            string id = detail.Detail.Id.ToString();
+            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            {
+                result.Add(LadderRow.AddStatement(id));
+            }
+            else
+            {
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+            }
+
+            // L0 の初期値を設定
+            var deviceNum = detail.Mnemonic.StartNum;
+            var label = detail.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessIdからデバイスを取得
+            var process = processes.FirstOrDefault(p => p.Mnemonic.RecordId == detail.Detail.ProcessId);
+            var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
+            var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            // ProcessDetailの開始条件
+            // この辺の処理がややこしいので共通コンポーネント化すること
+            var processDetailStartIds = detail.Detail.StartIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
+            var processDetailStartDevices = details
+                .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+            // ProcessDetailの終了条件
+            var processDetailFinishIds = detail.Detail.FinishIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
+            var processDetailFinishDevices = details
+                .Where(d => processDetailFinishIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+
+
+            // L9 工程完了
+            // detailのoperationIdからOperationの先頭デバイスを取得
+            var operationFinish = operations.FirstOrDefault(o => o.Mnemonic.RecordId == detail.Detail.OperationId);
+            var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
+            var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
+
+            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddAND(label + (deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
+
+
+            return result;
+
+        }
+
+
+
+
+
+
+
+
     }
 }

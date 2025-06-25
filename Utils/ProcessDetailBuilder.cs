@@ -25,7 +25,8 @@ namespace KdxDesigner.Utils
             List<MnemonicDeviceWithProcessDetail> details,
             List<MnemonicDeviceWithOperation> operations,
             List<MnemonicDeviceWithCylinder> cylinders,
-            List<IO> ioList)
+            List<IO> ioList,
+            List<MnemonicTimerDeviceWithDetail> detailTimers)
         {
             LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
             var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
@@ -36,41 +37,47 @@ namespace KdxDesigner.Utils
             {
                 switch (detail.Detail.CategoryId)
                 {
-                    case 1: // 通常工程
+                    case 1:     // 通常工程
                         allRows.AddRange(buildDetail.BuildDetailNormal(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 2: // 工程まとめ
+                    case 2:     // 工程まとめ
                         allRows.AddRange(buildDetail.BuildDetailSummarize(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 3: // センサON確認
+                    case 3:     // センサON確認
                         allRows.AddRange(buildDetail.BuildDetailSensorON(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 4: // センサOFF確認
+                    case 4:     // センサOFF確認
                         allRows.AddRange(buildDetail.BuildDetailSensorOFF(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 5: // 工程分岐
+                    case 5:     // 工程分岐
                         allRows.AddRange(buildDetail.BuildDetailBranch(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 6: // 工程合流
+                    case 6:     // 工程合流
                         allRows.AddRange(buildDetail.BuildDetailMerge(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 7: // サーボ座標指定
+                    case 7:     // サーボ座標指定
                         break;
-                    case 8: // サーボ番号指定
+                    case 8:     // サーボ番号指定
                         break;
-                    case 9: // INV座標指定
+                    case 9:     // INV座標指定
                         break;
-                    case 10: // IL待ち
+                    case 10:    // IL待ち
                         allRows.AddRange(buildDetail.BuildDetailILWait(detail, details, processes, operations, cylinders, ioList));
                         break;
-                    case 11: // リセット工程開始
+                    case 11:    // リセット工程開始
                         break;
-                    case 12: // リセット工程完了
+                    case 12:    // リセット工程完了
                         break;
-                    case 13: // 工程OFF確認
+                    case 13:    // 工程OFF確認
                         break;
-                    case 15: // 期間工程
+                    case 15:    // 期間工程
                         allRows.AddRange(buildDetail.BuildDetailSeason(detail, details, processes, operations, cylinders, ioList));
+                        break;
+                    case 16:    // タイマ工程
+                        allRows.AddRange(buildDetail.BuildDetailTimerProcess(detail, details, processes, operations, cylinders, ioList, detailTimers));
+                        break;                    
+                    case 17:    // タイマ
+                        allRows.AddRange(buildDetail.BuildDetailTimer(detail, details, processes, operations, cylinders, ioList, detailTimers));
                         break;
                     default:
                         break;

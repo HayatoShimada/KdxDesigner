@@ -121,5 +121,11 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         List<Servo> GetServos(int? plcId, int? cylinderId);
 
+        /// <summary>
+        /// IOレコードのリストを受け取り、LinkDeviceカラムをバッチ更新します。
+        /// </summary>
+        /// <param name="ioRecordsToUpdate">LinkDeviceが設定されたIOオブジェクトのリスト。</param>
+        void UpdateIoLinkDevices(IEnumerable<IO> ioRecordsToUpdate);
+
     }
 }

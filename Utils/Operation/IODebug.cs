@@ -58,7 +58,8 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddANI(_label + (_outNum + 18)));
 
             // --- Valve1 の処理 ---
-            if (!string.IsNullOrEmpty(_operation.Operation.Valve1))
+            if (!string.IsNullOrEmpty(_operation.Operation.Valve1) 
+                && _operation.Operation.CategoryId != 20)
             {
                 // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
                 var valve1Address = _ioAddressService.GetSingleAddress(

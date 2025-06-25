@@ -228,7 +228,7 @@ VALUES
         public List<IO> GetIoList()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = "SELECT Id, IOText, XComment, YComment, FComment, Address, IOName, IOExplanation, IOSpot, UnitName, System, StationNumber, IONameNaked FROM IO";
+            var sql = "SELECT * FROM IO";
             return connection.Query<IO>(sql).ToList();
         }
 
@@ -259,6 +259,30 @@ VALUES
                     : "SELECT * FROM Servo WHERE PlcId = @PlcId AND CylinderId = @CylinderId";
             }
             return connection.Query<Servo>(sql, new { PlcId = plcId, CycleId = cylinderId }).ToList();
+        }
+
+        public void UpdateIoLinkDevices(IEnumerable<IO> ioRecordsToUpdate)
+        {
+            if (!ioRecordsToUpdate.Any()) return;
+
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // Idをキーに、LinkDeviceを更新する
+                const string sql = "UPDATE [IO] SET [LinkDevice] = @LinkDevice WHERE [Id] = @Id";
+
+                // DapperのExecuteはリストを渡すと自動的にループ処理してくれる
+                connection.Execute(sql, ioRecordsToUpdate.Select(io => new { io.LinkDevice, io.Id }), transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw; // エラーを上位に通知
+            }
         }
     }
 }

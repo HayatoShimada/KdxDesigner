@@ -213,6 +213,15 @@ namespace KdxDesigner.ViewModels
             var view = new MemoryEditorView(SelectedPlc.Id);
             view.ShowDialog();
         }
+
+        [RelayCommand]
+        private void OpenLinkDeviceManager()
+        {
+            // Viewにリポジトリのインスタンスを渡す
+            var view = new LinkDeviceView(_repository);
+            view.ShowDialog(); // モーダルダイアログとして表示
+        }
+
         #endregion
 
         // 出力処理
@@ -252,7 +261,7 @@ namespace KdxDesigner.ViewModels
                 var pdErrorAggregator = new ErrorAggregator((int)MnemonicType.ProcessDetail);
                 var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, selectedPlc.Id);
                 var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService);
-                var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList);
+                var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, data.JoinedProcessDetailWithTimerList);
                 allOutputRows.AddRange(detailRows);
                 allGeneratedErrors.AddRange(pdErrorAggregator.GetAllErrors());
 
@@ -331,6 +340,7 @@ namespace KdxDesigner.ViewModels
 
         private ((List<MnemonicDeviceWithProcess> JoinedProcessList,
                   List<MnemonicDeviceWithProcessDetail> JoinedProcessDetailList,
+                  List<MnemonicTimerDeviceWithDetail> JoinedProcessDetailWithTimerList,
                   List<MnemonicDeviceWithOperation> JoinedOperationList,
                   List<MnemonicDeviceWithCylinder> JoinedCylinderList,
                   List<MnemonicTimerDeviceWithOperation> JoinedOperationWithTimerList,
@@ -351,7 +361,6 @@ namespace KdxDesigner.ViewModels
             var ioList = _repository.GetIoList();
             selectedServo = _repository.GetServos(null, null);
 
-
             var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
             var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
             var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
@@ -359,18 +368,41 @@ namespace KdxDesigner.ViewModels
 
             var timerDevices = _timerService!.GetMnemonicTimerDevice(plcId, cycleId);
             var prosTime = _prosTimeService!.GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
+
             var speedDevice = _speedService!.GetMnemonicSpeedDevice(plcId);
             var mnemonicErrors = _errorService!.GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
 
             // JOIN処理
             var joinedProcessList = devicesP.Join(Processes, m => m.RecordId, p => p.Id, (m, p) => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p }).OrderBy(x => x.Process.Id).ToList();
             var joinedProcessDetailList = devicesD.Join(details, m => m.RecordId, d => d.Id, (m, d) => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d }).OrderBy(x => x.Detail.Id).ToList();
+
+            var timerDevicesDetail = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
+
+            var joinedProcessDetailWithTimerList = timerDevicesDetail.Join(
+                details, m => m.RecordId, o => o.Id, (m, o) => 
+                new MnemonicTimerDeviceWithDetail { Timer = m, Detail = o }).OrderBy(x => x.Detail.Id).ToList();
+
             var joinedOperationList = devicesO.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
             var joinedCylinderList = devicesC.Join(cylinders, m => m.RecordId, c => c.Id, (m, c) => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c }).OrderBy(x => x.Cylinder.Id).ToList();
-            var joinedOperationWithTimerList = timerDevices.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
-            var joinedCylinderWithTimerList = timerDevices.Join(cylinders, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o }).OrderBy(x => x.Cylinder.Id).ToList();
+            
+            var timerDevicesOperation = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.Operation).ToList();
+            var joinedOperationWithTimerList = timerDevicesOperation.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
+            
+            var timerDevicesCY = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.CY).ToList();
+            var joinedCylinderWithTimerList = timerDevicesCY.Join(cylinders, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o }).OrderBy(x => x.Cylinder.Id).ToList();
 
-            var dataTuple = (joinedProcessList, joinedProcessDetailList, joinedOperationList, joinedCylinderList, joinedOperationWithTimerList, joinedCylinderWithTimerList,speedDevice, mnemonicErrors, prosTime, ioList);
+            var dataTuple = (
+                joinedProcessList, 
+                joinedProcessDetailList, 
+                joinedProcessDetailWithTimerList, 
+                joinedOperationList, 
+                joinedCylinderList, 
+                joinedOperationWithTimerList, 
+                joinedCylinderWithTimerList, 
+                speedDevice, 
+                mnemonicErrors, 
+                prosTime, 
+                ioList);
             return (dataTuple, new List<OutputError>()); // 初期エラーリスト
         }
 
@@ -439,6 +471,7 @@ namespace KdxDesigner.ViewModels
             _mnemonicService!.SaveMnemonicDeviceCY(prepData.cylinders, CylinderDeviceStartM, SelectedPlc!.Id);
 
             int timerCount = 0;
+            _timerService!.SaveWithDetail(prepData.timers, prepData.details, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
             _timerService!.SaveWithOperation(prepData.timers, prepData.operations, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
             _timerService!.SaveWithCY(prepData.timers, prepData.cylinders, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, ref timerCount);
 

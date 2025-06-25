@@ -83,6 +83,77 @@ namespace KdxDesigner.Services
         }
 
         // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
+        public void SaveWithDetail(
+            List<Models.Timer> timers,
+            List<ProcessDetailDto> details,
+            int startNum, int plcId, int cycleId, out int count)
+        {
+            count = 0; // outパラメータの初期化
+            using var connection = new OleDbConnection(_connectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // 既存データを取得し、高速検索用に辞書に変換
+                // キー: (RecordId, TimerId) でユニークと仮定
+                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.ProcessDetail);
+                var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerId: m.TimerId), m => m);
+
+                // 修正: 'int?' 型を 'int' 型に変換して、ToDictionary のキーとして使用可能にする
+                var timersByRecordId = timers
+                    .Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail)
+                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (ProcessDetailDto detail in details)
+                {
+                    if (detail == null || !timersByRecordId.TryGetValue(detail.Id, out var operationTimers))
+                    {
+                        continue; // 操作データがない、または関連するタイマーがない場合はスキップ
+                    }
+
+                    foreach (Models.Timer timer in operationTimers)
+                    {
+                        if (timer == null) continue;
+
+                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var timerDevice = "ZR" + timer.TimerNum.ToString();
+
+                        // 複合キーで既存レコードを検索
+                        existingLookup.TryGetValue((detail.Id, timer.ID), out var existingRecord);
+
+                        var deviceToSave = new MnemonicTimerDevice
+                        {
+                            // IDはUPDATE時にのみ必要。Upsertヘルパー内で処理
+                            MnemonicId = (int)MnemonicType.ProcessDetail,
+                            RecordId = detail.Id,
+                            TimerId = timer.ID,
+                            TimerCategoryId = timer.TimerCategoryId,
+                            ProcessTimerDevice = processTimerDevice,
+                            TimerDevice = timerDevice,
+                            PlcId = plcId,
+                            CycleId = cycleId
+                        };
+
+                        UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                        count++;
+                    }
+                }
+
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Console.WriteLine($"SaveWithOperation 失敗: {ex.Message}");
+                // エラーログの記録や上位への例外通知など
+                // Debug.WriteLine($"SaveWithOperation 失敗: {ex.Message}");
+                throw;
+            }
+        }
+
+        // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         public void SaveWithOperation(
             List<Models.Timer> timers,
             List<Operation> operations,

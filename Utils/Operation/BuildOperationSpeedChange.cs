@@ -47,10 +47,13 @@ namespace KdxDesigner.Utils.Operation
             {
                 label = operation.Mnemonic.DeviceLabel;
                 outNum = operation.Mnemonic.StartNum;
+
+            }
+            else
+            {
                 helper.CreateOperationError(operation, $"Mnemonicデバイスが設定されていません。");
                 return result;
             }
-           
 
             List<MnemonicTimerDeviceWithOperation> operationTimers = timers
                 .Where(t => t.Operation.Id == operation!.Operation.Id).ToList();
