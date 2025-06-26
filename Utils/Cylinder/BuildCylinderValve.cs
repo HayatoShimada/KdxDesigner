@@ -78,8 +78,6 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 出力検索
             result.AddRange(functions.SingleValve(sensors));
-
-            
             return result;
 
         }

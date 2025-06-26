@@ -81,7 +81,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.StartSensor,
                     false,
                     detail.Detail.DetailName,
-                    detail.Detail.Id);
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)
                 {
@@ -303,7 +304,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.FinishSensor, 
                     false,
                     detail.Detail.DetailName,
-                    detail.Detail.Id);
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
@@ -431,8 +433,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.FinishSensor, 
                     false,
                     detail.Detail.DetailName,
-                    detail.Detail.Id
-                    );
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)//　万一nullの場合は　空でLD接点入れておく
                 {
@@ -551,9 +553,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.StartSensor, 
                     false, 
                     detail.Detail.DetailName,
-                    detail.Detail.Id
-
-                    );
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)
                 {
@@ -861,7 +862,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.StartSensor, 
                     false, 
                     detail.Detail.DetailName,
-                    detail.Detail.Id);
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)
                 {
@@ -913,7 +915,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.FinishSensor, 
                     false, 
                     detail.Detail.DetailName,
-                    detail.Detail.Id);
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)
                 {
@@ -1046,7 +1049,8 @@ namespace KdxDesigner.Utils.ProcessDetail
                     detail.Detail.StartSensor,
                     false,
                     detail.Detail.DetailName,
-                    detail.Detail.Id);
+                    detail.Detail.Id,
+                    null);
 
                 if (ioSensor == null)
                 {
@@ -1185,13 +1189,5 @@ namespace KdxDesigner.Utils.ProcessDetail
             return result;
 
         }
-
-
-
-
-
-
-
-
     }
 }

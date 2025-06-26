@@ -344,15 +344,20 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // ﾌﾞﾚｰｷ接点の検索
-            var ioListCylinder = ioList.Where(i => i.IOName!.Contains(cylinder.Cylinder.CYNum!)).ToList();
+            // ブレーキ接点の検索
+            var breakeList = sensors.Where(i => i.IOName != null
+                                           && i.IOName.Contains(cylinder.Cylinder.CYNum)
+                                           && !i.IOName.Contains("STF")
+                                           && !i.IOName.Contains("STR")).ToList();
+
             var breakeIO = _ioAddressService.
                 GetSingleAddress(
-                ioListCylinder, 
-                "S", 
+                breakeList, 
+                cylinder.Cylinder.CYNum + "S", 
                 true,
                 cylinder.Cylinder.CYNum!, 
-                recordId: cylinder.Cylinder.Id
-                );
+                recordId: cylinder.Cylinder.Id,
+                null);
 
             if (nbtTimer != null)
             {
@@ -397,8 +402,8 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 正転指令
             var stfIO = _ioAddressService.GetSingleAddress(
-                ioList, "STF", true, cylinder.Cylinder.CYNum, 
-                cylinder.Cylinder.Id);
+                sensors, "STF", true, cylinder.Cylinder.CYNum, 
+                cylinder.Cylinder.Id, null);
             if (stfIO !=null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
@@ -417,7 +422,9 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // 逆転指令
-            var strIO = _ioAddressService.GetSingleAddress(ioList, "STR", true, cyNum + cyName, cylinder.Cylinder.Id);
+            var strIO = _ioAddressService.GetSingleAddress(
+                sensors, "STR", true, cyNum + cyName, 
+                cylinder.Cylinder.Id, null);
             if (strIO != null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
@@ -436,11 +443,9 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // 逆転指令
-            var rlIO = _ioAddressService.GetSingleAddress(
-                ioList, "RL", 
-                true, cyNum+cyName, cylinder.Cylinder.Id);
-            var rmIO = _ioAddressService.GetSingleAddress(ioList, "RM", true, cyNum + cyName, cylinder.Cylinder.Id);
-            var rhIO = _ioAddressService.GetSingleAddress(ioList, "RH", true, cyNum + cyName, cylinder.Cylinder.Id);
+            var rlIO = _ioAddressService.GetSingleAddress(sensors, "RL", true, cyNum+cyName, cylinder.Cylinder.Id, null);
+            var rmIO = _ioAddressService.GetSingleAddress(sensors, "RM", true, cyNum + cyName, cylinder.Cylinder.Id, null);
+            var rhIO = _ioAddressService.GetSingleAddress(sensors, "RH", true, cyNum + cyName, cylinder.Cylinder.Id, null);
 
             if (rlIO != null && rmIO != null && rhIO != null)
             {

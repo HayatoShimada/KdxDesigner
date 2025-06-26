@@ -1,6 +1,7 @@
 ﻿using KdxDesigner.Models;
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace KdxDesigner.Services.Error
@@ -18,6 +19,7 @@ namespace KdxDesigner.Services.Error
 
         public void AddError(OutputError error)
         {
+            Debug.WriteLine(error.Message + error.RecordId + error.MnemonicId);
             if (_mnemonicId != null) error.MnemonicId = _mnemonicId;
             lock (_lock) { _errors.Add(error); }
         }

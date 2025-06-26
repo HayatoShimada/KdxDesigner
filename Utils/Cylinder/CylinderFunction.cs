@@ -264,15 +264,15 @@ namespace KdxDesigner.Utils.Cylinder
                 sensors, "G", 
                 false, 
                 _cylinder.Cylinder.CYNum,
-                _cylinder.Cylinder.Id);
-            
-            
-            
-            
-            
-            
-            
-            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
+                _cylinder.Cylinder.Id,
+                null);
+
+            var backSensor = _ioAddressService.GetSingleAddress(
+                sensors, 
+                "B", false, 
+                _cylinder.Cylinder.CYNum, 
+                _cylinder.Cylinder.Id,
+                null);
 
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
@@ -318,8 +318,8 @@ namespace KdxDesigner.Utils.Cylinder
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
 
             // センサーの取得
-            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
-            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
+            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, null);
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, null);
 
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
@@ -451,7 +451,32 @@ namespace KdxDesigner.Utils.Cylinder
             var result = new List<LadderCsvRow>();
 
             string valveSearchString = _mainViewModel.ValveSearchText;
-            var goValve = _ioAddressService.GetSingleAddress(sensors, valveSearchString, true, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id);
+
+            string? goValve = null;
+
+            if (_cylinder.Cylinder.CYNameSub != null)
+            {
+                goValve = _ioAddressService.
+                    GetSingleAddress(
+                    sensors,
+                    _cylinder.Cylinder.Go + _cylinder.Cylinder.CYNameSub, 
+                    true, 
+                    _cylinder.Cylinder.CYNum, 
+                    _cylinder.Cylinder.Id, 
+                    null);
+            }
+            else
+            {
+                goValve = _ioAddressService.
+                    GetSingleAddress(
+                    sensors, 
+                    valveSearchString, 
+                    true, 
+                    _cylinder.Cylinder.CYNum, 
+                    _cylinder.Cylinder.Id,
+                    null);
+
+            }
 
             // 帰り方向
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));

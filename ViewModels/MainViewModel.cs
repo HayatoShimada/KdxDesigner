@@ -259,6 +259,7 @@ namespace KdxDesigner.ViewModels
 
                 // ProcessDetailBuilder
                 var pdErrorAggregator = new ErrorAggregator((int)MnemonicType.ProcessDetail);
+
                 var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, selectedPlc.Id);
                 var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService);
                 var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, data.JoinedProcessDetailWithTimerList);

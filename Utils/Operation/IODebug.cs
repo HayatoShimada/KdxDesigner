@@ -67,7 +67,8 @@ namespace KdxDesigner.Utils.Operation
                     _operation.Operation.Valve1, 
                     true, 
                     _operation.Operation.OperationName!,
-                    _operation.Operation.Id);
+                    _operation.Operation.Id,
+                    null);
                 if (valve1Address != null)
                 {
                     result.Add(LadderRow.AddAND(valve1Address));
@@ -124,7 +125,8 @@ namespace KdxDesigner.Utils.Operation
                     _operation.Operation.Start,
                     false,
                     _operation.Operation.OperationName,
-                    _operation.Operation.Id);
+                    _operation.Operation.Id,
+                    null);
                 if (ioSensor == null)
                 {
                     result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
@@ -173,7 +175,8 @@ namespace KdxDesigner.Utils.Operation
                 ssSignal,
                 false,
                 _operation.Operation.OperationName,
-                _operation.Operation.Id);
+                _operation.Operation.Id,
+                null);
             if (ssAddress == null) return;
 
             result.Add(LadderRow.AddMRD());
@@ -231,7 +234,8 @@ namespace KdxDesigner.Utils.Operation
                     _operation.Operation.Finish,
                     false,
                     _operation.Operation.OperationName!,
-                    _operation.Operation.Id);
+                    _operation.Operation.Id,
+                    null);
                 if (addr != null) addressesToSet.Add(addr);
             }
 
@@ -280,7 +284,8 @@ namespace KdxDesigner.Utils.Operation
                     _operation.Operation.Finish,
                     false,
                     _operation.Operation.OperationName!,
-                    _operation.Operation.Id);
+                    _operation.Operation.Id, 
+                    null);
                 if (finishSensorAddress != null)
                 {
                     if (_operation.Operation.Finish.StartsWith("_"))

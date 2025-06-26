@@ -42,8 +42,7 @@ namespace KdxDesigner.Utils.Operation
             _outNum = operation.Mnemonic.StartNum; // ラベルの取得
         }
 
-        public List<LadderCsvRow> GenerateM0(
-           )
+        public List<LadderCsvRow> GenerateM0()
         {
             var result = new List<LadderCsvRow>();
             if (_detailList.Count == 0)
@@ -144,7 +143,7 @@ namespace KdxDesigner.Utils.Operation
             if (_operation.Operation.SC != null && _operation.Operation.SC != 0)
             {
                 var ioSensorMulti = _ioAddressService.GetAddressRange(
-                    _ioList, 
+                    _ioList,
                     _operation.Operation.Start!,
                     _operation.Operation.OperationName!,
                     _operation.Operation.Id);
@@ -164,7 +163,8 @@ namespace KdxDesigner.Utils.Operation
                         _operation.Operation.Start!,
                         false,
                         _operation.Operation.OperationName!,
-                        _operation.Operation.Id);
+                        _operation.Operation.Id
+                        , null);
 
                 // SCが設定されていない場合は常にON
                 if (ioSensor == null)
@@ -184,7 +184,7 @@ namespace KdxDesigner.Utils.Operation
                     }
                 }
             }
-            
+
             result.Add(LadderRow.AddOR(_label + (_outNum + 6).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 5).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 7).ToString()));
@@ -201,48 +201,68 @@ namespace KdxDesigner.Utils.Operation
             )
         {
             var result = new List<LadderCsvRow>();
-            var ioSensor = _ioAddressService.GetSingleAddress(
-                _ioList, 
-                speedSensor, 
-                false,
-                _operation.Operation.OperationName,
-                _operation.Operation.Id);
 
-            if (ioSensor == null)
+            if (speedSensor!.StartsWith("T"))
             {
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                result.Add(LadderRow.AddLD(_label + (_outNum + 6).ToString()));
+                result.Add(LadderRow.AddANI(_label + (_outNum + 10 + speedCount).ToString()));
+                result.AddRange(LadderRow.AddTimer(
+                        operationTimer.Timer.ProcessTimerDevice ?? "",
+                        operationTimer.Timer.TimerDevice ?? ""));
+
+                // M10 + sppeedCount
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
+                result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
             }
             else
             {
-                if (speedSensor.Contains("_"))    // Containsではなく、先頭一文字
+                var ioSensor = _ioAddressService.GetSingleAddress(
+                    _ioList,
+                    speedSensor,
+                    false,
+                    _operation.Operation.OperationName,
+                    _operation.Operation.Id,
+                    null);
+
+                if (ioSensor == null)
                 {
-                    result.Add(LadderRow.AddLD(ioSensor));
+                    result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
                 }
                 else
                 {
-                    result.Add(LadderRow.AddLD(ioSensor));
+                    if (speedSensor.StartsWith("_"))
+                    {
+                        result.Add(LadderRow.AddLD(ioSensor));
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddLD(ioSensor));
 
+                    }
                 }
+
+                result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                result.Add(LadderRow.AddANI(_label + (_outNum + 10 + speedCount).ToString()));
+                result.AddRange(LadderRow.AddTimer(
+                        operationTimer.Timer.ProcessTimerDevice ?? "",
+                        operationTimer.Timer.TimerDevice ?? ""));
+
+                // M10 + sppeedCount
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
+                result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
+
+                // 速度指令
+                var speedDevice = speeds.FirstOrDefault(s => s.CylinderId == _operation.Operation.CYId)?.Device ?? "";
+                result.AddRange(LadderRow.AddMOVPSet(operationSpeed, speedDevice));
             }
-
-            result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
-            result.Add(LadderRow.AddANI(_label + (_outNum + 10 + speedCount).ToString()));
-            result.AddRange(LadderRow.AddTimer(
-                    operationTimer.Timer.ProcessTimerDevice ?? "",
-                    operationTimer.Timer.TimerDevice ?? ""
-                    ));
-
-            // M10 + sppeedCount
-            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
-            result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
-            result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
-
-            // 速度指令
-            var speedDevice = speeds.FirstOrDefault(s => s.CylinderId == _operation.Operation.CYId)?.Device ?? "";
-            result.AddRange(LadderRow.AddMOVPSet(operationSpeed, speedDevice));
 
             return result;
         }
@@ -277,7 +297,8 @@ namespace KdxDesigner.Utils.Operation
                         _operation.Operation.Finish!,
                         false,
                         _operation.Operation.OperationName!,
-                        _operation.Operation.Id);
+                        _operation.Operation.Id,
+                        null);
 
                 // SCが設定されていない場合は常にON
                 if (ioSensor == null)
@@ -383,7 +404,7 @@ namespace KdxDesigner.Utils.Operation
             var result = new List<LadderCsvRow>();
             var helper = new OperationHelper(_mainViewModel, _errorAggregator, _ioAddressService);
 
-            for (int i = 0; i < speedChangeCount; i++)
+            for (int i = 0; i < speedChangeCount -1; i++)
             {
                 if (i >= helper.s_speedChangeConfigs.Count) continue;
 
@@ -413,7 +434,9 @@ namespace KdxDesigner.Utils.Operation
                     _operation,
                     _cylinders, i + 1);
 
+
                 result.AddRange(GenerateSpeed(speedTimer!, speedSensor!, speeds, operationSpeed, i));
+
             }
             return result;
         }

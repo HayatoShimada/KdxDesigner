@@ -22,7 +22,8 @@ namespace KdxDesigner.Services
             string ioText, 
             bool isOutput,
             string processName, 
-            int recordId);
+            int recordId,
+            string? isnotInclude);
 
         /// <summary>
         /// 指定されたテキストを含むIOオブジェクトのリストを取得します。
