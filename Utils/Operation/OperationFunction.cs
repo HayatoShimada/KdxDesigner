@@ -197,8 +197,7 @@ namespace KdxDesigner.Utils.Operation
             string speedSensor,
             List<MnemonicSpeedDevice> speeds,
             string operationSpeed,
-            int speedCount
-            )
+            int speedCount)
         {
             var result = new List<LadderCsvRow>();
 
@@ -264,6 +263,65 @@ namespace KdxDesigner.Utils.Operation
                 result.AddRange(LadderRow.AddMOVPSet(operationSpeed, speedDevice));
             }
 
+            return result;
+        }
+
+        public List<LadderCsvRow> GenerateServo(
+            string speedSensor,
+            string operationSpeed,
+            int speedCount)
+        {
+            var result = new List<LadderCsvRow>();
+
+            var ioSensor = _ioAddressService.GetSingleAddress(
+                    _ioList,
+                    speedSensor,
+                    false,
+                    _operation.Operation.OperationName,
+                    _operation.Operation.Id,
+                    null);
+
+            // M10 + sppeedCount
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
+
+            if (ioSensor == null)
+            {
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+            }
+            else
+            {
+                if (speedSensor.StartsWith("_"))
+                {
+                    result.Add(LadderRow.AddAND(ioSensor));
+                }
+                else
+                {
+                    result.Add(LadderRow.AddANI(ioSensor));
+                }
+            }
+
+            result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
+
+            // 速度指令
+            var speedDevice = _operation.Operation.Valve1;
+            if (string.IsNullOrEmpty(speedDevice))
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    Message = $"操作「{_operation.Operation.OperationName}」(ID: {_operation.Operation.Id}) の速度デバイスが設定されていません。",
+                    MnemonicId = (int)MnemonicType.Operation,
+                    RecordId = _operation.Operation.Id,
+                    RecordName = _operation.Operation.OperationName,
+                    IsCritical = true
+                });
+            }
+            else
+            {
+                result.AddRange(LadderRow.AddMOVPSet("K" + operationSpeed.ToString(), speedDevice));
+            }
             return result;
         }
 
@@ -420,10 +478,10 @@ namespace KdxDesigner.Utils.Operation
                 // 速度変化ステップごとの処理
                 switch (i)
                 {
-                    case 0: operationSpeed = _operation.Operation.S1; break;
-                    case 1: operationSpeed = _operation.Operation.S2; break;
-                    case 2: operationSpeed = _operation.Operation.S3; break;
-                    case 3: operationSpeed = _operation.Operation.S4; break;
+                    case 0: operationSpeed = _operation.Operation.S2; break;
+                    case 1: operationSpeed = _operation.Operation.S3; break;
+                    case 2: operationSpeed = _operation.Operation.S4; break;
+                    case 3: operationSpeed = _operation.Operation.S5; break;
                     default:
                         // このケースは speedChangeConfigs.Count のチェックで基本的に到達しない
                         continue;

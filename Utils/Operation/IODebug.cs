@@ -61,14 +61,18 @@ namespace KdxDesigner.Utils.Operation
             if (!string.IsNullOrEmpty(_operation.Operation.Valve1) 
                 && _operation.Operation.CategoryId != 20)
             {
-                // ★修正: GetSingleAddress の引数を新しいI/Fに合わせる
-                var valve1Address = _ioAddressService.GetSingleAddress(
-                    _ioList, 
-                    _operation.Operation.Valve1, 
-                    true, 
+                // GetSingleAddressの代わりにGetAddressRangeを使い、複数の候補を取得する
+                var valveCandidates = _ioAddressService.GetAddressRange(
+                    _ioList,
+                    _operation.Operation.Valve1,
                     _operation.Operation.OperationName!,
                     _operation.Operation.Id,
-                    null);
+                    errorIfNotFound: true); // 候補が1つも見つからない場合は従来通りエラーとする
+
+                // 見つかった候補のリストから最初の1つのアドレスを取得する
+                // 候補がない場合はnullになる
+                var valve1Address = valveCandidates.FirstOrDefault()?.Address;
+
                 if (valve1Address != null)
                 {
                     result.Add(LadderRow.AddAND(valve1Address));

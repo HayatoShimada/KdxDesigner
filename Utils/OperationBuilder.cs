@@ -153,7 +153,7 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            1
+                            0
                             ));
                         break;
                     case 32:
@@ -167,7 +167,7 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            2
+                            1
                             ));
                         break;
                     case 33:
@@ -181,7 +181,7 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            3
+                            2
                             ));
                         break;
                     case 34:
@@ -195,7 +195,7 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            4
+                            3
                             ));
                         break;
 
@@ -210,7 +210,7 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             speed,
                             ioList,
-                            5
+                            4
                             ));
                         break;
                     default:

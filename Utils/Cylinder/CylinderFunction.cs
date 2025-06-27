@@ -5,9 +5,6 @@ using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System;
-using System.Xml.Linq;
-
 namespace KdxDesigner.Utils.Cylinder
 {
     internal class CylinderFunction
@@ -218,7 +215,8 @@ namespace KdxDesigner.Utils.Cylinder
                 // ★ 1. Split と int.Parse を安全に行う
                 List<int> startCycles = _cylinder.Cylinder.ProcessStartCycle
                     .Split(';', StringSplitOptions.RemoveEmptyEntries) // 空の要素を自動で削除
-                    .Select(idString => {
+                    .Select(idString =>
+                    {
                         int.TryParse(idString.Trim(), out int id); // 空白を除去し、変換を試みる
                         return id;
                     })
@@ -277,16 +275,16 @@ namespace KdxDesigner.Utils.Cylinder
         {
             // センサーの取得
             var goSensor = _ioAddressService.GetSingleAddress(
-                sensors, "G", 
-                false, 
+                sensors, "G",
+                false,
                 _cylinder.Cylinder.CYNum,
                 _cylinder.Cylinder.Id,
                 null);
 
             var backSensor = _ioAddressService.GetSingleAddress(
-                sensors, 
-                "B", false, 
-                _cylinder.Cylinder.CYNum, 
+                sensors,
+                "B", false,
+                _cylinder.Cylinder.CYNum,
                 _cylinder.Cylinder.Id,
                 null);
 
@@ -461,40 +459,63 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-
-        public List<LadderCsvRow> SingleValve(List<IO> sensors)
+        public List<LadderCsvRow> SingleValve(List<IO> sensors, int? multiSensorCount)
         {
             var result = new List<LadderCsvRow>();
-
             string valveSearchString = _mainViewModel.ValveSearchText;
 
-            string? goValve = null;
+            // 行き方向のバルブアドレスをリストとして保持する
+            var goValveAddresses = new List<string>();
 
-            if (_cylinder.Cylinder.CYNameSub != null)
+            // multiSensorCount の有無でバルブの検索方法を分岐
+            if (multiSensorCount.HasValue && multiSensorCount.Value > 0)
             {
-                goValve = _ioAddressService.
-                    GetSingleAddress(
-                    sensors,
-                    _cylinder.Cylinder.Go + _cylinder.Cylinder.CYNameSub, 
-                    true, 
-                    _cylinder.Cylinder.CYNum, 
-                    _cylinder.Cylinder.Id, 
-                    null);
+                // multiSensorCountが指定されている場合： "G1", "G2"... のように複数のバルブを検索
+                for (int i = 1; i <= multiSensorCount.Value; i++)
+                {
+                    // シリンダ設定のGoサフィックス（例: "G"）と連番で検索文字列を作成
+                    string searchName = _cylinder.Cylinder.Go + i;
+                    var foundValve = _ioAddressService.GetSingleAddress(
+                        sensors,
+                        searchName,
+                        true, // errorIfNotFound
+                        _cylinder.Cylinder.CYNum,
+                        _cylinder.Cylinder.Id,
+                        null);
+
+                    if (foundValve != null)
+                    {
+                        goValveAddresses.Add(foundValve);
+                    }
+                    // 見つからない場合のエラーは GetSingleAddress 内で記録される
+                }
             }
             else
             {
-                goValve = _ioAddressService.
-                    GetSingleAddress(
-                    sensors, 
-                    valveSearchString, 
-                    true, 
-                    _cylinder.Cylinder.CYNum, 
-                    _cylinder.Cylinder.Id,
-                    null);
-
+                // multiSensorCountが指定されていない場合： 従来のロジックで単一のバルブを検索
+                string? goValve = _cylinder.Cylinder.CYNameSub != null
+                    ? _ioAddressService.GetSingleAddress(
+                        sensors,
+                        _cylinder.Cylinder.Go + _cylinder.Cylinder.CYNameSub,
+                        true, // errorIfNotFound
+                        _cylinder.Cylinder.CYNum,
+                        _cylinder.Cylinder.Id,
+                        null)
+                    : _ioAddressService.GetSingleAddress(
+                        sensors,
+                        valveSearchString,
+                        true, // errorIfNotFound
+                        _cylinder.Cylinder.CYNum,
+                        _cylinder.Cylinder.Id,
+                        null);
+                if (goValve != null)
+                {
+                    goValveAddresses.Add(goValve);
+                }
+                // 見つからない場合のエラーは GetSingleAddress 内で記録される
             }
 
-            // 帰り方向
+            // 片ソレノイドのため、帰り方向は内部リレーをONする
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -503,12 +524,14 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
             result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
-            result.Add(LadderRow.AddORB()); // 出力命令を追加
+            result.Add(LadderRow.AddORB());
+            // 出力は内部リレー
             result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString()));
 
-            // 行き方向のバルブ出力
-            if (goValve != null)
+            // ■■■ 行き方向のバルブ出力 (複数対応) ■■■
+            if (goValveAddresses.Any()) // 行き方向のバルブが1つでも見つかっていれば
             {
+                // --- 条件ブロック (共通) ---
                 result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -517,25 +540,34 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
                 result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
-                result.Add(LadderRow.AddORB()); // 出力命令を追加
+                result.Add(LadderRow.AddORB());
+
+                // 帰り用内部リレーとのインターロック
                 result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
-                result.Add(LadderRow.AddOUT(goValve));
+
+                // --- 出力ブロック (見つかったアドレスの数だけOUTを並列で追加) ---
+                foreach (var goAddress in goValveAddresses)
+                {
+                    result.Add(LadderRow.AddOUT(goAddress));
+                }
             }
             else
             {
+                // goValveAddressesが空の場合、GetSingleAddressが既にエラーを記録しているため
+                // ここでの追加エラーは不要かもしれないが、念のため残す場合は以下のようにする
                 _errorAggregator.AddError(new OutputError
                 {
                     RecordName = _cylinder.Cylinder.CYNum ?? "",
-                    Message = $"行き方向のバルブ '{_cylinder.Cylinder.Go}' が見つかりませんでした。",
+                    Message = $"行き方向のバルブが見つかりませんでした。検索文字列: '{_cylinder.Cylinder.Go}' など",
                     MnemonicId = (int)MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id
                 });
             }
-            return result; // 生成されたLadderCsvRowのリストを返す
 
+            return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public List<LadderCsvRow> DoubleValve(List<IO> sensors)
+        public List<LadderCsvRow> DoubleValve(List<IO> sensors, int? multiSensorCount)
         {
             var result = new List<LadderCsvRow>();
 
@@ -553,18 +585,19 @@ namespace KdxDesigner.Utils.Cylinder
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum ?? ""
                 });
-                // 候補が足りないが、個別のエラーを報告するために処理は続行
+                // 候補が足りない場合でも、個別のエラーを報告するために処理は続行される想定
             }
 
-            // 3. ヘルパーメソッドを使い、Go/Backバルブをそれぞれ検索
-            var goValveAddress = FindValveAddress(valveCandidates, _cylinder.Cylinder.Go, "前進 (Go)");
-            var backValveAddress = FindValveAddress(valveCandidates, _cylinder.Cylinder.Back, "後退 (Back)");
+            // 3. ヘルパーメソッドを使い、Go/Backバルブの "アドレスリスト" をそれぞれ検索
+            var goValveAddresses = FindMultipleValveAddresses(valveCandidates, _cylinder.Cylinder.Go, multiSensorCount, "前進 (Go)");
+            var backValveAddresses = FindMultipleValveAddresses(valveCandidates, _cylinder.Cylinder.Back, multiSensorCount, "後退 (Back)");
 
-            // 4. 見つかったアドレスに基づいてラダーを生成（エラー処理はヘルパーが担当）
+            // 4. 見つかったアドレスに基づいてラダーを生成
 
-            // 行き方向のバルブ出力
-            if (goValveAddress != null)
+            // ■■■ 行き方向のバルブ出力 ■■■
+            if (goValveAddresses.Any()) // 見つかったアドレスが1つ以上あれば
             {
+                // --- 条件ブロック (このブロックは共通) ---
                 result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -576,18 +609,24 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB());
 
                 // backValveAddress が見つかっている場合、それとANDNでインターロックを組む
-                if (backValveAddress != null)
+                // 複数ある場合は最初の1つで代表してインターロック
+                if (backValveAddresses.Any())
                 {
-                    result.Add(LadderRow.AddANI(backValveAddress));
+                    result.Add(LadderRow.AddANI(backValveAddresses.First()));
                 }
 
-                result.Add(LadderRow.AddOUT(goValveAddress));
+                // --- 出力ブロック (見つかったアドレスの数だけOUTを並列で追加) ---
+                foreach (var goAddress in goValveAddresses)
+                {
+                    result.Add(LadderRow.AddOUT(goAddress));
+                }
             }
-            // elseの場合、エラーはFindValveAddress内で記録済み
+            // elseの場合、エラーはFindMultipleValveAddresses内で記録済み
 
-            // 帰り方向のバルブ出力
-            if (backValveAddress != null)
+            // ■■■ 帰り方向のバルブ出力 ■■■
+            if (backValveAddresses.Any()) // 見つかったアドレスが1つ以上あれば
             {
+                // --- 条件ブロック (このブロックは共通) ---
                 result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -599,14 +638,19 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB());
 
                 // goValveAddress が見つかっている場合、それとANDNでインターロックを組む
-                if (goValveAddress != null)
+                // 複数ある場合は最初の1つで代表してインターロック
+                if (goValveAddresses.Any())
                 {
-                    result.Add(LadderRow.AddANI(goValveAddress));
+                    result.Add(LadderRow.AddANI(goValveAddresses.First()));
                 }
 
-                result.Add(LadderRow.AddOUT(backValveAddress));
+                // --- 出力ブロック (見つかったアドレスの数だけOUTを並列で追加) ---
+                foreach (var backAddress in backValveAddresses)
+                {
+                    result.Add(LadderRow.AddOUT(backAddress));
+                }
             }
-            // elseの場合、エラーはFindValveAddress内で記録済み
+            // elseの場合、エラーはFindMultipleValveAddresses内で記録済み
 
             return result;
         }
@@ -701,19 +745,24 @@ namespace KdxDesigner.Utils.Cylinder
         }
 
         /// <summary>
-        /// 指定された候補リストから、設定に基づいた特定のバルブアドレスを検索します。
+        /// 設定されたサフィックスに基づき、バルブのアドレスを検索します。
+        /// multiSensorCountが指定されている場合は、複数のバルブを検索します。
         /// </summary>
-        /// <param name="valveCandidates">検索対象のIO候補リスト。</param>
-        /// <param name="configuredSuffix">Cylinderに設定されているバルブのSuffix(GoまたはBackの値)。</param>
-        /// <param name="valveTypeForErrorMessage">エラーメッセージに表示するためのバルブ種別（例：「前進 (Go)」）。</param>
-        /// <returns>見つかった場合はアドレス文字列。見つからない、または設定がない場合はnull。</returns>
-        private string? FindValveAddress(
+        /// <param name="valveCandidates">検索対象のIOリスト</param>
+        /// <param name="configuredBaseSuffix">設定ファイル上のバルブサフィックスのベース部分 (例: "G", "B")</param>
+        /// <param name="multiSensorCount">多連バルブの数。nullの場合は単一バルブとして検索</param>
+        /// <param name="valveTypeForErrorMessage">エラーメッセージに表示するバルブの種類 (例: "前進 (Go)")</param>
+        /// <returns>見つかったバルブアドレスのリスト</returns>
+        private List<string> FindMultipleValveAddresses(
             List<IO> valveCandidates,
-            string? configuredSuffix,
+            string? configuredBaseSuffix,
+            int? multiSensorCount,
             string valveTypeForErrorMessage)
         {
+            var foundAddresses = new List<string>();
+
             // 1. シリンダにバルブの設定自体が存在するかチェック
-            if (string.IsNullOrEmpty(configuredSuffix))
+            if (string.IsNullOrEmpty(configuredBaseSuffix))
             {
                 _errorAggregator.AddError(new OutputError
                 {
@@ -722,27 +771,57 @@ namespace KdxDesigner.Utils.Cylinder
                     Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の{valveTypeForErrorMessage}バルブ出力先が設定されていません。",
                     RecordName = _cylinder.Cylinder.CYNum ?? ""
                 });
-                return null;
+                return foundAddresses; // 空のリストを返す
             }
 
-            // 2. 候補リストから一致するものを探す
-            var foundValve = valveCandidates
-                .FirstOrDefault(m => m.IOName != null && m.IOName.EndsWith(configuredSuffix));
-
-            // 3. IOリスト内に見つかったかチェック
-            if (foundValve == null)
+            // multiSensorCount に値がある場合は、"G1", "G2"... のように探す
+            if (multiSensorCount.HasValue && multiSensorCount.Value > 0)
             {
-                _errorAggregator.AddError(new OutputError
+                for (int i = 1; i <= multiSensorCount.Value; i++)
                 {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = _cylinder.Cylinder.Id,
-                    Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{configuredSuffix}' が見つかりませんでした。",
-                    RecordName = _cylinder.Cylinder.CYNum ?? ""
-                });
-                return null;
+                    string searchSuffix = configuredBaseSuffix + i;
+                    var foundValve = valveCandidates
+                        .FirstOrDefault(m => m.IOName != null && m.IOName.EndsWith(searchSuffix));
+
+                    if (foundValve != null)
+                    {
+                        foundAddresses.Add(foundValve.Address);
+                    }
+                    else
+                    {
+                        // 見つからなかった場合はエラーを記録
+                        _errorAggregator.AddError(new OutputError
+                        {
+                            MnemonicId = (int)MnemonicType.CY,
+                            RecordId = _cylinder.Cylinder.Id,
+                            Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{searchSuffix}' が見つかりませんでした。",
+                            RecordName = _cylinder.Cylinder.CYNum ?? ""
+                        });
+                    }
+                }
+            }
+            else // multiSensorCount が null の場合は、従来通り単一のバルブを探す
+            {
+                var foundValve = valveCandidates
+                    .FirstOrDefault(m => m.IOName != null && m.IOName.EndsWith(configuredBaseSuffix));
+
+                if (foundValve != null)
+                {
+                    foundAddresses.Add(foundValve.Address);
+                }
+                else
+                {
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        MnemonicId = (int)MnemonicType.CY,
+                        RecordId = _cylinder.Cylinder.Id,
+                        Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{configuredBaseSuffix}' が見つかりませんでした。",
+                        RecordName = _cylinder.Cylinder.CYNum ?? ""
+                    });
+                }
             }
 
-            return foundValve.Address;
+            return foundAddresses;
         }
 
 
