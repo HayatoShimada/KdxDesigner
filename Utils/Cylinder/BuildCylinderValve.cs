@@ -77,7 +77,17 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.Retention(sensors));
 
             // 出力検索
-            result.AddRange(functions.SingleValve(sensors));
+            if (cylinder.Cylinder.CYNameSub != null)
+            {
+                result.AddRange(functions.SingleValve(sensors, cylinder.Cylinder.CYNameSub));
+
+            }
+            else
+            {
+                result.AddRange(functions.DoubleValve(sensors, null));
+
+            }
+
             return result;
 
         }
@@ -137,8 +147,16 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.Retention(sensors));
 
             // 出力検索
-            result.AddRange(functions.DoubleValve(sensors));
+            if (cylinder.Cylinder.CYNameSub != null)
+            {
+                result.AddRange(functions.DoubleValve(sensors, cylinder.Cylinder.CYNameSub));
 
+            }
+            else
+            {
+                result.AddRange(functions.DoubleValve(sensors, null));
+
+            }
 
             return result;
 
