@@ -117,18 +117,44 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(LadderRow.AddMOVPSet(operation.Operation.Start, speedDevice));
 
             // M10 : 速度変化の処理
-            result.AddRange(operationFunction.SpeedCheck(speeds, speedChangeCount, operationTimers));
+            for (int i = 0; i < speedChangeCount; i++)
+            {
+                string speedSensor;
+                string operationSpeed;
+                switch (i)
+                {
+                    case 0:
+                        speedSensor = operation.Operation.SS1 ?? "";
+                        operationSpeed = operation.Operation.S2 ?? "";
+                        break;
+                    case 1:
+                        speedSensor = operation.Operation.SS2 ?? "";
+                        operationSpeed = operation.Operation.S3 ?? "";
+                        break;
+                    case 2:
+                        speedSensor = operation.Operation.SS3 ?? "";
+                        operationSpeed = operation.Operation.S4 ?? "";
+                        break;
+                    case 3:
+                        speedSensor = operation.Operation.SS4 ?? "";
+                        operationSpeed = operation.Operation.S5 ?? "";
+                        break; 
+                    
+                    default:
+                        helper.CreateOperationError(operation, $"不正な速度変化ステップ インデックス: {i + 1}");
+                        return result;
+                }
+                result.AddRange(operationFunction.GenerateServo(speedSensor, operationSpeed, i));
+
+            }
 
             // M17
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
-
             result.Add(LadderRow.AddAND(servo.Prefix + servo.Status + ".F"));
-
             result.Add(LadderRow.AddOR(label + (outNum + 17).ToString()));
             result.Add(LadderRow.AddAND(label + (outNum + 16).ToString()));
             result.Add(LadderRow.AddOUT(label + (outNum + 17).ToString()));
-
 
             var operationTimerStable = timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
             var operationTimerONWait = timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
@@ -139,8 +165,7 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddANI(label + (outNum + 19).ToString()));
                 result.AddRange(LadderRow.AddTimer(
                     operationTimerStable.Timer.ProcessTimerDevice ?? "",
-                    operationTimerStable.Timer.TimerDevice ?? ""
-                    ));
+                    operationTimerStable.Timer.TimerDevice ?? ""));
             }
 
             // M19
