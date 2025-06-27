@@ -74,7 +74,23 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.CyclePulse());
            
             // 保持出力
-            result.AddRange(functions.Retention(sensors));
+            switch (cylinder.Cylinder.MacineId)
+            {
+                case 7:
+                case 15:
+                case 16:
+                case 18:
+                case 22:
+                case 28:
+                case 32:
+                case 33:
+                case 34:
+                    result.AddRange(functions.Excitation(sensors));
+                    break;
+                default:
+                    result.AddRange(functions.Retention(sensors));
+                    break;
+            }
 
             // 出力検索
             result.AddRange(functions.SingleValve(sensors));

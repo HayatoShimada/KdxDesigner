@@ -257,6 +257,22 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
+        public List<LadderCsvRow> Excitation(List<IO> sensors)
+        {
+            List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 5).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 19).ToString()));
+
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 1).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 3).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 6).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 20).ToString()));
+
+            return result; // 生成されたLadderCsvRowのリストを返す
+        }
+
         public List<LadderCsvRow> Retention(List<IO> sensors)
         {
             // センサーの取得
