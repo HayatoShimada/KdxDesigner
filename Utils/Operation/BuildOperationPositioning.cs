@@ -40,7 +40,7 @@ namespace KdxDesigner.Utils.Operation
             // ここに単一工程の処理を実装
             var result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
             var operationDetails = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
-            OperationFunction operationFunction 
+            OperationFunction operationFunction
                 = new(operation, timers, cylinders, ioList, operationDetails, _mainViewModel, _errorAggregator, _ioAddressService);
             OperationHelper helper = new(_mainViewModel, _errorAggregator, _ioAddressService);
 
@@ -59,7 +59,7 @@ namespace KdxDesigner.Utils.Operation
             }
             else
             {
-                helper.CreateOperationError(operation, $"Mnemonicデバイスが設定されていません。");
+                helper.CreateOperationError(operation!, $"Mnemonicデバイスが設定されていません。");
                 return result;
             }
 
@@ -138,8 +138,8 @@ namespace KdxDesigner.Utils.Operation
                     case 3:
                         speedSensor = operation.Operation.SS4 ?? "";
                         operationSpeed = operation.Operation.S5 ?? "";
-                        break; 
-                    
+                        break;
+
                     default:
                         helper.CreateOperationError(operation, $"不正な速度変化ステップ インデックス: {i + 1}");
                         return result;

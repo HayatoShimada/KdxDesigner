@@ -5,9 +5,6 @@ using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System.Diagnostics;
-using System.Reflection.Emit;
-
 namespace KdxDesigner.Utils.Cylinder
 {
     internal class BuildCylinderValve
@@ -69,18 +66,23 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 帰り方向手動指令  
             result.AddRange(functions.BackManualOperation(backOperation));
-                
+
             // Cycleスタート時の方向自動指令
             result.AddRange(functions.CyclePulse());
-           
+
             // 保持出力
             switch (cylinder.Cylinder.MacineId)
             {
+                case 4:
                 case 7:
                 case 15:
                 case 16:
                 case 18:
                 case 22:
+                case 24:
+                case 25:
+                case 26:
+                case 27:
                 case 28:
                 case 32:
                 case 33:
@@ -100,7 +102,7 @@ namespace KdxDesigner.Utils.Cylinder
             }
             else
             {
-                result.AddRange(functions.DoubleValve(sensors, null));
+                result.AddRange(functions.SingleValve(sensors, null));
 
             }
 
@@ -129,9 +131,9 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 行間ステートメント  
             string id = cylinder.Cylinder.Id.ToString();
-            string cyNum = cylinder.Cylinder.CYNum ?? ""; // シリンダー名の取得  
+            string cyNum = cylinder.Cylinder.CYNum ?? "";                   // シリンダー名の取得  
             string cyNumSub = cylinder.Cylinder.CYNameSub.ToString() ?? ""; // シリンダー名の取得  
-            string cyName = cyNum + cyNumSub; // シリンダー名の組み合わせ  
+            string cyName = cyNum + cyNumSub;                               // シリンダー名の組み合わせ  
 
             result.Add(LadderRow.AddStatement(id + ":" + cyName + " シングルバルブ"));
 

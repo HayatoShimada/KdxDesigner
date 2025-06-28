@@ -273,67 +273,83 @@ namespace KdxDesigner.Utils.Cylinder
 
         public List<LadderCsvRow> Retention(List<IO> sensors)
         {
-            // センサーの取得
-            var goSensor = _ioAddressService.GetSingleAddress(
-                sensors, "G",
-                false,
-                _cylinder.Cylinder.CYNum,
-                _cylinder.Cylinder.Id,
-                null);
+            // ■■■ 1. ヘルパーメソッドを使って、Go/Backセンサーのアドレスリストをシンプルに取得 ■■■
+            var goSensorAddresses = GetSensorAddresses(sensors, _cylinder.Cylinder.RetentionSensorGo, _cylinder.Cylinder.GoSensorCount, false); // isOutput: false
+            var backSensorAddresses = GetSensorAddresses(sensors, _cylinder.Cylinder.RetentionSensorBack, _cylinder.Cylinder.BackSensorCount, false); // isOutput: false
 
-            var backSensor = _ioAddressService.GetSingleAddress(
-                sensors,
-                "B", false,
-                _cylinder.Cylinder.CYNum,
-                _cylinder.Cylinder.Id,
-                null);
+            // ■■■ 2. ラダーロジックの生成 ■■■
+            var result = new List<LadderCsvRow>();
 
-            List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
-            result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
-            result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
-            if (goSensor != null)
+            // --- 保持出力 行き (内部リレー _startNum + 19) ---
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 0)));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 2)));
+
+            if (goSensorAddresses.Any())
             {
-                result.Add(LadderRow.AddAND(goSensor));
+                // 見つかった全てのGoセンサーをAND条件で直列に接続
+                foreach (var address in goSensorAddresses)
+                {
+                    result.Add(LadderRow.AddAND(address));
+                }
             }
             else
             {
-                _errorAggregator.AddError(
-                    new OutputError
+                // ★ センサーが見つからなかった場合のエラーチェックを簡素化
+                // (設定が "null" 文字列でない場合にのみエラーとする)
+                if (!string.IsNullOrEmpty(_cylinder.Cylinder.RetentionSensorGo) &&
+                    !_cylinder.Cylinder.RetentionSensorGo.Equals("null", StringComparison.OrdinalIgnoreCase))
+                {
+                    _errorAggregator.AddError(new OutputError
                     {
-                        Message = "センサー 'G' が見つかりませんでした。",
+                        Message = $"保持条件に必要な行き方向センサー '{_cylinder.Cylinder.RetentionSensorGo}' がIOリストに見つかりませんでした。",
                         RecordName = _cylinder.Cylinder.CYNum,
-                        RecordId = _cylinder.Cylinder.Id,
-                        MnemonicId = (int)MnemonicType.CY,
-                        IsCritical = false
+                        RecordId = _cylinder.Cylinder.Id
                     });
+                }
             }
-            result.Add(LadderRow.AddAND(_label + (_startNum + 5).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 19).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 5)));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 19)));
 
-            // 保持出力行き
-            result.Add(LadderRow.AddLDI(_label + (_startNum + 1).ToString()));
-            result.Add(LadderRow.AddANI(_label + (_startNum + 3).ToString()));
-            if (backSensor != null)
+
+            // --- 保持出力 帰り (内部リレー _startNum + 20) ---
+            result.Add(LadderRow.AddLDI(_label + (_startNum + 1)));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 3)));
+
+            if (backSensorAddresses.Any())
             {
-                result.Add(LadderRow.AddAND(backSensor));
+                // 見つかった全てのBackセンサーをAND条件で直列に接続
+                foreach (var address in backSensorAddresses)
+                {
+                    result.Add(LadderRow.AddAND(address));
+                }
             }
             else
             {
+                // ★ センサーが見つからなかった場合のエラーチェックを簡素化
+                if (!string.IsNullOrEmpty(_cylinder.Cylinder.RetentionSensorBack) &&
+                    !_cylinder.Cylinder.RetentionSensorBack.Equals("null", StringComparison.OrdinalIgnoreCase))
+                {
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        Message = $"保持条件に必要な帰り方向センサー '{_cylinder.Cylinder.RetentionSensorBack}' がIOリストに見つかりませんでした。",
+                        RecordName = _cylinder.Cylinder.CYNum,
+                        RecordId = _cylinder.Cylinder.Id
+                    });
+                }
             }
-            result.Add(LadderRow.AddAND(_label + (_startNum + 6).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 20).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 6)));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 20)));
 
-
-
-            return result; // 生成されたLadderCsvRowのリストを返す
+            return result;
         }
+
         public List<LadderCsvRow> RetentionFlow(List<IO> sensors)
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
 
             // センサーの取得
-            var goSensor = _ioAddressService.GetSingleAddress(sensors, "G", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, null);
-            var backSensor = _ioAddressService.GetSingleAddress(sensors, "B", false, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, null);
+            var goSensor = _ioAddressService.GetSingleAddress(sensors, _cylinder.Cylinder.RetentionSensorGo, false, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, null);
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, _cylinder.Cylinder.RetentionSensorBack, false, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, null);
 
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
@@ -474,12 +490,12 @@ namespace KdxDesigner.Utils.Cylinder
                 for (int i = 1; i <= multiSensorCount.Value; i++)
                 {
                     // シリンダ設定のGoサフィックス（例: "G"）と連番で検索文字列を作成
-                    string searchName = _cylinder.Cylinder.Go + i;
+                    string searchName = _cylinder.Cylinder.RetentionSensorGo + i;
                     var foundValve = _ioAddressService.GetSingleAddress(
                         sensors,
                         searchName,
                         true, // errorIfNotFound
-                        _cylinder.Cylinder.CYNum,
+                        _cylinder.Cylinder.CYNum!,
                         _cylinder.Cylinder.Id,
                         null);
 
@@ -498,14 +514,14 @@ namespace KdxDesigner.Utils.Cylinder
                         sensors,
                         _cylinder.Cylinder.Go + _cylinder.Cylinder.CYNameSub,
                         true, // errorIfNotFound
-                        _cylinder.Cylinder.CYNum,
+                        _cylinder.Cylinder.CYNum!,
                         _cylinder.Cylinder.Id,
                         null)
                     : _ioAddressService.GetSingleAddress(
                         sensors,
                         valveSearchString,
                         true, // errorIfNotFound
-                        _cylinder.Cylinder.CYNum,
+                        _cylinder.Cylinder.CYNum!,
                         _cylinder.Cylinder.Id,
                         null);
                 if (goValve != null)
@@ -573,7 +589,7 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 1. GetAddressRange を使って、"SV" を含むすべてのバルブ候補を取得
             string? valveSearchString = _mainViewModel.ValveSearchText;
-            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString ?? "SV", _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, errorIfNotFound: true);
+            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString ?? "SV", _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, errorIfNotFound: true);
 
             // 2. ダブルバルブには最低2つの候補が必要なため、候補数をチェック
             if (valveCandidates.Count < 2)
@@ -662,7 +678,7 @@ namespace KdxDesigner.Utils.Cylinder
             const string valveSearchString = "IN";
 
             // 1. "IN" を含むIO候補を全て取得する。見つからない場合はサービスがエラーを報告する。
-            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString, _cylinder.Cylinder.CYNum, _cylinder.Cylinder.Id, errorIfNotFound: true);
+            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, errorIfNotFound: true);
 
             // 2. 見つかった候補を、末尾の番号をキーとする辞書に変換する
             var valveMap = new Dictionary<int, string>();
@@ -785,7 +801,7 @@ namespace KdxDesigner.Utils.Cylinder
 
                     if (foundValve != null)
                     {
-                        foundAddresses.Add(foundValve.Address);
+                        foundAddresses.Add(foundValve.Address!);
                     }
                     else
                     {
@@ -807,7 +823,7 @@ namespace KdxDesigner.Utils.Cylinder
 
                 if (foundValve != null)
                 {
-                    foundAddresses.Add(foundValve.Address);
+                    foundAddresses.Add(foundValve.Address!);
                 }
                 else
                 {
@@ -818,6 +834,67 @@ namespace KdxDesigner.Utils.Cylinder
                         Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{configuredBaseSuffix}' が見つかりませんでした。",
                         RecordName = _cylinder.Cylinder.CYNum ?? ""
                     });
+                }
+            }
+
+            return foundAddresses;
+        }
+
+        /// <summary>
+        /// 設定に基づき、単一または複数のセンサーアドレスのリストを取得します。
+        /// </summary>
+        /// <param name="sensors">検索対象のIOリスト。</param>
+        /// <param name="sensorName">検索するセンサー名 (例: "G", "B")。</param>
+        /// <param name="sensorCount">複数検索する場合のセンサー数。単一の場合はnull。</param>
+        /// <param name="isOutput">検索対象がY(出力)デバイスかどうか。</param>
+        /// <returns>見つかったセンサーアドレスのリスト。</returns>
+        private List<string> GetSensorAddresses(List<IO> sensors, string? sensorName, int? sensorCount, bool isOutput)
+        {
+            var foundAddresses = new List<string>();
+
+            if (string.IsNullOrEmpty(sensorName) || sensorName.Equals("null", StringComparison.OrdinalIgnoreCase))
+            {
+                return foundAddresses;
+            }
+
+            if (sensorCount.HasValue && sensorCount.Value > 0)
+            {
+                for (int i = 1; i <= sensorCount.Value; i++)
+                {
+                    string searchName = sensorName + i;
+
+                    // ★★★ 修正箇所 ★★★
+                    // isOutput とエラー報告用のコンテキスト情報を引数に追加
+                    var sensorAddress = _ioAddressService.GetSingleAddress(
+                        sensors,
+                        searchName,
+                        isOutput,
+                        _cylinder.Cylinder.CYNum!, // RecordName
+                        _cylinder.Cylinder.Id,     // RecordId
+                        null                       // isnotInclude (今回は不要なのでnull)
+                    );
+
+                    if (sensorAddress != null)
+                    {
+                        foundAddresses.Add(sensorAddress);
+                    }
+                }
+            }
+            else
+            {
+                // ★★★ 修正箇所 ★★★
+                var sensorAddress = _ioAddressService.GetSingleAddress(
+                    sensors,
+                    sensorName,
+                    isOutput,
+                    _cylinder.Cylinder.CYNum!,
+                    _cylinder.Cylinder.Id,
+                    null
+                );
+
+                if (sensorAddress != null)
+                {
+                    foundAddresses.Add(sensorAddress);
                 }
             }
 
