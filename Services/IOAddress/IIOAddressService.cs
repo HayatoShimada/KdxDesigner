@@ -1,6 +1,6 @@
 ﻿using KdxDesigner.Models;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.IOAddress
 {
     /// <summary>
     /// IOリストに対する検索機能を提供します。
@@ -18,11 +18,11 @@ namespace KdxDesigner.Services
         /// <param name="plcId">"L-"プレフィックス検索時に使用するPLCのID。</param>
         /// <returns>一意に特定できた場合はIOアドレス文字列。それ以外の場合はnull。</returns>
         string? GetSingleAddress(
-            List<IO> ioList, 
-            string ioText, 
+            List<IO> ioList,
+            string ioText,
             bool isOutput,
-            string processName, 
-            int recordId,
+            string recordName,
+            int? recordId,
             string? isnotInclude);
 
         /// <summary>

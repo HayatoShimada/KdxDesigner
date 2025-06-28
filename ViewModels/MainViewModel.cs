@@ -7,7 +7,8 @@ using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
 using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
-
+using KdxDesigner.Services.IOAddress;
+using KdxDesigner.Services.IOSelectorService;
 using KdxDesigner.Utils;
 using KdxDesigner.Views;
 
@@ -28,6 +29,8 @@ namespace KdxDesigner.ViewModels
         private readonly ProsTimeDeviceService? _prosTimeService;
         private readonly MnemonicSpeedDeviceService? _speedService; // クラス名が不明なため仮定
         private readonly MemoryService? _memoryService;
+        private readonly WpfIOSelectorService _ioSelectorService;
+
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
@@ -231,6 +234,7 @@ namespace KdxDesigner.ViewModels
         private void ProcessOutput()
         {
             var errorMessages = ValidateProcessOutput();
+
             if (errorMessages.Any())
             {
                 MessageBox.Show(string.Join("\n", errorMessages), "入力エラー");
@@ -260,7 +264,7 @@ namespace KdxDesigner.ViewModels
                 // ProcessDetailBuilder
                 var pdErrorAggregator = new ErrorAggregator((int)MnemonicType.ProcessDetail);
 
-                var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, selectedPlc.Id);
+                var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, selectedPlc.Id, _ioSelectorService);
                 var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService);
                 var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, data.JoinedProcessDetailWithTimerList);
                 allOutputRows.AddRange(detailRows);
@@ -268,7 +272,7 @@ namespace KdxDesigner.ViewModels
 
                 // OperationBuilder
                 var opErrorAggregator = new ErrorAggregator((int)MnemonicType.Operation);
-                var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, selectedPlc.Id);
+                var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, selectedPlc.Id, _ioSelectorService);
                 var operationBuilder = new OperationBuilder(this, opErrorAggregator, opIoAddressService);
                 var operationRows = operationBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
                 allOutputRows.AddRange(operationRows);
@@ -276,7 +280,7 @@ namespace KdxDesigner.ViewModels
 
                 // CylinderBuilder
                 var cyErrorAggregator = new ErrorAggregator((int)MnemonicType.CY);
-                var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, selectedPlc.Id);
+                var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, selectedPlc.Id, _ioSelectorService);
                 var cylinderBuilder = new CylinderBuilder(this, cyErrorAggregator, cyIoAddressService);
                 var cylinderRows = cylinderBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.JoinedCylinderWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
                 allOutputRows.AddRange(cylinderRows);
@@ -380,36 +384,36 @@ namespace KdxDesigner.ViewModels
             var timerDevicesDetail = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
 
             var joinedProcessDetailWithTimerList = timerDevicesDetail.Join(
-                details, m => m.RecordId, o => o.Id, (m, o) => 
+                details, m => m.RecordId, o => o.Id, (m, o) =>
                 new MnemonicTimerDeviceWithDetail { Timer = m, Detail = o }).OrderBy(x => x.Detail.Id).ToList();
 
             var joinedOperationList = devicesO.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
             var joinedCylinderList = devicesC.Join(cylinders, m => m.RecordId, c => c.Id, (m, c) => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c }).OrderBy(x => x.Cylinder.Id).ToList();
-            
+
             var timerDevicesOperation = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.Operation).ToList();
             var joinedOperationWithTimerList = timerDevicesOperation.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
-            
+
             var timerDevicesCY = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.CY).ToList();
             var joinedCylinderWithTimerList = timerDevicesCY.Join(cylinders, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o }).OrderBy(x => x.Cylinder.Id).ToList();
 
             var dataTuple = (
-                joinedProcessList, 
-                joinedProcessDetailList, 
-                joinedProcessDetailWithTimerList, 
-                joinedOperationList, 
-                joinedCylinderList, 
-                joinedOperationWithTimerList, 
-                joinedCylinderWithTimerList, 
-                speedDevice, 
-                mnemonicErrors, 
-                prosTime, 
+                joinedProcessList,
+                joinedProcessDetailList,
+                joinedProcessDetailWithTimerList,
+                joinedOperationList,
+                joinedCylinderList,
+                joinedOperationWithTimerList,
+                joinedCylinderWithTimerList,
+                speedDevice,
+                mnemonicErrors,
+                prosTime,
                 ioList);
             return (dataTuple, new List<OutputError>()); // 初期エラーリスト
         }
 
         #endregion
 
-        
+
         // メモリ設定
         #region MemorySetting
 

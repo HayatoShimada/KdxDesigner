@@ -3,36 +3,50 @@ using CommunityToolkit.Mvvm.Input;
 
 using KdxDesigner.Models;
 
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
 
 namespace KdxDesigner.ViewModels
 {
     public partial class IOSelectViewModel : ObservableObject
     {
+        /// <summary>
+        /// ListBoxに表示するための各項目。表示名と実際の値を保持します。
+        /// </summary>
         public class AddressItem
         {
             public string Display { get; set; } = string.Empty;
-            public string Address { get; set; } = string.Empty;
+            public IO OriginalIO { get; set; } // ★元のIOオブジェクトを保持
         }
 
         [ObservableProperty]
-        private ObservableCollection<AddressItem> addressItems = new();
+        private ObservableCollection<AddressItem> _addressItems = new();
 
         [ObservableProperty]
-        private AddressItem? selectedItem;
+        private AddressItem? _selectedItem;
 
-        public string? SelectedAddress => SelectedItem?.Address;
+        /// <summary>
+        /// ユーザーが最終的に選択したIOオブジェクト。
+        /// </summary>
+        public IO? SelectedIO => SelectedItem?.OriginalIO;
 
-        public void Load(List<IO> candidates)
+        /// <summary>
+        /// View（コードビハインド）がダイアログの結果を判断するためのプロパティ。
+        /// </summary>
+        [ObservableProperty]
+        private bool? _dialogResult;
+
+        /// <summary>
+        /// コンストラクタでIO候補リストを受け取ります。
+        /// </summary>
+        public IOSelectViewModel(List<IO> candidates)
         {
             AddressItems = new ObservableCollection<AddressItem>(
                 candidates.Select(io => new AddressItem
                 {
-                    Display = $"{io.IOText} ({io.Address})",
-                    Address = io.Address ?? string.Empty
+                    // 表示テキストをより詳細に（例: "IN1 (X0800) - 入力センサー"）
+                    Display = $"{io.IOName} ({io.Address}) - {io.IOExplanation}",
+                    OriginalIO = io
                 })
             );
         }
@@ -42,18 +56,20 @@ namespace KdxDesigner.ViewModels
         {
             if (SelectedItem != null)
             {
-                //Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive)?.DialogResult = true;
+                // ダイアログの結果をtrueに設定して、Viewに通知
+                DialogResult = true;
             }
             else
             {
-                MessageBox.Show("選択してください。", "確認", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("リストから項目を選択してください。", "確認", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
         [RelayCommand]
         private void Cancel()
         {
-            Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive)?.Close();
+            // ダイアログの結果をfalseに設定して、Viewに通知
+            DialogResult = false;
         }
     }
 }

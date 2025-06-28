@@ -1,12 +1,13 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
-using KdxDesigner.Utils;
 
+using KdxDesigner.Utils;
+using KdxDesigner.Services.IOSelectorService;
 using System.Diagnostics;
 using System.Text;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.IOAddress
 {
     public class IOAddressService : IIOAddressService
     {
@@ -15,24 +16,31 @@ namespace KdxDesigner.Services
 
         private readonly IErrorAggregator _errorAggregator;
         private readonly IAccessRepository _repository;
+        private readonly IIOSelectorService _ioSelectorService;
         private readonly int _plcId;
 
-        public IOAddressService(IErrorAggregator errorAggregator, IAccessRepository repository, int plcId)
+        public IOAddressService(
+            IErrorAggregator errorAggregator,
+            IAccessRepository repository,
+            int plcId,
+            IIOSelectorService ioSelectorService)
         {
             _errorAggregator = errorAggregator;
             _repository = repository;
             _plcId = plcId;
+            _ioSelectorService = ioSelectorService; // ★ 依存性を保持
         }
+
 
         public string? GetSingleAddress(
             List<IO> ioList,
             string ioText,
             bool isOutput,
-            string processName,
-            int recordId,
+            string recordName,
+            int? recordId,
             string? isnotInclude)
         {
-            Debug.WriteLine($"GetSingleAddress called with:{isOutput} recordId={recordId}, processName='{processName}', ioText='{ioText}'");
+            Debug.WriteLine($"GetSingleAddress called with:{isOutput} recordId={recordId}, processName='{recordName}', ioText='{ioText}'");
             Debug.WriteLine(ioList.Count);
 
             // isOutput (Y/X) でフィルタリング
@@ -40,36 +48,58 @@ namespace KdxDesigner.Services
                 ? ioList.Where(io => io.Address != null && (io.Address.Contains("Y") || io.Address.Contains("Ｙ"))).ToList()
                 : ioList.Where(io => io.Address != null && (io.Address.Contains("X") || io.Address.Contains("Ｘ"))).ToList();
 
-            // ★★★ 修正箇所 スタート ★★★
             // isnotInclude パラメータに値が指定されている場合、その単語を含むIOを除外する
             // FindByIOTextInternal での検索対象である IOName プロパティに対してチェックを行う
             if (!string.IsNullOrEmpty(isnotInclude))
             {
                 ioList = ioList.Where(io => io.IOName != null && !io.IOName.Contains(isnotInclude)).ToList();
             }
-            // ★★★ 修正箇所 エンド ★★★
 
-            // 内部で共通の検索ロジックを呼ぶ
-            var result = FindByIOTextInternal(ioList, ioText, processName, recordId);
+            var workingList = isOutput
+                ? ioList.Where(io => io.Address != null && (io.Address.Contains("Y") || io.Address.Contains("Ｙ"))).ToList()
+                : ioList.Where(io => io.Address != null && (io.Address.Contains("X") || io.Address.Contains("Ｘ"))).ToList();
+            if (!string.IsNullOrEmpty(isnotInclude))
+            {
+                workingList = workingList.Where(io => io.IOName != null && !io.IOName.Contains(isnotInclude)).ToList();
+            }
+
+            var result = FindByIOTextInternal(workingList, ioText, recordName, recordId);
 
             switch (result.State)
             {
                 case FindIOResultState.FoundOne:
-                    return result.SingleAddress; // 成功ケース: アドレスを返す
+                    return result.SingleAddress;
 
                 case FindIOResultState.FoundMultiple:
-                    // ★ 複数件ヒットはエラーとして処理
-                    _errorAggregator.AddError(new OutputError
+                    // ★★★ 修正箇所 ★★★
+                    // 複数件ヒットした場合、UI選択サービスを呼び出す
+                    IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches!, recordName, recordId);
+
+                    if (selectedIo != null)
                     {
-                        Message = $"センサー '{ioText}' で複数の候補が見つかりました。一意に特定できません。",
-                        RecordName = processName,
-                        RecordId = recordId,
-                    });
-                    return null;
+                        // ユーザーが項目を選択した場合、そのアドレスを返す
+                        // LinkDeviceが設定されていればそれを優先
+                        string? addressToReturn = !string.IsNullOrWhiteSpace(selectedIo.LinkDevice)
+                            ? selectedIo.LinkDevice
+                            : selectedIo.Address;
+                        return addressToReturn?.Normalize(NormalizationForm.FormKC);
+                    }
+                    else
+                    {
+                        // ユーザーが選択をキャンセルした場合、エラーとして報告
+                        _errorAggregator.AddError(new OutputError
+                        {
+                            Message = $"IO '{ioText}' の選択がキャンセルされました。",
+                            RecordName = recordName,
+                            RecordId = recordId,
+                            IsCritical = true // 処理を続行できないため致命的なエラーとする
+                        });
+                        return null;
+                    }
 
                 case FindIOResultState.NotFound:
                 default:
-                    // ★ 0件ヒットはエラー (既に内部でエラー追加済み)
+                    // 0件ヒットはエラー (既に内部でエラー追加済み)
                     return null;
             }
         }
