@@ -107,6 +107,7 @@ namespace KdxDesigner.ViewModels
                 _prosTimeService = new ProsTimeDeviceService(_repository);
                 _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
                 _memoryService = new MemoryService(_repository);
+                _ioSelectorService = new WpfIOSelectorService();
 
                 LoadInitialData();
             }
@@ -361,7 +362,20 @@ namespace KdxDesigner.ViewModels
             var devices = _mnemonicService!.GetMnemonicDevice(plcId);
             var timers = _repository!.GetTimersByCycleId(cycleId);
             var operations = _repository.GetOperations();
-            var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
+            var cylinders = _repository.GetCYs()
+                .Where(c => c.PlcId == plcId 
+                && c.ProcessStartCycle == SelectedPlc.Id).ToList();
+
+            List<int> startCycles = _cylinder.Cylinder.ProcessStartCycle
+                   .Split(';', StringSplitOptions.RemoveEmptyEntries) // 空の要素を自動で削除
+                   .Select(idString =>
+                   {
+                       int.TryParse(idString.Trim(), out int id); // 空白を除去し、変換を試みる
+                       return id;
+                   })
+                   .Where(id => id != 0) // 変換に失敗した(0になった)要素を除外
+                   .ToList();
+
             var details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == cycleId).ToList();
             var ioList = _repository.GetIoList();
             selectedServo = _repository.GetServos(null, null);

@@ -8,7 +8,7 @@
         d:DataContext="{d:DesignInstance Type=vm:IOSelectViewModel}"
         Title="複数候補の選択" Height="350" Width="500"
         WindowStartupLocation="CenterScreen"
-        SizeToContent="WidthAndHeight" MinWidth="400" MinHeight="300">
+        SizeToContent="Height" MinWidth="450">
 
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -17,12 +17,17 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="複数のIO候補が見つかりました。使用するものを選択してください。" Margin="0,0,0,10" TextWrapping="Wrap"/>
+        <TextBlock Grid.Row="0" 
+                   Text="{Binding ContextMessage}" 
+                   Margin="0,0,0,10" 
+                   TextWrapping="Wrap"
+                   FontWeight="Bold"/>
 
         <ListBox Grid.Row="1" ItemsSource="{Binding AddressItems}"
                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                  DisplayMemberPath="Display"
-                 Margin="0,0,0,10">
+                 Margin="0,0,0,10"
+                 MinHeight="150">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Padding" Value="5"/>

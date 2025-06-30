@@ -11,7 +11,7 @@ namespace KdxDesigner.Services.IOSelectorService
     {
         public IO? SelectIoFromMultiple(string ioText, List<IO> candidates, string recordName, int? recordId)
         {
-            var viewModel = new IOSelectViewModel(candidates);
+            var viewModel = new IOSelectViewModel(ioText, candidates, recordName, recordId);
             var view = new IOSelectView(viewModel)
             {
                 Title = $"複数候補の選択: '{ioText}' (対象: {recordName})"

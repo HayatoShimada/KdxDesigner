@@ -16,7 +16,7 @@ namespace KdxDesigner.ViewModels
         public class AddressItem
         {
             public string Display { get; set; } = string.Empty;
-            public IO OriginalIO { get; set; } // ★元のIOオブジェクトを保持
+            public IO OriginalIO { get; set; } = new IO();// ★元のIOオブジェクトを保持
         }
 
         [ObservableProperty]
@@ -37,14 +37,23 @@ namespace KdxDesigner.ViewModels
         private bool? _dialogResult;
 
         /// <summary>
-        /// コンストラクタでIO候補リストを受け取ります。
+        /// ★【新規】UIに表示するための、検索コンテキスト情報メッセージ。
         /// </summary>
-        public IOSelectViewModel(List<IO> candidates)
+        public string ContextMessage { get; }
+
+
+        /// <summary>
+        /// コンストラクタでIO候補リストと、表示用のコンテキスト情報を受け取ります。
+        /// </summary>
+        public IOSelectViewModel(string ioText, List<IO> candidates, string recordName, int? recordId)
         {
+            // 1. コンテキストメッセージを生成
+            ContextMessage = $"対象:「{recordName}」(ID:{recordId}) の検索キーワード '{ioText}' で、複数のIO候補が見つかりました。\n使用するものを選択してください。";
+
+            // 2. 表示用アイテムリストを生成
             AddressItems = new ObservableCollection<AddressItem>(
                 candidates.Select(io => new AddressItem
                 {
-                    // 表示テキストをより詳細に（例: "IN1 (X0800) - 入力センサー"）
                     Display = $"{io.IOName} ({io.Address}) - {io.IOExplanation}",
                     OriginalIO = io
                 })
