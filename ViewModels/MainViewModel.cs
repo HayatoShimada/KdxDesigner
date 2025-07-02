@@ -37,7 +37,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private ObservableCollection<PLC> plcs = new();
         [ObservableProperty] private ObservableCollection<Cycle> cycles = new();
         [ObservableProperty] private ObservableCollection<Models.Process> processes = new();
-        [ObservableProperty] private ObservableCollection<ProcessDetailDto> processDetails = new();
+        [ObservableProperty] private ObservableCollection<ProcessDetail> processDetails = new();
         [ObservableProperty] private ObservableCollection<Operation> selectedOperations = new();
 
         [ObservableProperty] private Company? selectedCompany;
@@ -78,7 +78,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private string memoryStatusMessage = string.Empty;
         [ObservableProperty] private List<OutputError> outputErrors = new();
 
-        private List<ProcessDetailDto> allDetails = new();
+        private List<ProcessDetail> allDetails = new();
         private List<Models.Process> allProcesses = new();
         public List<Servo> selectedServo = new(); // 選択されたサーボのリスト
 
@@ -127,7 +127,7 @@ namespace KdxDesigner.ViewModels
         {
             Companies = new ObservableCollection<Company>(_repository!.GetCompanies());
             allProcesses = _repository.GetProcesses();
-            allDetails = _repository.GetProcessDetailDtos();
+            allDetails = _repository.GetProcessDetails();
         }
 
         partial void OnSelectedCompanyChanged(Company? value)
@@ -160,7 +160,7 @@ namespace KdxDesigner.ViewModels
             }
             Processes = new ObservableCollection<Models.Process>(allProcesses.Where(p => p.CycleId == value.Id));
         }
-        public void OnProcessDetailSelected(ProcessDetailDto selected)
+        public void OnProcessDetailSelected(ProcessDetail selected)
         {
             if (selected?.OperationId != null)
             {
@@ -185,7 +185,7 @@ namespace KdxDesigner.ViewModels
                 .Where(d => d.ProcessId.HasValue && selectedIds.Contains(d.ProcessId.Value))
                 .ToList();
 
-            ProcessDetails = new ObservableCollection<ProcessDetailDto>(filtered);
+            ProcessDetails = new ObservableCollection<ProcessDetail>(filtered);
         }
 
         [RelayCommand]
@@ -362,21 +362,9 @@ namespace KdxDesigner.ViewModels
             var devices = _mnemonicService!.GetMnemonicDevice(plcId);
             var timers = _repository!.GetTimersByCycleId(cycleId);
             var operations = _repository.GetOperations();
-            var cylinders = _repository.GetCYs()
-                .Where(c => c.PlcId == plcId 
-                && c.ProcessStartCycle == SelectedPlc.Id).ToList();
+            var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
 
-            List<int> startCycles = _cylinder.Cylinder.ProcessStartCycle
-                   .Split(';', StringSplitOptions.RemoveEmptyEntries) // 空の要素を自動で削除
-                   .Select(idString =>
-                   {
-                       int.TryParse(idString.Trim(), out int id); // 空白を除去し、変換を試みる
-                       return id;
-                   })
-                   .Where(id => id != 0) // 変換に失敗した(0になった)要素を除外
-                   .ToList();
-
-            var details = _repository.GetProcessDetailDtos().Where(d => d.CycleId == cycleId).ToList();
+            var details = _repository.GetProcessDetails().Where(d => d.CycleId == cycleId).ToList();
             var ioList = _repository.GetIoList();
             selectedServo = _repository.GetServos(null, null);
 
@@ -466,11 +454,11 @@ namespace KdxDesigner.ViewModels
         }
 
         // MemorySettingに必要なデータを準備するヘルパー
-        private (List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers)? PrepareDataForMemorySetting()
+        private (List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers)? PrepareDataForMemorySetting()
         {
             if (SelectedCycle == null || SelectedPlc == null) return null;
 
-            List<ProcessDetailDto> details = _repository!.GetProcessDetailDtos().Where(d => d.CycleId == SelectedCycle.Id).ToList();
+            List<ProcessDetail> details = _repository!.GetProcessDetails().Where(d => d.CycleId == SelectedCycle.Id).ToList();
             List<CY> cylinders = _repository!.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
             var operationIds = details.Select(c => c.OperationId).ToHashSet();
             List<Operation> operations = _repository.GetOperations().Where(o => operationIds.Contains(o.Id)).ToList();
@@ -481,7 +469,7 @@ namespace KdxDesigner.ViewModels
         }
 
         // Mnemonic* と Timer* テーブルへのデータ保存をまとめたヘルパー
-        private void SaveMnemonicAndTimerDevices((List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
+        private void SaveMnemonicAndTimerDevices((List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
             MemoryStatusMessage = "ニーモニックデバイス情報を保存中...";
             _mnemonicService!.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL, SelectedPlc!.Id);
@@ -500,7 +488,7 @@ namespace KdxDesigner.ViewModels
         }
 
         // Memoryテーブルへの保存処理
-        private async Task SaveMemoriesToMemoryTableAsync((List<ProcessDetailDto> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
+        private async Task SaveMemoriesToMemoryTableAsync((List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
             var devices = _mnemonicService!.GetMnemonicDevice(SelectedPlc!.Id);
             var timerDevices = _timerService!.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);

@@ -96,17 +96,6 @@ namespace KdxDesigner.Services.Access
         List<ProcessDetail> GetProcessDetails();
 
         /// <summary>
-        /// 関連テーブルを結合した、表示用の工程詳細情報(DTO)のリストを取得します。
-        /// </summary>
-        List<ProcessDetailDto> GetProcessDetailDtos();
-
-        /// <summary>
-        /// 工程詳細情報のリストをデータベースに保存します。既存のデータは全て削除された後、新しいデータが挿入されます。
-        /// </summary>
-        /// <param name="details">保存するProcessDetailDtoのリスト。</param>
-        void SaveProcessDetailDtos(List<ProcessDetailDto> details);
-
-        /// <summary>
         /// 全てのIOリスト情報を取得します。
         /// </summary>
         List<IO> GetIoList();

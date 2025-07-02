@@ -21,6 +21,10 @@ namespace KdxDesigner.Models
         public string? StartSensor { get; set; }
         public int? CategoryId { get; set; }
         public string? FinishSensor { get; set; }
+        public int? BlockNumber { get; set; }
+        public int? TimerId { get; set; }
+        public string? SkipMode { get; set; }
+        public int? CycleId { get; set; }
 
     }
 

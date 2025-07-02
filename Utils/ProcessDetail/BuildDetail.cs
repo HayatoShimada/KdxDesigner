@@ -38,13 +38,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定
@@ -105,6 +105,13 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
             else
             {
+                if (detail.Detail.TimerId)
+
+
+
+
+
+
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             }
             //
@@ -156,13 +163,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定　→　資料画像のL4010の事　この後末尾番号として　+9する　+0が開始で　+9が終了
@@ -244,13 +251,13 @@ namespace KdxDesigner.Utils.ProcessDetail
             // L***0 ~ L***9のDeviceリストを取得
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定　→　資料画像のL4010の事　この後末尾番号として　+9する　+0が開始で　+9が終了
@@ -373,13 +380,13 @@ namespace KdxDesigner.Utils.ProcessDetail
             // L***0 ~ L***9のDeviceリストを取得
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定　→　資料画像のL4010の事　この後末尾番号として　+9する　+0が開始で　+9が終了
@@ -501,13 +508,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定
@@ -581,7 +588,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 localErrors.Add(new OutputError
                 {
                     Message = "StartSensor が設定されていません。",
-                    RecordName = detail.Detail.ProcessName,
+                    RecordName = detail.Detail.DetailName,
                     MnemonicId = (int)MnemonicType.ProcessDetail,
                     RecordId = detail.Detail.Id,
                     IsCritical = false
@@ -619,13 +626,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定
@@ -697,13 +704,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定
@@ -753,7 +760,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 localErrors.Add(new OutputError
                 {
                     Message = "StartSensor が設定されていません。",
-                    RecordName = detail.Detail.ProcessName,
+                    RecordName = detail.Detail.DetailName,
                     MnemonicId = (int)MnemonicType.ProcessDetail,
                     RecordId = detail.Detail.Id,
                     IsCritical = false
@@ -808,13 +815,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定
@@ -995,13 +1002,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定
@@ -1134,13 +1141,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(detail.Detail.ProcessName))
+            if (string.IsNullOrEmpty(detail.Detail.DetailName))
             {
                 result.Add(LadderRow.AddStatement(id));
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.ProcessName));
+                result.Add(LadderRow.AddStatement(id + ":" + detail.Detail.DetailName));
             }
 
             // L0 の初期値を設定

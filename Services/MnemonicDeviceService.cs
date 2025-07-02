@@ -109,7 +109,7 @@ namespace KdxDesigner.Services
         }
 
         // 修正: AccessRepository のインスタンス化に必要な connectionString を渡すように修正  
-        public void SaveMnemonicDeviceProcessDetail(List<ProcessDetailDto> processes, int startNum, int plcId)
+        public void SaveMnemonicDeviceProcessDetail(List<ProcessDetail> processes, int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
@@ -121,7 +121,7 @@ namespace KdxDesigner.Services
                 var repository = new AccessRepository(_connectionString);
 
                 int count = 0;
-                foreach (ProcessDetailDto process in processes)
+                foreach (ProcessDetail process in processes)
                 {
                     if (process == null || !process.OperationId.HasValue) continue;
 

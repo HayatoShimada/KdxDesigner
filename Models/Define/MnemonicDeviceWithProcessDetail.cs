@@ -9,7 +9,7 @@ namespace KdxDesigner.Models.Define
     public class MnemonicDeviceWithProcessDetail
     {
         public MnemonicDevice Mnemonic { get; set; } = default!;
-        public ProcessDetailDto Detail { get; set; } = default!;
+        public ProcessDetail Detail { get; set; } = default!;
         
     }
 }

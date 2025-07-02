@@ -85,7 +85,7 @@ namespace KdxDesigner.Services
         // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         public void SaveWithDetail(
             List<Models.Timer> timers,
-            List<ProcessDetailDto> details,
+            List<ProcessDetail> details,
             int startNum, int plcId, int cycleId, out int count)
         {
             count = 0; // outパラメータの初期化
@@ -106,7 +106,7 @@ namespace KdxDesigner.Services
                     .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
                     .ToDictionary(g => g.Key, g => g.ToList());
 
-                foreach (ProcessDetailDto detail in details)
+                foreach (ProcessDetail detail in details)
                 {
                     if (detail == null || !timersByRecordId.TryGetValue(detail.Id, out var operationTimers))
                     {
