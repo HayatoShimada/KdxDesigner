@@ -33,7 +33,7 @@ namespace KdxDesigner.Views
         {
             if (DataContext is MainViewModel vm)
             {
-                var selected = (sender as DataGrid)?.SelectedItem as ProcessDetailDto;
+                var selected = (sender as DataGrid)?.SelectedItem as ProcessDetail;
                 if (selected != null)
                 {
                     vm.OnProcessDetailSelected(selected);

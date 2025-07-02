@@ -13,7 +13,7 @@ using System.Linq; // ToList, GroupBy, FirstOrDefault, SingleOrDefault 等のた
 
 namespace KdxDesigner.Services
 {
-    internal class MnemonicTimerDeviceService
+    public class MnemonicTimerDeviceService
     {
         private readonly string _connectionString;
 
@@ -37,6 +37,15 @@ namespace KdxDesigner.Services
             var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND CycleId = @CycleId AND MnemonicId = @MnemonicId";
             return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, CycleId = cycleId, MnemonicId = mnemonicId }).ToList();
         }
+
+        // MnemonicDeviceテーブルからPlcIdとTimerIdに基づいてデータを取得する
+        public MnemonicTimerDevice? GetMnemonicTimerDeviceByTimerId(int plcId, int timerId)
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND TimerId = @TimerId";
+            return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, TimerId = timerId }).FirstOrDefault();
+        }
+
 
         /// <summary>
         /// 共通のUPSERT（Insert or Update）処理

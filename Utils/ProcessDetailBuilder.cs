@@ -4,6 +4,7 @@ using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.ProcessDetail;
 using KdxDesigner.ViewModels;
+using KdxDesigner.Services.Access;
 
 namespace KdxDesigner.Utils
 {
@@ -12,12 +13,14 @@ namespace KdxDesigner.Utils
         private readonly MainViewModel _mainViewModel;
         private readonly IErrorAggregator _errorAggregator;
         private readonly IIOAddressService _ioAddressService;
+        private readonly IAccessRepository _repository;
 
-        public ProcessDetailBuilder(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService)
+        public ProcessDetailBuilder(MainViewModel mainViewModel, IErrorAggregator errorAggregator, IIOAddressService ioAddressService, IAccessRepository repository)
         {
             _mainViewModel = mainViewModel; // MainViewModelのインスタンスを取得
             _errorAggregator = errorAggregator;
             _ioAddressService = ioAddressService;
+            _repository = repository;
         }
 
         public List<LadderCsvRow> GenerateAllLadderCsvRows(
@@ -31,7 +34,7 @@ namespace KdxDesigner.Utils
             LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
             var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
             List<OutputError> errorsForDetail = new(); // 各工程詳細のエラーリスト
-            BuildDetail buildDetail = new(_mainViewModel, _ioAddressService, _errorAggregator); // BuildDetailのインスタンスを生成
+            BuildDetail buildDetail = new(_mainViewModel, _ioAddressService, _errorAggregator, _repository); // BuildDetailのインスタンスを生成
             int plcId = _mainViewModel.SelectedPlc!.Id;
             foreach (var detail in details)
             {

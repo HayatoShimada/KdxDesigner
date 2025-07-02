@@ -1,11 +1,11 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Services.IOAddress;
+using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
-
-using Windows.AI.MachineLearning;
+using KdxDesigner.Services;
 
 // ProcessDetail（工程プログラム）のニモニック配列を返すコード群
 
@@ -16,12 +16,14 @@ namespace KdxDesigner.Utils.ProcessDetail
         private readonly MainViewModel _mainViewModel;
         private readonly IErrorAggregator _errorAggregator;
         private readonly IIOAddressService _ioAddressService;
+        private readonly IAccessRepository _repository;
 
-        public BuildDetail(MainViewModel mainViewModel,IIOAddressService ioAddressService, IErrorAggregator errorAggregator)
+        public BuildDetail(MainViewModel mainViewModel,IIOAddressService ioAddressService, IErrorAggregator errorAggregator, IAccessRepository repository)
         {
             _mainViewModel = mainViewModel; // MainViewModelのインスタンスを取得
             _ioAddressService = ioAddressService; // IOアドレスサービスのインスタンスを取得
             _errorAggregator = errorAggregator;   // エラーアグリゲーターのインスタンスを取得
+            _repository = repository; // リポジトリのインスタンスを取得
         }
 
         // 通常工程を出力するメソッド
@@ -74,8 +76,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
             if (detail.Detail.StartSensor != null)
             {
-                // ioの取得を共通コンポーネント化すること
-                var plcId = _mainViewModel.SelectedPlc!.Id;
+
+                if (detail.Detail.TimerId != null)
+                {
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        Message = "TimerIdが設定されている場合は、StartSensorを設定しないでください。",
+                        RecordName = detail.Detail.DetailName,
+                        MnemonicId = (int)MnemonicType.ProcessDetail,
+                        RecordId = detail.Detail.Id,
+                        IsCritical = true
+                    });
+
+                    return result; // エラーがある場合は、空のリストを返す
+                }
+
                 var ioSensor = _ioAddressService.GetSingleAddress(
                     ioList, 
                     detail.Detail.StartSensor,
@@ -105,14 +120,37 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
             else
             {
-                if (detail.Detail.TimerId)
+                if (detail.Detail.TimerId != null)
+                {
 
+                    MnemonicTimerDeviceService timerDeviceService = new MnemonicTimerDeviceService(_repository);
+                    var timerDevice = timerDeviceService.GetMnemonicTimerDeviceByTimerId(_mainViewModel.SelectedPlc!.Id ,detail.Detail.TimerId.Value);
+                    if (timerDevice == null)
+                    {
+                        _errorAggregator.AddError(new OutputError
+                        {
+                            Message = "TimerIdが設定されている場合は、StartSensorを設定しないでください。",
+                            RecordName = detail.Detail.DetailName,
+                            MnemonicId = (int)MnemonicType.ProcessDetail,
+                            RecordId = detail.Detail.Id,
+                            IsCritical = true
+                        });
+                        return result; // エラーがある場合は、空のリストを返す
+                    }
+                    else
+                    {
+                        // タイマーデバイスが取得できた場合は、LDコマンドを追加
+                        result.Add(LadderRow.AddLD(timerDevice.ProcessTimerDevice));
+                        result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                    }
 
+                }
+                else
+                {
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
 
+                }
 
-
-
-                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             }
             //
             result.Add(LadderRow.AddOR(label + (deviceNum + 0).ToString()));
