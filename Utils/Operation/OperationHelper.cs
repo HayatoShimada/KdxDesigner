@@ -4,12 +4,6 @@ using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
 using KdxDesigner.ViewModels;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using static KdxDesigner.Utils.Operation.BuildOperationSpeedChange;
 
 namespace KdxDesigner.Utils.Operation
@@ -35,7 +29,6 @@ namespace KdxDesigner.Utils.Operation
             new SpeedChangeStepConfig(10, op => op.SS2!, "SS2"),
             new SpeedChangeStepConfig(11, op => op.SS3!, "SS3"),
             new SpeedChangeStepConfig(12, op => op.SS4!, "SS4"),
-            // 必要に応じてさらに追加
         };
 
         // BuildOperationSpeedChange クラス内
@@ -99,8 +92,7 @@ namespace KdxDesigner.Utils.Operation
             string? operationSpeed,
             MnemonicDeviceWithOperation operation,
             List<MnemonicDeviceWithCylinder> cylinders,
-            int stepNumber // エラーメッセージ用にステップ番号を追加
-            )
+            int stepNumber)
         {
             if (string.IsNullOrEmpty(operationSpeed))
             {
