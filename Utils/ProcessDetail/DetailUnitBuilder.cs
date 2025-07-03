@@ -4,10 +4,7 @@ using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
-using KdxDesigner.Utils.ProcessDetail;
 using KdxDesigner.ViewModels;
-
-using System.Diagnostics;
 
 namespace KdxDesigner.Utils.ProcessDetail
 {
@@ -108,6 +105,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             return result;
         }
 
+        /// <summary>
+        /// 工程まとめのビルド
+        /// </summary>
+        /// <returns></returns>
         public List<LadderCsvRow> BuildSummarize()
         {
             var result = new List<LadderCsvRow>();
@@ -138,6 +139,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         /// <summary>
         /// センサON確認のビルド
         /// </summary>
+        /// <returns></returns>
         public List<LadderCsvRow> BuildSensorON()
         {
             var result = new List<LadderCsvRow>();
@@ -305,7 +307,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                     _ioList,
                     _detail.Detail.StartSensor,
                     false,
-                    _detail.Detail.DetailName,
+                    _detail.Detail.DetailName!,
                     _detail.Detail.Id,
                     null);
 
@@ -586,6 +588,13 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L2 タイマ開始
             var stopTimer = detailTimers.FirstOrDefault(t => t.Timer.RecordId == _detail.Detail.Id);
+
+            if (stopTimer == null)
+            {
+                detailFunctions.DetailError("タイマー工程にタイマが設定されていません。");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+
             result.Add(LadderRow.AddLD(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddANI(_label + (_deviceNum + 2).ToString()));
             result.AddRange(LadderRow.AddTimer(stopTimer.Timer.ProcessTimerDevice, stopTimer.Timer.TimerDevice));
