@@ -94,6 +94,16 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddANI(_label + (_outNum + 4).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 5).ToString()));
 
+            // 関連するタイマがある場合
+            if (_timers.Count > 0)
+            {
+                result.Add(LadderRow.AddLDP(_label + (_outNum + 5).ToString()));
+
+                foreach (var timer in _timers)
+                {
+                    result.Add(LadderRow.AddRST(timer.Timer.ProcessTimerDevice));
+                }
+            }
             return result;
         }
 

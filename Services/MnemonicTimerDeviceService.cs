@@ -13,7 +13,7 @@ using System.Linq; // ToList, GroupBy, FirstOrDefault, SingleOrDefault 等のた
 
 namespace KdxDesigner.Services
 {
-    internal class MnemonicTimerDeviceService
+    public class MnemonicTimerDeviceService
     {
         private readonly string _connectionString;
 
@@ -37,6 +37,15 @@ namespace KdxDesigner.Services
             var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND CycleId = @CycleId AND MnemonicId = @MnemonicId";
             return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, CycleId = cycleId, MnemonicId = mnemonicId }).ToList();
         }
+
+        // MnemonicDeviceテーブルからPlcIdとTimerIdに基づいてデータを取得する
+        public MnemonicTimerDevice? GetMnemonicTimerDeviceByTimerId(int plcId, int timerId)
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND TimerId = @TimerId";
+            return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, TimerId = timerId }).FirstOrDefault();
+        }
+
 
         /// <summary>
         /// 共通のUPSERT（Insert or Update）処理
@@ -85,7 +94,7 @@ namespace KdxDesigner.Services
         // Operationのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         public void SaveWithDetail(
             List<Models.Timer> timers,
-            List<ProcessDetailDto> details,
+            List<ProcessDetail> details,
             int startNum, int plcId, int cycleId, out int count)
         {
             count = 0; // outパラメータの初期化
@@ -106,7 +115,7 @@ namespace KdxDesigner.Services
                     .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
                     .ToDictionary(g => g.Key, g => g.ToList());
 
-                foreach (ProcessDetailDto detail in details)
+                foreach (ProcessDetail detail in details)
                 {
                     if (detail == null || !timersByRecordId.TryGetValue(detail.Id, out var operationTimers))
                     {
@@ -117,7 +126,7 @@ namespace KdxDesigner.Services
                     {
                         if (timer == null) continue;
 
-                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var processTimerDevice = "ST" + (startNum + count).ToString();
                         var timerDevice = "ZR" + timer.TimerNum.ToString();
 
                         // 複合キーで既存レコードを検索
@@ -188,7 +197,7 @@ namespace KdxDesigner.Services
                     {
                         if (timer == null) continue;
 
-                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var processTimerDevice = "ST" + (startNum + count).ToString();
                         var timerDevice = "ZR" + timer.TimerNum.ToString();
 
                         // 複合キーで既存レコードを検索
@@ -261,7 +270,7 @@ namespace KdxDesigner.Services
                         && m.TimerCategoryId == timer.TimerCategoryId);
 
                     var category = timerCategory.FirstOrDefault(c => c.ID == timer.TimerCategoryId);
-                    var processTimerDevice = "T" + (startNum + count).ToString();
+                    var processTimerDevice = "ST" + (startNum + count).ToString();
                     var timerDevice = "ZR" + timer.TimerNum.ToString();
 
                     if (timer.RecordId == null) continue; // RecordIdがnullの場合はスキップ

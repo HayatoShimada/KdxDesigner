@@ -155,76 +155,11 @@ WHERE Id = @Id";
         public List<ProcessDetail> GetProcessDetails()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = @"
-SELECT Id, ProcessId, OperationId, DetailName,
-       StartIds, FinishIds,
-       
-, CategoryId, FinishSensor
-FROM ProcessDetail";
+            var sql = "SELECT * FROM ProcessDetail";
             return connection.Query<ProcessDetail>(sql).ToList();
         }
 
-        public List<ProcessDetailDto> GetProcessDetailDtos()
-        {
-            using var connection = new OleDbConnection(ConnectionString);
-            var sql = @"
-SELECT 
-    pd.Id,
-    pd.ProcessId,
-    p.ProcessName,
-    pd.OperationId,
-    o.OperationName,
-    pd.DetailName,
-    pd.StartIds,
-    pd.FinishIds,
-    pd.StartSensor,
-    pd.CategoryId,
-    c.CategoryName,
-    pd.FinishSensor,
-    p.CycleId As CycleId
-FROM 
-    (((ProcessDetail AS pd
-    LEFT JOIN Process AS p ON pd.ProcessId = p.Id)
-    LEFT JOIN Operation AS o ON pd.OperationId = o.Id)
-    LEFT JOIN ProcessDetailCategory AS c ON pd.CategoryId = c.Id)
-";
-            return connection.Query<ProcessDetailDto>(sql).ToList();
-        }
-
-        public void SaveProcessDetailDtos(List<ProcessDetailDto> details)
-        {
-            using var connection = new OleDbConnection(ConnectionString);
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
-
-            try
-            {
-                // ① 全削除
-                var deleteSql = "DELETE FROM ProcessDetail";
-                connection.Execute(deleteSql, transaction: transaction);
-
-                // ② 全挿入
-                var insertSql = @"
-INSERT INTO ProcessDetail 
-(Id, ProcessId, OperationId, DetailName, StartIds, FinishIds, StartSensor, CategoryId, FinishSensor)
-VALUES
-(@Id, @ProcessId, @OperationId, @DetailName, @StartIds, @FinishIds, @StartSensor, @CategoryId, @FinishSensor)
-";
-
-                foreach (var detail in details)
-                {
-                    connection.Execute(insertSql, detail, transaction: transaction);
-                }
-
-                transaction.Commit();
-            }
-            catch
-            {
-                transaction.Rollback();
-                throw;
-            }
-        }
-
+        
         public List<IO> GetIoList()
         {
             using var connection = new OleDbConnection(ConnectionString);
