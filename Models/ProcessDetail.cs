@@ -13,7 +13,7 @@ namespace KdxDesigner.Models
     {
         [Key]
         public int Id { get; set; }
-        public int? ProcessId { get; set; }
+        public int ProcessId { get; set; }
         public int? OperationId { get; set; }
         public string? DetailName { get; set; }
         public string? StartIds { get; set; }   // 複数値→カンマ区切り

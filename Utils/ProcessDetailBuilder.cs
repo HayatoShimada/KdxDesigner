@@ -31,32 +31,46 @@ namespace KdxDesigner.Utils
             List<IO> ioList,
             List<MnemonicTimerDeviceWithDetail> detailTimers)
         {
-            LadderCsvRow.ResetKeyCounter();                     // 0から再スタート
-            var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
-            List<OutputError> errorsForDetail = new(); // 各工程詳細のエラーリスト
-            BuildDetail buildDetail = new(_mainViewModel, _ioAddressService, _errorAggregator, _repository); // BuildDetailのインスタンスを生成
-            int plcId = _mainViewModel.SelectedPlc!.Id;
+            LadderCsvRow.ResetKeyCounter();
+            var allRows = new List<LadderCsvRow>();
+
+            // 1. BuildDetail のインスタンス化を修正
+            //    processes もコンストラクタに渡すようにする
+            BuildDetail buildDetail = new(
+                _mainViewModel,
+                _ioAddressService,
+                _errorAggregator,
+                _repository,
+                processes,
+                details,
+                operations,
+                cylinders,
+                ioList
+            );
             foreach (var detail in details)
             {
+                // DetailUnitBuilder を使うようにリファクタリングされた
+                // BuildDetail の各メソッドを呼び出す。
+                // 呼び出し側の見た目は同じだが、内部実装がクリーンになっている。
                 switch (detail.Detail.CategoryId)
                 {
-                    case 1:     // 通常工程
-                        allRows.AddRange(buildDetail.BuildDetailNormal(detail, details, processes, operations, cylinders, ioList));
+                    case 1:  // 通常工程
+                        allRows.AddRange(buildDetail.Normal(detail));
                         break;
-                    case 2:     // 工程まとめ
-                        allRows.AddRange(buildDetail.BuildDetailSummarize(detail, details, processes, operations, cylinders, ioList));
+                    case 2:  // 工程まとめ
+                        allRows.AddRange(buildDetail.Summarize(detail));
                         break;
-                    case 3:     // センサON確認
-                        allRows.AddRange(buildDetail.BuildDetailSensorON(detail, details, processes, operations, cylinders, ioList));
+                    case 3:  // センサON確認
+                        allRows.AddRange(buildDetail.SensorON(detail));
                         break;
                     case 4:     // センサOFF確認
-                        allRows.AddRange(buildDetail.BuildDetailSensorOFF(detail, details, processes, operations, cylinders, ioList));
+                        allRows.AddRange(buildDetail.SensorOFF(detail));
                         break;
                     case 5:     // 工程分岐
-                        allRows.AddRange(buildDetail.BuildDetailBranch(detail, details, processes, operations, cylinders, ioList));
+                        allRows.AddRange(buildDetail.Branch(detail));
                         break;
                     case 6:     // 工程合流
-                        allRows.AddRange(buildDetail.BuildDetailMerge(detail, details, processes, operations, cylinders, ioList));
+                        allRows.AddRange(buildDetail.Merge(detail));
                         break;
                     case 7:     // サーボ座標指定
                         break;
@@ -65,22 +79,23 @@ namespace KdxDesigner.Utils
                     case 9:     // INV座標指定
                         break;
                     case 10:    // IL待ち
-                        allRows.AddRange(buildDetail.BuildDetailILWait(detail, details, processes, operations, cylinders, ioList));
+                        allRows.AddRange(buildDetail.ILWait(detail));
                         break;
                     case 11:    // リセット工程開始
                         break;
                     case 12:    // リセット工程完了
                         break;
                     case 13:    // 工程OFF確認
+                        allRows.AddRange(buildDetail.ProcessOFF(detail));
                         break;
                     case 15:    // 期間工程
-                        allRows.AddRange(buildDetail.BuildDetailSeason(detail, details, processes, operations, cylinders, ioList));
+                        allRows.AddRange(buildDetail.Season(detail));
                         break;
                     case 16:    // タイマ工程
-                        allRows.AddRange(buildDetail.BuildDetailTimerProcess(detail, details, processes, operations, cylinders, ioList, detailTimers));
+                        allRows.AddRange(buildDetail.TimerProcess(detail, detailTimers));
                         break;                    
                     case 17:    // タイマ
-                        allRows.AddRange(buildDetail.BuildDetailTimer(detail, details, processes, operations, cylinders, ioList, detailTimers));
+                        allRows.AddRange(buildDetail.Timer(detail, detailTimers));
                         break;
                     default:
                         break;

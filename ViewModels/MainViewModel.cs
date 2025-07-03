@@ -182,7 +182,7 @@ namespace KdxDesigner.ViewModels
         {
             var selectedIds = selectedProcesses.Select(p => p.Id).ToHashSet();
             var filtered = allDetails
-                .Where(d => d.ProcessId.HasValue && selectedIds.Contains(d.ProcessId.Value))
+                .Where(d => selectedIds.Contains(d.ProcessId))
                 .ToList();
 
             ProcessDetails = new ObservableCollection<ProcessDetail>(filtered);

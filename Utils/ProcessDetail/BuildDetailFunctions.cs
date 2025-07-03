@@ -7,45 +7,64 @@ using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace KdxDesigner.Utils.ProcessDetail
 {
+    /// <summary>
+    /// ProcessDetailのビルド関数を提供するクラス。
+    /// </summary>
+    /// <remarks>
+    /// 継承している <see cref="BuildDetail"/> クラスは、processDetailの出力単位ビルド機能を提供するのに対し、
+    /// このクラスは各アウトコイル単位のビルド機能を提供します。
+    /// </remarks>
     internal class BuildDetailFunctions : BuildDetail
     {
+        // --- このクラス固有のフィールド ---
         private readonly MnemonicDeviceWithProcessDetail _detail;
         private readonly MnemonicDeviceWithProcess _process;
-        private readonly List<MnemonicDeviceWithProcessDetail> _details;
-        private readonly List<IO> _ioList;
         private readonly string _label;
         private readonly int _outNum;
 
+        // _details や _ioList は基底クラスのものを利用するため、ここでは削除
+
+        /// <summary>
+        /// 新しい BuildDetailFunctions のインスタンスを初期化します。
+        /// </summary>
+        /// <param name="detail">処理対象の工程詳細データ</param>
+        /// <param name="process">処理対象の工程データ</param>
+        /// <param name="mainViewModel">MainViewからの初期値</param>
+        /// <param name="ioAddressService">IO検索用のサービス</param>
+        /// <param name="errorAggregator">エラー出力用のサービス</param>
+        /// <param name="repository">ACCESSファイル検索用のリポジトリ</param>
+        /// <param name="processes">全工程のリスト</param>
+        /// <param name="details">全工程詳細のリスト</param>
+        /// <param name="operations">全操作のリスト</param>
+        /// <param name="cylinders">全CYのリスト</param>
+        /// <param name="ioList">全IOのリスト</param>
         public BuildDetailFunctions(
-            // --- このクラス固有の引数 ---
+            // --- このクラスで直接使用する引数 ---
             MnemonicDeviceWithProcessDetail detail,
             MnemonicDeviceWithProcess process,
-            List<MnemonicDeviceWithProcessDetail> details,
-            List<IO> ioList,
             // --- 基底クラスに渡すための引数 ---
             MainViewModel mainViewModel,
-            IIOAddressService ioAddressService, // 変更点1: 引数を追加
+            IIOAddressService ioAddressService,
             IErrorAggregator errorAggregator,
             IAccessRepository repository,
-            List<MnemonicDeviceWithProcess> processes)
-            // 変更点2: 基底クラスのコンストラクタに合わせて引数の順序を修正
-            : base(mainViewModel, ioAddressService, errorAggregator, repository, processes)
+            List<MnemonicDeviceWithProcess> processes,
+            List<MnemonicDeviceWithProcessDetail> details,
+            List<MnemonicDeviceWithOperation> operations,
+            List<MnemonicDeviceWithCylinder> cylinders,
+            List<IO> ioList)
+            // --- 基底クラスのコンストラクタを正しく呼び出す ---
+            : base(mainViewModel, ioAddressService, errorAggregator, repository,
+                   processes, details, operations, cylinders, ioList)
         {
-            _detail = detail; // MnemonicDeviceWithProcessDetailのインスタンスを取得
-            _process = process; // MnemonicDeviceWithProcessのインスタンスを取得
-            _details = details; // MnemonicDeviceWithProcessDetailのリストを取得
-            _ioList = ioList; // IOリストのインスタンスを取得
-            _label = detail.Mnemonic.DeviceLabel ?? string.Empty; // ラベルを設定
-            _outNum = detail.Mnemonic.StartNum; // 出力番号を設定
+            // このクラス固有のフィールドを初期化
+            _detail = detail;
+            _process = process;
+            _label = detail.Mnemonic.DeviceLabel ?? string.Empty;
+            _outNum = detail.Mnemonic.StartNum;
+
+            // _details や _ioList の初期化は不要（基底クラスのコンストラクタが実行するため）
         }
 
         public List<LadderCsvRow> L0()
@@ -137,6 +156,32 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOUT(_label + (_outNum + 0).ToString()));
 
             return result;
+        }
+
+        public List<MnemonicDeviceWithProcessDetail> StartDevices()
+        {
+            var processDetailStartIds = _detail.Detail.StartIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
+            var processDetailStartDevices = _details
+                .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+            return processDetailStartDevices;
+        }
+
+        public List<MnemonicDeviceWithProcessDetail> FinishDevices()
+        {
+            var processDetailFinishIds = _detail.Detail.FinishIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
+            var processDetailFinishDevices = _details
+                .Where(d => processDetailFinishIds.Contains(d.Mnemonic.RecordId))
+                .ToList();
+            return processDetailFinishDevices;
         }
 
 
