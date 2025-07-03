@@ -90,16 +90,16 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
-            // L9 工程完了
+            // L5 工程完了
             var operationFinish = _operations.FirstOrDefault(o => o.Mnemonic.RecordId == _detail.Detail.OperationId);
             var opFinishNum = operationFinish?.Mnemonic.StartNum ?? 0;
             var opFinishLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
             result.Add(LadderRow.AddLD(opFinishLabel + (opFinishNum + 19).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             return result;
         }
@@ -124,12 +124,12 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             //4行目この工程の最終の出力番号算出と LDコマンド発行
 
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             //3行目 M3300後の　L0初期値　AND
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
 
             //3行目 OUT出力
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             return result;
 
@@ -202,11 +202,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
 
             //6行目
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
 
             //5行目
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
 
             // エラーをまとめて返す。
@@ -278,11 +278,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
 
             //6行目
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
 
             //5行目
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             // エラーをまとめて返す。
             return result;
@@ -350,9 +350,9 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L9 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
 
             return result;
@@ -407,8 +407,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             foreach (var d in processDetailStartDevices)
             {
                 var row = first
-                    ? LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString())
-                    : LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString());
+                    ? LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString())
+                    : LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString());
 
                 result.Add(row);
                 first = false;
@@ -418,9 +418,9 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L9 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(label + (deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(label + (deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
-            result.Add(LadderRow.AddOUT(label + (deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(label + (deviceNum + 4).ToString()));
 
             // エラーをまとめて返す。
 
@@ -456,11 +456,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
-            // L9 工程完了
+            // L5 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
 
             return result;
@@ -547,10 +547,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             else
             {
                 // FinishSensorが設定されていない場合
-                // FinishIdsのStartNum+9を出力
+                // FinishIdsのStartNum+5を出力
                 foreach (var d in processDetailFinishDevices)
                 {
-                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString()));
+                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString()));
                 }
             }
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 2).ToString()));
@@ -562,9 +562,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
             result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             return result;
         }
@@ -609,9 +609,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
             result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             return result;
         }
@@ -633,9 +633,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
             result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
 
             return result;

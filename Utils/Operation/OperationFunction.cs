@@ -59,7 +59,7 @@ namespace KdxDesigner.Utils.Operation
                     var detailOutNum = detail.Mnemonic.StartNum; // 工程詳細のラベル取得
 
                     result.Add(LadderRow.AddLD(_label + (detailOutNum + 1).ToString()));
-                    result.Add(LadderRow.AddANI(_label + (detailOutNum + 9).ToString()));
+                    result.Add(LadderRow.AddANI(_label + (detailOutNum + 4).ToString()));
                     if (notFirst) result.Add(LadderRow.AddORB());
                     notFirst = true;
                 }

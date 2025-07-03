@@ -151,7 +151,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             foreach (var d in processDetailStartDevices)
             {
-                result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 9).ToString()));
+                result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
             }
             result.Add(LadderRow.AddOUT(_label + (_outNum + 0).ToString()));
 

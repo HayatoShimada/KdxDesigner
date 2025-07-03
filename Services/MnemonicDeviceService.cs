@@ -135,8 +135,8 @@ namespace KdxDesigner.Services
                     parameters.Add("MnemonicId", (int)MnemonicType.ProcessDetail, DbType.Int32);
                     parameters.Add("RecordId", process.Id, DbType.Int32);
                     parameters.Add("DeviceLabel", "L", DbType.String);
-                    parameters.Add("StartNum", (count * 10 + startNum), DbType.Int32);
-                    parameters.Add("OutCoilCount", 10, DbType.Int32);
+                    parameters.Add("StartNum", (count * 5 + startNum), DbType.Int32);
+                    parameters.Add("OutCoilCount", 5, DbType.Int32);
                     parameters.Add("PlcId", plcId, DbType.Int32);
                     parameters.Add("Comment1", comment1, DbType.String);
                     parameters.Add("Comment2", comment2, DbType.String);
