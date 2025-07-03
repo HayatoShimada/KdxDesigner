@@ -7,6 +7,8 @@ using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
+using System.Diagnostics.Eventing.Reader;
+
 namespace KdxDesigner.Utils.ProcessDetail
 {
     /// <summary>
@@ -110,10 +112,12 @@ namespace KdxDesigner.Utils.ProcessDetail
                     if (_detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
                         result.Add(LadderRow.AddLDI(ioSensor));
+                        result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
                     }
                     else
                     {
                         result.Add(LadderRow.AddLD(ioSensor));
+                        result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
                     }
                 }
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -135,26 +139,48 @@ namespace KdxDesigner.Utils.ProcessDetail
                     {
                         // タイマーデバイスが取得できた場合は、LDコマンドを追加
                         result.Add(LadderRow.AddLD(timerDevice.ProcessTimerDevice));
+                        result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
                         result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                     }
-
                 }
                 else
                 {
                     result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-
                 }
 
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 0).ToString()));
-            result.Add(LadderRow.AddAND(processDeviceLabel + (processDeviceStartNum + 0).ToString()));
+
+            // 複数工程かどうか
+            int blockNumber = _detail.Detail.BlockNumber ?? 0;
+            if (blockNumber != 0)
+            {
+                var moduleDetail = _details.FirstOrDefault(d => d.Detail.Id == blockNumber);
+
+                if (moduleDetail != null)
+                {
+                    processDeviceStartNum = moduleDetail.Mnemonic.StartNum;
+                    processDeviceLabel = moduleDetail.Mnemonic.DeviceLabel ?? string.Empty;
+                }
+                else
+                {
+                    DetailError($"BlockNumber {blockNumber} に対応する工程詳細が見つかりません。");
+                    return result; // エラーがある場合は、空のリストを返す
+                }
+
+            }
+            result.Add(LadderRow.AddLD(processDeviceLabel + (processDeviceStartNum + 0).ToString()));
 
             foreach (var d in processDetailStartDevices)
             {
                 result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
-            }
-            result.Add(LadderRow.AddOUT(_label + (_outNum + 0).ToString()));
 
+            }
+
+            result.Add(LadderRow.AddANB());
+            result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
+
+            result.Add(LadderRow.AddOUT(_label + (_outNum + 0).ToString()));
             return result;
         }
 

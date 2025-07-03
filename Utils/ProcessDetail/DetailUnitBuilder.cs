@@ -90,7 +90,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
-            // L5 工程完了
+            // L4 工程完了
             var operationFinish = _operations.FirstOrDefault(o => o.Mnemonic.RecordId == _detail.Detail.OperationId);
             var opFinishNum = operationFinish?.Mnemonic.StartNum ?? 0;
             var opFinishLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
@@ -100,6 +100,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
+
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
 
             return result;
         }
@@ -208,12 +211,16 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
 
-            // エラーをまとめて返す。
             return result;
         }
 
-        // --- 他のBuild***メソッドも同様にここに移植 ---
+        /// <summary>
+        /// 工程詳細：センサOFFのビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildSensorOFF()
         {
             var result = new List<LadderCsvRow>();
@@ -284,10 +291,16 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
-            // エラーをまとめて返す。
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
             return result;
         }
 
+        /// <summary>
+        /// 工程詳細：工程分岐のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildBranch()
         {
             var result = new List<LadderCsvRow>();
@@ -348,16 +361,23 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
-            // L9 工程完了
+            // L4 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
 
             return result;
         }
 
+        /// <summary>
+        /// 工程詳細：工程合流のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildMerge()
         {
             var result = new List<LadderCsvRow>();
@@ -416,18 +436,22 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddANB());
             result.Add(LadderRow.AddOUT(label + (deviceNum + 0).ToString()));
 
-            // L9 工程完了
+            // L4 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(label + (deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(label + (deviceNum + 4).ToString()));
 
-            // エラーをまとめて返す。
-
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
             return result;
 
         }
 
+        /// <summary>
+        /// 工程詳細：IL待ち工程のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildILWait()
         {
             var result = new List<LadderCsvRow>();
@@ -462,10 +486,16 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
 
             return result;
         }
 
+        /// <summary>
+        /// 工程詳細：工程OFF確認のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildDetailProcessOFF()
         {
             var result = new List<LadderCsvRow>();
@@ -477,6 +507,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             return result;
         }
 
+        /// <summary>
+        /// 工程詳細：期間工程のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildSeason()
         {
             var result = new List<LadderCsvRow>();
@@ -555,7 +589,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 2).ToString()));
 
-            // L9 工程完了
+            // L4 工程完了
             // detailのoperationIdからOperationの先頭デバイスを取得
             var operationFinish = _operations.FirstOrDefault(o => o.Mnemonic.RecordId == _detail.Detail.OperationId);
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
@@ -566,9 +600,17 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
             return result;
         }
 
+        /// <summary>
+        /// 工程詳細：タイマ工程のビルド
+        /// </summary>
+        /// <param name="detailTimers">タイマの詳細リスト</param>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildTimerProcess(List<MnemonicTimerDeviceWithDetail> detailTimers)
         {
             var result = new List<LadderCsvRow>();
@@ -602,7 +644,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 2).ToString()));
 
-            // L9 工程完了
+            // L4 工程完了
             // detailのoperationIdからOperationの先頭デバイスを取得
             var operationFinish = _operations.FirstOrDefault(o => o.Mnemonic.RecordId == _detail.Detail.OperationId);
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
@@ -613,9 +655,17 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
             return result;
         }
 
+        /// <summary>
+        /// 工程詳細：タイマのビルド
+        /// </summary>
+        /// <param name="detailTimers">タイマの詳細リスト</param>
+        /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildTimer(List<MnemonicTimerDeviceWithDetail> detailTimers)
         {
             var result = new List<LadderCsvRow>();
@@ -626,7 +676,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var detailFunctions = CreateDetailFunctions();
             result.AddRange(detailFunctions.L0());
 
-            // L9 工程完了
+            // L4 工程完了
             // detailのoperationIdからOperationの先頭デバイスを取得
             var operationFinish = _operations.FirstOrDefault(o => o.Mnemonic.RecordId == _detail.Detail.OperationId);
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
@@ -637,6 +687,56 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
+            return result;
+        }
+
+        /// <summary>
+        /// 複数工程のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
+        public List<LadderCsvRow> BuildModule()
+        {
+            var result = new List<LadderCsvRow>();
+
+            // 行間ステートメントを追加
+            result.Add(CreateStatement());
+            // L0 工程開始
+            var detailFunctions = CreateDetailFunctions();
+            result.AddRange(detailFunctions.L0());
+
+            // L1 操作実行
+            result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
+
+            var processDetailFinishDevices = detailFunctions.FinishDevices();
+            if (processDetailFinishDevices.Count == 0)
+            {
+                detailFunctions.DetailError("複数工程ではFinishIds が必須です");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+            else if (processDetailFinishDevices.Count != 1)
+            {
+                detailFunctions.DetailError("複数工程ではFinishIds を1つにしてください");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+            else
+            {
+                var finishLabel = processDetailFinishDevices.First().Mnemonic.DeviceLabel ?? string.Empty;
+                var finishNum = processDetailFinishDevices.First().Mnemonic.StartNum;    
+                result.Add(LadderRow.AddLD(finishLabel + (finishNum + 5).ToString()));
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
+
+            }
+
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
 
             return result;
         }
