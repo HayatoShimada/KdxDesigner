@@ -28,7 +28,6 @@ namespace KdxDesigner.Utils.ProcessDetail
         private readonly List<MnemonicDeviceWithOperation> _operations;
         private readonly List<MnemonicDeviceWithCylinder> _cylinders;
         private readonly List<IO> _ioList;
-        // ... 他に必要なデータがあれば追加 ...
 
         // --- 派生したフィールド ---
         private readonly MnemonicDeviceWithProcess _process;

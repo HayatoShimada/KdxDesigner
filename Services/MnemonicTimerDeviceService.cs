@@ -126,7 +126,7 @@ namespace KdxDesigner.Services
                     {
                         if (timer == null) continue;
 
-                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var processTimerDevice = "ST" + (startNum + count).ToString();
                         var timerDevice = "ZR" + timer.TimerNum.ToString();
 
                         // 複合キーで既存レコードを検索
@@ -197,7 +197,7 @@ namespace KdxDesigner.Services
                     {
                         if (timer == null) continue;
 
-                        var processTimerDevice = "T" + (startNum + count).ToString();
+                        var processTimerDevice = "ST" + (startNum + count).ToString();
                         var timerDevice = "ZR" + timer.TimerNum.ToString();
 
                         // 複合キーで既存レコードを検索
@@ -270,7 +270,7 @@ namespace KdxDesigner.Services
                         && m.TimerCategoryId == timer.TimerCategoryId);
 
                     var category = timerCategory.FirstOrDefault(c => c.ID == timer.TimerCategoryId);
-                    var processTimerDevice = "T" + (startNum + count).ToString();
+                    var processTimerDevice = "ST" + (startNum + count).ToString();
                     var timerDevice = "ZR" + timer.TimerNum.ToString();
 
                     if (timer.RecordId == null) continue; // RecordIdがnullの場合はスキップ
