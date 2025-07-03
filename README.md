@@ -31,26 +31,7 @@ https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0
 - Dapper.SqlBuilder Version 2.1.66
 - CommunityToolkit.Mvvm 8.4.0
 - System.Data.OleDb 9.0.4
-### ACCESSファイルの変更を伴う場合
-TEST用のACCESSファイルを準備して、コード内でそのパスを参照させること。  
-該当プログラムは下記。  
-\Services\AccessRepository.cs
-```
-namespace KdxDesigner.Services
-{
-    public class AccessRepository
-    {
-        private readonly string? _connectionString;
 
-        public AccessRepository()
-        {
-            // TEST環境ではこのパスを変更して、ACCESSファイルをTEST用にすること。
-            _connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Z:\\検図\\電気設計変更用\\@04_スズキ\\KDX_Designer.accdb;";
-
-        }
-  }
-}
-```
 ### GitHubの運用について
 下記Notion頁参照のこと  
 https://www.notion.so/GitHub-1f9e3206de34809ea273c6f36ebdab84
