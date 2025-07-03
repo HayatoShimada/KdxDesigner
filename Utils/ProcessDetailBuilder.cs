@@ -97,6 +97,9 @@ namespace KdxDesigner.Utils
                     case 17:    // タイマ
                         allRows.AddRange(buildDetail.Timer(detail, detailTimers));
                         break;
+                    case 18:    // 複数工程
+                        allRows.AddRange(buildDetail.Module(detail));
+                        break;
                     default:
                         break;
                 }

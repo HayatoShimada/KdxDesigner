@@ -220,5 +220,20 @@ namespace KdxDesigner.Utils.ProcessDetail
              );
             return builder.BuildTimer(detailTimers);
         }
+
+        /// <summary>
+        /// 工程詳細：複数工程のビルド
+        /// </summary>
+        /// <param name="detail">出力するProcessDetailのレコード</param>
+        /// <param name="detailTimers">タイマの詳細リスト</param>
+        /// <returns>工程詳細のニモニックリスト</returns>
+        public List<LadderCsvRow> Module(MnemonicDeviceWithProcessDetail detail)
+        {
+            var builder = new DetailUnitBuilder(
+                 detail, _details, _processes, _operations, _cylinders, _ioList,
+                 _mainViewModel, _ioAddressService, _errorAggregator, _repository
+             );
+            return builder.BuildModule();
+        }
     }
 }
