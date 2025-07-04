@@ -1,0 +1,53 @@
+﻿<Window x:Class="KdxDesigner.Views.IoEditorView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:KdxDesigner.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:IoEditorViewModel}"
+        Title="IOテーブル管理" Height="800" Width="1800"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+            <TextBlock Text="全文検索:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+            <TextBox Width="400" Text="{Binding FullTextSearch, UpdateSourceTrigger=PropertyChanged}"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" Margin="5"
+                  ItemsSource="{Binding IoRecordsView}"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  AutoGenerateColumns="False"
+                  HorizontalScrollBarVisibility="Visible"
+                  VerticalScrollBarVisibility="Visible">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}" />
+                <DataGridTextColumn Header="PlcId" Binding="{Binding PlcId}" />
+                <DataGridTextColumn Header="Address" Binding="{Binding Address}" />
+                <DataGridTextColumn Header="LinkDevice" Binding="{Binding LinkDevice}" />
+                <DataGridTextColumn Header="IOName" Binding="{Binding IOName}" Width="*"/>
+                <DataGridTextColumn Header="IOText" Binding="{Binding IOText}" Width="*"/>
+                <DataGridTextColumn Header="IOExplanation" Binding="{Binding IOExplanation}" Width="*"/>
+                <DataGridTextColumn Header="XComment" Binding="{Binding XComment}" Width="*"/>
+                <DataGridTextColumn Header="YComment" Binding="{Binding YComment}" Width="*"/>
+                <DataGridTextColumn Header="FComment" Binding="{Binding FComment}" Width="*"/>
+                <DataGridTextColumn Header="IOSpot" Binding="{Binding IOSpot}" />
+                <DataGridTextColumn Header="UnitName" Binding="{Binding UnitName}" />
+                <DataGridTextColumn Header="System" Binding="{Binding System}" />
+                <DataGridTextColumn Header="StationNumber" Binding="{Binding StationNumber}" />
+                <DataGridTextColumn Header="IONameNaked" Binding="{Binding IONameNaked}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Content="閉じる" Width="100" Height="25" Click="CloseButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

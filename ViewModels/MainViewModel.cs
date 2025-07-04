@@ -189,6 +189,14 @@ namespace KdxDesigner.ViewModels
         }
 
         [RelayCommand]
+        private void OpenIoEditor()
+        {
+            // Viewにリポジトリのインスタンスを渡して生成
+            var view = new IoEditorView(_repository);
+            view.Show(); // モードレスダイアログとして表示
+        }
+
+        [RelayCommand]
         private void SaveOperation()
         {
             foreach (var op in SelectedOperations)

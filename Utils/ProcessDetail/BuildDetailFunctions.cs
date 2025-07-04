@@ -7,8 +7,6 @@ using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System.Diagnostics.Eventing.Reader;
-
 namespace KdxDesigner.Utils.ProcessDetail
 {
     /// <summary>
@@ -26,7 +24,6 @@ namespace KdxDesigner.Utils.ProcessDetail
         private readonly string _label;
         private readonly int _outNum;
 
-        // _details や _ioList は基底クラスのものを利用するため、ここでは削除
 
         /// <summary>
         /// 新しい BuildDetailFunctions のインスタンスを初期化します。
@@ -71,7 +68,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
         public List<LadderCsvRow> L0()
         {
-            List<LadderCsvRow> result = new List<LadderCsvRow>();
+            List<LadderCsvRow> result = new();
 
             var processDetailStartIds = _detail.Detail.StartIds?.Split(';')
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
@@ -128,7 +125,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 if (_detail.Detail.TimerId != null)
                 {
 
-                    MnemonicTimerDeviceService timerDeviceService = new MnemonicTimerDeviceService(_repository);
+                    MnemonicTimerDeviceService timerDeviceService = new(_repository);
                     var timerDevice = timerDeviceService.GetMnemonicTimerDeviceByTimerId(_mainViewModel.SelectedPlc!.Id, _detail.Detail.TimerId.Value);
                     if (timerDevice == null)
                     {
