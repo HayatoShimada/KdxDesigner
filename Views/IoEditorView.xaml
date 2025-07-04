@@ -43,8 +43,17 @@
                 <DataGridTextColumn Header="System" Binding="{Binding System}" />
                 <DataGridTextColumn Header="StationNumber" Binding="{Binding StationNumber}" />
                 <DataGridTextColumn Header="IONameNaked" Binding="{Binding IONameNaked}" Width="*"/>
+                <DataGridTextColumn Header="LinkDevice" Binding="{Binding LinkDevice}" Width="*"/>
+
             </DataGrid.Columns>
         </DataGrid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="CSV出力" HorizontalAlignment="Left" 
+            Width="120" Height="30" Margin="0,0,20,0" Command="{Binding ExportLinkDeviceCsvCommand}"/>
+
+            <Button Content="リンク実行"
+            Width="120" Height="30" Margin="5" Command="{Binding ExecuteLinkCommand}"/>
+        </StackPanel>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <Button Content="閉じる" Width="100" Height="25" Click="CloseButton_Click"/>

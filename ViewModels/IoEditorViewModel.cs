@@ -1,10 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using KdxDesigner.Models;
+using KdxDesigner.Services;
 using KdxDesigner.Services.Access;
+
+using Microsoft.Win32;
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Data;
 
 namespace KdxDesigner.ViewModels
@@ -20,6 +25,7 @@ namespace KdxDesigner.ViewModels
         /// DataGridにバインドするための、フィルタリングとソートが可能なIOレコードのビュー。
         /// </summary>
         public ICollectionView IoRecordsView { get; }
+        private readonly LinkDeviceService _linkDeviceService;
 
         /// <summary>
         /// 全文検索テキストボックスにバインドされるプロパティ。
@@ -31,7 +37,7 @@ namespace KdxDesigner.ViewModels
         {
             // データベースから全てのIOレコードを読み込む
             _allIoRecords = repository.GetIoList();
-
+            _linkDeviceService = new LinkDeviceService(repository);
             // ICollectionViewを初期化し、フィルタリングロジックを割り当てる
             IoRecordsView = CollectionViewSource.GetDefaultView(_allIoRecords);
             IoRecordsView.Filter = FilterIoRecord;
@@ -44,6 +50,33 @@ namespace KdxDesigner.ViewModels
         {
             IoRecordsView.Refresh();
         }
+
+        [RelayCommand]
+        private void ExportLinkDeviceCsv()
+        {
+            // 1. ユーザーに保存場所を選んでもらう
+            var dialog = new SaveFileDialog
+            {
+                Filter = "CSVファイル (*.csv)|*.csv",
+                Title = "リンクデバイスCSVを保存",
+                FileName = "LinkDeviceList.csv"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    // 2. Serviceのメソッドを呼び出してCSVを生成・保存
+                    _linkDeviceService.ExportLinkDeviceCsv(dialog.FileName);
+                    MessageBox.Show($"CSVファイルを出力しました。\nパス: {dialog.FileName}", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"CSVの出力中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
 
         /// <summary>
         /// ICollectionViewのフィルタリングロジック。

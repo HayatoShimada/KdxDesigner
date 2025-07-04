@@ -88,5 +88,59 @@ namespace KdxDesigner.Services
                 masterUpdateList.Add(currentIoDevice);
             }
         }
+
+        public void ExportLinkDeviceCsv(string filePath)
+        {
+            // 1. IOテーブルからLinkDeviceが設定されているデータを取得
+            var allIo = _repository.GetIoList();
+            var linkedIoList = allIo.Where(io => !string.IsNullOrWhiteSpace(io.LinkDevice)).ToList();
+
+            if (!linkedIoList.Any())
+            {
+                throw new InvalidOperationException("出力対象のリンクデバイスが見つかりません。");
+            }
+
+            // 2. LinkDeviceを16進数として解釈し、正しくソート
+            var sortedIo = linkedIoList
+                .Select(io =>
+                {
+                    // ソートキーとしてアドレスの数値表現を取得
+                    LinkDeviceCalculator.TryParseLinkAddress(io.LinkDevice, out _, out long sortKey);
+                    return new { IO = io, SortKey = sortKey };
+                })
+                .OrderBy(item => item.SortKey)
+                .Select(item => item.IO)
+                .ToList();
+
+            // 3. CSVに出力するデータ形式に変換（空行挿入ロジックを含む）
+            var csvData = new List<string[]>();
+            csvData.Add(new[] { "LinkDevice", "Comment" }); // ヘッダー行
+
+            string? previousWordPart = null;
+
+            foreach (var io in sortedIo)
+            {
+                string linkDevice = io.LinkDevice!;
+
+                // 現在のワード部を取得 (例: "W01B5.F" -> "W01B5")
+                string currentWordPart = linkDevice.Split('.')[0];
+
+                // ★ ワード部が前回と変わったタイミングで空行を挿入
+                if (previousWordPart != null && currentWordPart != previousWordPart)
+                {
+                    csvData.Add(new string[0]); // 空の配列を空行とする
+                }
+
+                // XかYかでコメントを切り替える
+                string comment = (io.Address?.StartsWith("X") == true) ? io.XComment ?? "" : io.YComment ?? "";
+
+                csvData.Add(new[] { linkDevice, comment });
+
+                previousWordPart = currentWordPart;
+            }
+
+            // 4. 汎用エクスポーターを呼び出してファイルに書き込み
+            CsvExporter.Export(filePath, csvData);
+        }
     }
 }
