@@ -4,13 +4,8 @@ using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Access;
 
-using System; // Encoding.RegisterProvider を使うために追加
-using System.Collections.Generic; // List, Dictionary のために追加
 using System.Data;
 using System.Data.OleDb;
-using System.Linq; // FirstOrDefault を使うために追加
-using System.Text;
-using System.Xml.Linq;
 
 namespace KdxDesigner.Services
 {
@@ -77,7 +72,7 @@ namespace KdxDesigner.Services
                     parameters.Add("OutCoilCount", 5, DbType.Int32);
                     parameters.Add("PlcId", plcId, DbType.Int32);
 
-                    
+
                     parameters.Add("Comment1", process.Comment1, DbType.String); // Memoryのrow_3兼用
                     parameters.Add("Comment2", process.Comment2, DbType.String); // Memoryのrow_4兼用
 
@@ -459,7 +454,6 @@ namespace KdxDesigner.Services
 
                     // 結果を保持する変数を先に宣言し、デフォルト値を設定
                     string comment1 = "";
-                    string comment2 = "";
 
 
 
@@ -556,46 +550,46 @@ namespace KdxDesigner.Services
                             7 => "JOG",
                             8 => "JOG",
                             9 => "OFF指令",
-                            10 =>"",
-                            11 =>"",
-                            12 =>"自動",
-                            13 =>"自動",
-                            14 =>"",
-                            15 =>"ILOK",
-                            16 =>"ILOK",
-                            17 =>"ILOK",
-                            18 =>"ILOK",
-                            19 =>"行き",
-                            20 =>"帰り",
-                            21 =>"1",
-                            22 =>"2",
-                            23 =>"3",
-                            24 =>"4",
-                            25 =>"5",
-                            26 =>"6",
-                            27 =>"7",
-                            28 =>"8",
-                            29 =>"9",
-                            30 =>"10",
-                            31 =>"",
-                            32 =>"",
-                            33 =>"記憶",
-                            34 =>"ﾌﾞﾚｰｷ待ち",
-                            35 =>"",
-                            36 =>"",
-                            37 =>"",
-                            38 =>"",
-                            39 =>"",
-                            40 =>"停止",
-                            41 =>"ｴﾗｰ発生",
-                            42 =>"行きOK",
-                            43 =>"帰りOK",
-                            44 =>"",
-                            45 =>"",
-                            46 =>"",
-                            47 =>"",
-                            48 =>"",
-                            49 =>"",
+                            10 => "",
+                            11 => "",
+                            12 => "自動",
+                            13 => "自動",
+                            14 => "",
+                            15 => "ILOK",
+                            16 => "ILOK",
+                            17 => "ILOK",
+                            18 => "ILOK",
+                            19 => "行き",
+                            20 => "帰り",
+                            21 => "1",
+                            22 => "2",
+                            23 => "3",
+                            24 => "4",
+                            25 => "5",
+                            26 => "6",
+                            27 => "7",
+                            28 => "8",
+                            29 => "9",
+                            30 => "10",
+                            31 => "",
+                            32 => "",
+                            33 => "記憶",
+                            34 => "ﾌﾞﾚｰｷ待ち",
+                            35 => "",
+                            36 => "",
+                            37 => "",
+                            38 => "",
+                            39 => "",
+                            40 => "停止",
+                            41 => "ｴﾗｰ発生",
+                            42 => "行きOK",
+                            43 => "帰りOK",
+                            44 => "",
+                            45 => "",
+                            46 => "",
+                            47 => "",
+                            48 => "",
+                            49 => "",
 
                             _ => ""
                         };
