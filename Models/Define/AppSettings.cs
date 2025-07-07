@@ -5,19 +5,19 @@ namespace KdxDesigner.Models.Define
     public class AppSettings
     {
         [Description("エラーリセット信号")]
-        public string ErrorResetSignal { get; set; } = "M9999";
+        public string ErrorResetSignal { get; set; } = "M880";
 
         [Description("リセット信号")]
-        public string ResetSignal { get; set; } = "M3002";
+        public string ResetSignal { get; set; } = "M880";
 
         [Description("一時停止信号")]
-        public string PauseSignal { get; set; } = "M3300";
+        public string PauseSignal { get; set; } = "M207";
 
         [Description("一時停止遅延信号")]
-        public string PauseDelaySignal { get; set; } = "M3301";
+        public string PauseDelaySignal { get; set; } = "M208";
 
         [Description("ソフトリセット信号")]
-        public string SoftResetSignal { get; set; } = "M1234";
+        public string SoftResetSignal { get; set; } = "M100";
 
         [Description("アドレスオフセット")]
         public int AddressOffset { get; set; } = 1000;
@@ -41,7 +41,7 @@ namespace KdxDesigner.Models.Define
         public string CycleTime { get; set; } = "D400";
 
         [Description("エラー格納デバイス")]
-        public string ErrorDevice { get; set; } = "D401";
+        public string ErrorDevice { get; set; } = "D222";
 
         [Description("出力エラーデバイス")]
         public string OutErrorDevice { get; set; } = "M9999";

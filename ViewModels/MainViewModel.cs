@@ -22,14 +22,14 @@ namespace KdxDesigner.ViewModels
 
     public partial class MainViewModel : ObservableObject
     {
-        private readonly IAccessRepository? _repository;
-        private readonly MnemonicDeviceService? _mnemonicService;
-        private readonly MnemonicTimerDeviceService? _timerService;
-        private readonly ErrorService? _errorService;
-        private readonly ProsTimeDeviceService? _prosTimeService;
-        private readonly MnemonicSpeedDeviceService? _speedService; // クラス名が不明なため仮定
-        private readonly MemoryService? _memoryService;
-        private readonly WpfIOSelectorService? _ioSelectorService;
+        protected private readonly IAccessRepository? _repository;
+        protected private readonly MnemonicDeviceService? _mnemonicService;
+        protected private readonly MnemonicTimerDeviceService? _timerService;
+        protected private readonly ErrorService? _errorService;
+        protected private readonly ProsTimeDeviceService? _prosTimeService;
+        protected private readonly MnemonicSpeedDeviceService? _speedService; // クラス名が不明なため仮定
+        protected private readonly MemoryService? _memoryService;
+        protected private readonly WpfIOSelectorService? _ioSelectorService;
 
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
@@ -88,40 +88,51 @@ namespace KdxDesigner.ViewModels
         {
             try
             {
-                // 1. パス管理クラスを使ってDBパスを取得
+                // 1. パス管理と接続文字列生成
                 var pathManager = new DatabasePathManager();
                 string dbPath = pathManager.ResolveDatabasePath();
-
-                // 2. 接続文字列を生成
                 string connectionString = pathManager.CreateConnectionString(dbPath);
 
-                // 3. リポジトリに接続文字列を渡してインスタンス化
+                // 2. ★★★ 修正箇所 ★★★
+                // リポジトリと、それに依存する全てのサービスをここで先に初期化してしまう
                 _repository = new AccessRepository(connectionString);
-                if (_repository.GetCompanies().Count == 0)
-                {
-                    MessageBox.Show("データベースに会社情報がありません。", "初期化エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Application.Current.Shutdown();
-                    return;
-                }
-
                 _mnemonicService = new MnemonicDeviceService(_repository);
                 _timerService = new MnemonicTimerDeviceService(_repository, this);
                 _errorService = new ErrorService(_repository);
                 _prosTimeService = new ProsTimeDeviceService(_repository);
-                _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
+                _speedService = new MnemonicSpeedDeviceService(_repository);
                 _memoryService = new MemoryService(_repository);
                 _ioSelectorService = new WpfIOSelectorService();
 
+                // 3. データベースの基本的な健全性チェック
+                if (_repository.GetCompanies().Count == 0)
+                {
+                    // データがない場合はエラーメッセージを表示して終了
+                    MessageBox.Show("データベースは有効ですが、必須の会社情報が登録されていません。", "初期化エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Application.Current.Shutdown();
+                    return; // ここで終了しても、フィールドは既に初期化済み
+                }
+
+                // 4. 全ての初期化が成功した後に、データをロード
                 LoadInitialData();
             }
             catch (Exception ex)
             {
-                // パス選択キャンセルなどで例外が発生した場合の処理
+                // ファイルが見つからない、選択がキャンセルされた等の致命的なエラー
                 MessageBox.Show(ex.Message, "初期化エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                // アプリケーションを終了する
                 Application.Current.Shutdown();
-                return;
+                // この時点でフィールドはnullのままなので、後続の処理はガード句で保護される
             }
+        }
+
+        private bool CanExecute()
+        {
+            if (_repository == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return false;
+            }
+            return true;
         }
 
         // データの更新
@@ -141,50 +152,36 @@ namespace KdxDesigner.ViewModels
 
         partial void OnSelectedCompanyChanged(Company? value)
         {
-            if (_repository == null || _ioSelectorService == null)
-            {
-                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
-                return;
-            }
+            if (!CanExecute()) return;
 
             if (value == null) return;
-            Models = new ObservableCollection<Model>(_repository.GetModels().Where(m => m.CompanyId == value.Id));
+            Models = new ObservableCollection<Model>(_repository!.GetModels().Where(m => m.CompanyId == value.Id));
             SelectedModel = null;
         }
 
         partial void OnSelectedModelChanged(Model? value)
         {
-            if (_repository == null || _ioSelectorService == null)
-            {
-                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
-                return;
-            }
+            if (!CanExecute()) return;
 
             if (value == null) return;
-            Plcs = new ObservableCollection<PLC>(_repository.GetPLCs().Where(p => p.ModelId == value.Id));
+            Plcs = new ObservableCollection<PLC>(_repository!.GetPLCs().Where(p => p.ModelId == value.Id));
             SelectedPlc = null;
         }
 
         partial void OnSelectedPlcChanged(PLC? value)
         {
-            if (_repository == null || _ioSelectorService == null)
-            {
-                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
-                return;
-            }
+            if (!CanExecute()) return;
 
             if (value == null) return;
-            Cycles = new ObservableCollection<Cycle>(_repository.GetCycles().Where(c => c.PlcId == value.Id));
+            Cycles = new ObservableCollection<Cycle>(_repository!.GetCycles().Where(c => c.PlcId == value.Id));
             SelectedCycle = null;
         }
 
         partial void OnSelectedCycleChanged(Cycle? value)
         {
-            if (value == null)
-            {
-                Processes = new ObservableCollection<Models.Process>(allProcesses);
-                return;
-            }
+            if (!CanExecute()) return;
+
+            if (value == null) return;
             Processes = new ObservableCollection<Models.Process>(allProcesses.Where(p => p.CycleId == value.Id));
         }
         public void OnProcessDetailSelected(ProcessDetail selected)
@@ -238,15 +235,11 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void SaveOperation()
         {
-            if (_repository == null || SelectedPlc == null || _ioSelectorService == null)
-            {
-                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
-                return;
-            }
+            if (!CanExecute()) return;
 
             foreach (var op in SelectedOperations)
             {
-                _repository.UpdateOperation(op);
+                _repository!.UpdateOperation(op);
             }
             MessageBox.Show("保存しました。");
         }
@@ -317,7 +310,13 @@ namespace KdxDesigner.ViewModels
                 MemoryStatusMessage = "ラダー生成中...";
 
                 // ProcessBuilder (out パラメータ方式を維持、または新しい方式に修正)
-                var processRows = ProcessBuilder.GenerateAllLadderCsvRows(SelectedCycle!, ProcessDeviceStartL, DetailDeviceStartL, data.JoinedProcessList, data.JoinedProcessDetailList, data.IoList, out var processErrors);
+                var processRows = ProcessBuilder.GenerateAllLadderCsvRows(
+                    SelectedCycle!, 
+                    ProcessDeviceStartL, 
+                    DetailDeviceStartL, 
+                    data.JoinedProcessList, 
+                    data.JoinedProcessDetailList, 
+                    data.IoList, out var processErrors);
                 allOutputRows.AddRange(processRows);
                 allGeneratedErrors.AddRange(processErrors);
 
@@ -326,7 +325,13 @@ namespace KdxDesigner.ViewModels
 
                 var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService, _repository);
-                var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, data.JoinedProcessDetailWithTimerList);
+                var detailRows = detailBuilder.GenerateAllLadderCsvRows(
+                    data.JoinedProcessList, 
+                    data.JoinedProcessDetailList, 
+                    data.JoinedOperationList, 
+                    data.JoinedCylinderList, 
+                    data.IoList, 
+                    data.JoinedProcessDetailWithTimerList);
                 allOutputRows.AddRange(detailRows);
                 allGeneratedErrors.AddRange(pdErrorAggregator.GetAllErrors());
 
@@ -334,7 +339,14 @@ namespace KdxDesigner.ViewModels
                 var opErrorAggregator = new ErrorAggregator((int)MnemonicType.Operation);
                 var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var operationBuilder = new OperationBuilder(this, opErrorAggregator, opIoAddressService);
-                var operationRows = operationBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
+                var operationRows = operationBuilder.GenerateLadder(
+                    data.JoinedProcessDetailList, 
+                    data.JoinedOperationList, 
+                    data.JoinedCylinderList, 
+                    data.JoinedOperationWithTimerList, 
+                    data.SpeedDevice, 
+                    data.MnemonicErrors, 
+                    data.ProsTime, data.IoList);
                 allOutputRows.AddRange(operationRows);
                 allGeneratedErrors.AddRange(opErrorAggregator.GetAllErrors());
 
@@ -342,7 +354,15 @@ namespace KdxDesigner.ViewModels
                 var cyErrorAggregator = new ErrorAggregator((int)MnemonicType.CY);
                 var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var cylinderBuilder = new CylinderBuilder(this, cyErrorAggregator, cyIoAddressService);
-                var cylinderRows = cylinderBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.JoinedCylinderWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
+                var cylinderRows = cylinderBuilder.GenerateLadder(
+                    data.JoinedProcessDetailList, 
+                    data.JoinedOperationList, 
+                    data.JoinedCylinderList, 
+                    data.JoinedOperationWithTimerList, 
+                    data.JoinedCylinderWithTimerList, 
+                    data.SpeedDevice, 
+                    data.MnemonicErrors, 
+                    data.ProsTime, data.IoList);
                 allOutputRows.AddRange(cylinderRows);
                 allGeneratedErrors.AddRange(cyErrorAggregator.GetAllErrors());
 
@@ -446,8 +466,14 @@ namespace KdxDesigner.ViewModels
             var mnemonicErrors = _errorService!.GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
 
             // JOIN処理
-            var joinedProcessList = devicesP.Join(Processes, m => m.RecordId, p => p.Id, (m, p) => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p }).OrderBy(x => x.Process.Id).ToList();
-            var joinedProcessDetailList = devicesD.Join(details, m => m.RecordId, d => d.Id, (m, d) => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d }).OrderBy(x => x.Detail.Id).ToList();
+            var joinedProcessList = devicesP
+                .Join(Processes, m => m.RecordId, p => p.Id, (m, p) 
+                => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p })
+                .OrderBy(x => x.Process.Id).ToList();
+            var joinedProcessDetailList = devicesD
+                .Join(details, m => m.RecordId, d => d.Id, (m, d) 
+                => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d })
+                .OrderBy(x => x.Detail.Id).ToList();
 
             var timerDevicesDetail = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
 
@@ -455,14 +481,26 @@ namespace KdxDesigner.ViewModels
                 details, m => m.RecordId, o => o.Id, (m, o) =>
                 new MnemonicTimerDeviceWithDetail { Timer = m, Detail = o }).OrderBy(x => x.Detail.Id).ToList();
 
-            var joinedOperationList = devicesO.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
-            var joinedCylinderList = devicesC.Join(cylinders, m => m.RecordId, c => c.Id, (m, c) => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c }).OrderBy(x => x.Cylinder.Id).ToList();
+            var joinedOperationList = devicesO
+                .Join(operations, m => m.RecordId, o => o.Id, (m, o) 
+                => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o })
+                .OrderBy(x => x.Operation.Id).ToList();
+            var joinedCylinderList = devicesC
+                .Join(cylinders, m => m.RecordId, c => c.Id, (m, c) 
+                => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c })
+                .OrderBy(x => x.Cylinder.Id).ToList();
 
             var timerDevicesOperation = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.Operation).ToList();
-            var joinedOperationWithTimerList = timerDevicesOperation.Join(operations, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o }).OrderBy(x => x.Operation.Id).ToList();
+            var joinedOperationWithTimerList = timerDevicesOperation
+                .Join(operations, m => m.RecordId, o => o.Id, (m, o) 
+                => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o })
+                .OrderBy(x => x.Operation.Id).ToList();
 
             var timerDevicesCY = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.CY).ToList();
-            var joinedCylinderWithTimerList = timerDevicesCY.Join(cylinders, m => m.RecordId, o => o.Id, (m, o) => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o }).OrderBy(x => x.Cylinder.Id).ToList();
+            var joinedCylinderWithTimerList = timerDevicesCY
+                .Join(cylinders, m => m.RecordId, o => o.Id, (m, o) 
+                => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o })
+                .OrderBy(x => x.Cylinder.Id).ToList();
 
             var dataTuple = (
                 joinedProcessList,
@@ -520,7 +558,12 @@ namespace KdxDesigner.ViewModels
         }
 
         // MemorySettingに必要なデータを準備するヘルパー
-        private (List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers)? PrepareDataForMemorySetting()
+        private (
+            List<ProcessDetail> details, 
+            List<CY> cylinders, 
+            List<Operation> operations, 
+            List<IO> ioList, 
+            List<Models.Timer> timers)? PrepareDataForMemorySetting()
         {
             if (SelectedCycle == null || _repository == null || SelectedPlc == null || _ioSelectorService == null)
             {
@@ -539,7 +582,10 @@ namespace KdxDesigner.ViewModels
         }
 
         // Mnemonic* と Timer* テーブルへのデータ保存をまとめたヘルパー
-        private void SaveMnemonicAndTimerDevices((List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
+        private void SaveMnemonicAndTimerDevices(
+            (List<ProcessDetail> details, 
+            List<CY> cylinders, 
+            List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
             MemoryStatusMessage = "ニーモニックデバイス情報を保存中...";
             _mnemonicService!.SaveMnemonicDeviceProcess(Processes.ToList(), ProcessDeviceStartL, SelectedPlc!.Id);
@@ -558,7 +604,10 @@ namespace KdxDesigner.ViewModels
         }
 
         // Memoryテーブルへの保存処理
-        private async Task SaveMemoriesToMemoryTableAsync((List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
+        private async Task SaveMemoriesToMemoryTableAsync(
+            (List<ProcessDetail> details, 
+            List<CY> cylinders, 
+            List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
             var devices = _mnemonicService!.GetMnemonicDevice(SelectedPlc!.Id);
             var timerDevices = _timerService!.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);
@@ -579,17 +628,12 @@ namespace KdxDesigner.ViewModels
                                 (IsTimerMemory ? timerDevices.Count * 2 : 0);
             MemoryProgressValue = 0;
 
-            // 汎用ヘルパーを使って繰り返しを削減
-            if (!await ProcessAndSaveMemoryAsync(IsProcessMemory, devicesP, _memoryService!.SaveMnemonicMemories, "Process")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsDetailMemory, devicesD, _memoryService!.SaveMnemonicMemories, "ProcessDetail")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsOperationMemory, devicesO, _memoryService!.SaveMnemonicMemories, "Operation")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsCylinderMemory, devicesC, _memoryService!.SaveMnemonicMemories, "CY")) return;
-            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService!.SaveMnemonicMemories, "エラー")) return; // ★
+            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService.SaveMnemonicMemories, "エラー")) return; // ★
 
             if (IsTimerMemory)
             {
-                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService!.SaveMnemonicTimerMemoriesT, "Timer (T)")) return;
-                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService!.SaveMnemonicTimerMemoriesZR, "Timer (ZR)")) return;
+                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService.SaveMnemonicTimerMemoriesT, "Timer (T)")) return;
+                if (!await ProcessAndSaveMemoryAsync(true, timerDevices, _memoryService.SaveMnemonicTimerMemoriesZR, "Timer (ZR)")) return;
             }
 
             MemoryStatusMessage = "保存完了！";

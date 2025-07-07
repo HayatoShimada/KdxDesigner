@@ -6,6 +6,9 @@ using KdxDesigner.Services.Access;
 using System.Data;
 using System.Data.OleDb;
 using System.Diagnostics;
+using System.Text;
+
+using static Dapper.SqlMapper;
 
 namespace KdxDesigner.Services
 {
@@ -44,55 +47,57 @@ namespace KdxDesigner.Services
         {
             var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             var parameters = new DynamicParameters();
+            var debugParams = new List<string>(); // ★ デバッグ情報格納用のリスト
 
-            // Memory オブジェクトのプロパティを DynamicParameters に設定
-            parameters.Add("PlcId", memoryToSave.PlcId, DbType.Int32); // PlcIdはキーなので必須
-            parameters.Add("Device", memoryToSave.Device ?? "", DbType.String); // Deviceはキーなので必須
-            parameters.Add("MemoryCategory", memoryToSave.MemoryCategory ?? 0, DbType.Int32);
-            parameters.Add("DeviceNumber", memoryToSave.DeviceNumber ?? 0, DbType.Int32);
-            parameters.Add("DeviceNumber1", memoryToSave.DeviceNumber1 ?? "", DbType.String);
-            parameters.Add("DeviceNumber2", memoryToSave.DeviceNumber2 ?? "", DbType.String);
-            parameters.Add("Category", memoryToSave.Category ?? "", DbType.String);
-            parameters.Add("Row_1", memoryToSave.Row_1 ?? "", DbType.String);
-            parameters.Add("Row_2", memoryToSave.Row_2 ?? "", DbType.String);
-            parameters.Add("Row_3", memoryToSave.Row_3 ?? "", DbType.String);
-            parameters.Add("Row_4", memoryToSave.Row_4 ?? "", DbType.String);
-            parameters.Add("Direct_Input", memoryToSave.Direct_Input ?? "", DbType.String);
-            parameters.Add("Confirm", memoryToSave.Confirm ?? "", DbType.String);
-            parameters.Add("Note", memoryToSave.Note ?? "", DbType.String);
-            parameters.Add("UpdatedAt", now, DbType.String); // 更新日は常に現在時刻
-            parameters.Add("GOT", memoryToSave.GOT ?? false, DbType.Boolean);
-            parameters.Add("MnemonicId", memoryToSave.MnemonicId, DbType.Int32);
-            parameters.Add("RecordId", memoryToSave.RecordId, DbType.Int32);
-            parameters.Add("OutcoilNumber", memoryToSave.OutcoilNumber, DbType.Int32);
+            // ★ AddParameterヘルパーを使ってパラメータを追加＆デバッグ情報を記録
+            AddParameter(parameters, debugParams, "PlcId", memoryToSave.PlcId, DbType.Int32);
+            AddParameter(parameters, debugParams, "Device", memoryToSave.Device ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "MemoryCategory", memoryToSave.MemoryCategory ?? 0, DbType.Int32);
+            AddParameter(parameters, debugParams, "DeviceNumber", memoryToSave.DeviceNumber ?? 0, DbType.Int32);
+            AddParameter(parameters, debugParams, "DeviceNumber1", memoryToSave.DeviceNumber1 ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "DeviceNumber2", memoryToSave.DeviceNumber2 ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Category", memoryToSave.Category ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Row_1", memoryToSave.Row_1 ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Row_2", memoryToSave.Row_2 ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Row_3", memoryToSave.Row_3 ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Row_4", memoryToSave.Row_4 ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Direct_Input", memoryToSave.Direct_Input ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Confirm", memoryToSave.Confirm ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "Note", memoryToSave.Note ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "GOT", memoryToSave.GOT ?? "", DbType.String);
+            AddParameter(parameters, debugParams, "MnemonicId", memoryToSave.MnemonicId ?? 0, DbType.Int32);
+            AddParameter(parameters, debugParams, "RecordId", memoryToSave.RecordId ?? 0, DbType.Int32);
+            AddParameter(parameters, debugParams, "OutcoilNumber", memoryToSave.OutcoilNumber ?? 0, DbType.Int32);
 
             if (existingRecord != null) // Update
             {
-                // CreatedAt は更新しないため、ここではパラメータに追加しない
-                // PlcId と Device は WHERE 句で使用される (既に parameters に含まれている)
                 connection.Execute(@"
             UPDATE [Memory] SET
                 [MemoryCategory] = @MemoryCategory, [DeviceNumber] = @DeviceNumber,
                 [DeviceNumber1] = @DeviceNumber1, [DeviceNumber2] = @DeviceNumber2,
                 [Category] = @Category, [Row_1] = @Row_1, [Row_2] = @Row_2,
                 [Row_3] = @Row_3, [Row_4] = @Row_4, [Direct_Input] = @Direct_Input,
-                [Confirm] = @Confirm, [Note] = @Note, [UpdatedAt] = @UpdatedAt, [GOT] = @GOT,
+                [Confirm] = @Confirm, [Note] = @Note, 
+                [GOT] = @GOT,
                 [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [OutcoilNumber] = @OutcoilNumber
             WHERE [PlcId] = @PlcId AND [Device] = @Device",
                 parameters, transaction);
             }
             else // Insert
             {
-                parameters.Add("CreatedAt", memoryToSave.CreatedAt ?? now, DbType.String); // 新規作成時のみ CreatedAt を設定
+                string paramsString = ToDebugString(parameters);
+                Debug.WriteLine("--- Executing INSERT with Parameters ---");
+                Debug.WriteLine(string.Join("\n", debugParams)); // ★ デバッグ出力
+
                 connection.Execute(@"
             INSERT INTO [Memory] (
-                [PlcId], [MemoryCategory], [DeviceNumber], [DeviceNumber1], [DeviceNumber2], [Device],
+                [PlcId], [Device], [MemoryCategory], [DeviceNumber], [DeviceNumber1], [DeviceNumber2],
                 [Category], [Row_1], [Row_2], [Row_3], [Row_4], [Direct_Input], [Confirm], [Note],
-                [CreatedAt], [UpdatedAt], [GOT], [MnemonicId], [RecordId], [OutcoilNumber]
+                [GOT], [MnemonicId], [RecordId], [OutcoilNumber]
             ) VALUES (
-                @PlcId, @MemoryCategory, @DeviceNumber, @DeviceNumber1, @DeviceNumber2, @Device,
+                @PlcId, @Device, @MemoryCategory, @DeviceNumber, @DeviceNumber1, @DeviceNumber2,
                 @Category, @Row_1, @Row_2, @Row_3, @Row_4, @Direct_Input, @Confirm, @Note,
-                @CreatedAt, @UpdatedAt, @GOT, @MnemonicId, @RecordId, @OutcoilNumber
+                @GOT, @MnemonicId, @RecordId, @OutcoilNumber
             )",
                 parameters, transaction);
             }
@@ -284,7 +289,7 @@ namespace KdxDesigner.Services
                         Confirm = mnemonicTypeBasedCategoryString + device.Comment1 + i.ToString(),
                         Note = "",
                         // CreatedAt, UpdatedAt は ExecuteUpsertMemory で処理
-                        GOT = false,
+                        GOT = "False",
                         MnemonicId = device.MnemonicId, // MnemonicDevice の ID
                         RecordId = device.RecordId, // MnemonicDevice の ID
                         OutcoilNumber = i
@@ -438,6 +443,52 @@ namespace KdxDesigner.Services
                 Debug.WriteLine($"[ERROR] MnemonicTimerDevice ID={device.ID} のMemory(T)保存失敗 → {ex.Message}");
                 return false;
             }
+        }
+
+        private void AddParameter<T>(DynamicParameters parameters, List<string> debugList, string name, T value, DbType dbType)
+        {
+            parameters.Add(name, value, dbType);
+            debugList.Add($"  - @{name}: '{value}' (Type: {dbType})");
+        }
+
+        /// <summary>
+        /// DynamicParametersの中身をデバッグ用の文字列に変換します。
+        /// </summary>
+        private string ToDebugString(DynamicParameters parameters)
+        {
+            var sb = new StringBuilder();
+
+            // DynamicParametersはテンプレートを介してパラメータ名にアクセスする必要がある
+            var template = (IDynamicParameters)parameters;
+
+            // Get a reference to the private list of parameters
+            // This uses reflection and might be brittle if Dapper's internal structure changes.
+            // A simpler approach might be needed if this fails.
+            // Let's try a safer public interface first.
+
+            // Dapperの内部実装にアクセスするのは推奨されないため、
+            // パラメータ名の一覧を取得する公式な方法を使います。
+            var parameterNames = parameters.ParameterNames;
+
+            if (parameterNames.Any())
+            {
+                foreach (var name in parameterNames)
+                {
+                    // パラメータ名を使って値を取得する (この方法は少しトリッキーです)
+                    // DapperのDynamicParametersは、直接キーで値を取得する簡単な公開メソッドがありません。
+                    // そのため、デバッグでは方法1（デバッga）がはるかに優れています。
+
+                    // ここでは、デバッグ出力のための一つのアプローチを示します。
+                    // (リフレクションを使ったより複雑な方法もありますが、ここでは省略します)
+                    sb.AppendLine($"  - @{name}"); // パラメータ名だけを出力するだけでも有用
+                }
+            }
+            else
+            {
+                sb.AppendLine("(No parameters found)");
+            }
+
+            return sb.ToString();
         }
     }
 }

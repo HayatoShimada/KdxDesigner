@@ -2,9 +2,11 @@
 using CommunityToolkit.Mvvm.Input;
 
 using KdxDesigner.Models.Define;
+using KdxDesigner.Services;
 using KdxDesigner.Utils;
 
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 
@@ -12,14 +14,23 @@ namespace KdxDesigner.ViewModels
 {
     public partial class SettingsViewModel : ObservableObject
     {
+        private readonly DatabasePathManager _pathManager;
+
         [ObservableProperty]
-        private ObservableCollection<SettingItem> settingItems = new();
+        private ObservableCollection<SettingItem> _settingItems = new();
+
+        [ObservableProperty]
+        private string? _databasePath;
 
         private readonly Window _window;
 
         public SettingsViewModel(Window window)
         {
             _window = window;
+            _pathManager = new DatabasePathManager();
+
+            // 現在の設定を読み込んで表示
+            DatabasePath = _pathManager.CurrentDatabasePath;
             LoadSettings();
         }
 
@@ -32,12 +43,36 @@ namespace KdxDesigner.ViewModels
                     Key = p.Name,
                     Value = p.GetValue(SettingsManager.Settings)?.ToString() ?? "",
                     Description = p.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false)
-                                       .Cast<System.ComponentModel.DescriptionAttribute>()
-                                       .FirstOrDefault()?.Description ?? ""
+                                   .Cast<System.ComponentModel.DescriptionAttribute>()
+                                   .FirstOrDefault()?.Description ?? ""
                 })
             );
         }
 
+        /// <summary>
+        /// ★【新規】データベースパスの変更ダイアログを開くコマンド
+        /// </summary>
+        [RelayCommand]
+        private void ChangeDatabasePath()
+        {
+            // ★ SelectAndSaveNewPathメソッドを呼び出す
+            if (_pathManager.SelectAndSaveNewPath())
+            {
+                // パスが正常に選択・保存されたら、UIの表示も更新
+                DatabasePath = _pathManager.CurrentDatabasePath;
+
+                MessageBox.Show(
+                    "データベースのパスが変更されました。\nアプリケーションを再起動して設定を反映してください。",
+                    "情報",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            // キャンセルされた場合は何もしない
+        }
+
+        /// <summary>
+        /// DataGrid内の設定を保存するコマンド
+        /// </summary>
         [RelayCommand]
         private void Save()
         {
@@ -46,32 +81,29 @@ namespace KdxDesigner.ViewModels
 
             foreach (var item in SettingItems)
             {
-                if (string.IsNullOrEmpty(item.Key)) // Ensure Key is not null or empty
-                {
-                    MessageBox.Show("設定項目のキーが無効です。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+                if (string.IsNullOrEmpty(item.Key)) continue;
 
                 var prop = settingsType.GetProperty(item.Key);
                 if (prop == null || !prop.CanWrite) continue;
 
                 try
                 {
-                    object? convertedValue = prop.PropertyType == typeof(int)
-                        ? int.Parse(item.Value ?? "0") // Provide a default value to handle null
-                        : item.Value ?? ""; // Provide a default value for other types
+                    // 型変換をより安全に行う
+                    var convertedValue = System.Convert.ChangeType(item.Value, prop.PropertyType);
                     prop.SetValue(settingsObj, convertedValue);
                 }
                 catch
                 {
-                    MessageBox.Show($"設定 [{item.Key}] の保存に失敗しました。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
+                    MessageBox.Show($"設定 [{item.Key}] の値「{item.Value}」は正しい形式ではありません。", "保存エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return; // エラーがあれば中断
                 }
             }
 
             SettingsManager.Save();
-            MessageBox.Show("設定を保存しました！", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("設定を保存しました！", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+
+
 
         [RelayCommand]
         private void Close()
@@ -85,7 +117,5 @@ namespace KdxDesigner.ViewModels
         public string? Key { get; set; }
         public string? Value { get; set; }
         public string? Description { get; set; }
-
     }
-
 }

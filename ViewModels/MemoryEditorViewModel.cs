@@ -131,9 +131,7 @@ namespace KdxDesigner.ViewModels
                             Row_4 = cols.ElementAtOrDefault(7),
                             Direct_Input = cols.ElementAtOrDefault(8),
                             Confirm = cols.ElementAtOrDefault(9),
-                            Note = cols.ElementAtOrDefault(10),
-                            CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                            UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                            Note = cols.ElementAtOrDefault(10)
                         };
                     }).ToList();
 
