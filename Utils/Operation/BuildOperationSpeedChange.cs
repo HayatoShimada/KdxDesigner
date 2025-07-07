@@ -51,7 +51,7 @@ namespace KdxDesigner.Utils.Operation
             }
             else
             {
-                helper.CreateOperationError(operation, $"Mnemonicデバイスが設定されていません。");
+                helper.CreateOperationError(operation!, $"Mnemonicデバイスが設定されていません。");
                 return result;
             }
 

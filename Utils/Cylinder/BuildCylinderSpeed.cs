@@ -346,7 +346,7 @@ namespace KdxDesigner.Utils.Cylinder
             // ﾌﾞﾚｰｷ接点の検索
             // ブレーキ接点の検索
             var breakeList = sensors.Where(i => i.IOName != null
-                                           && i.IOName.Contains(cylinder.Cylinder.CYNum)
+                                           && i.IOName.Contains(cylinder.Cylinder.CYNum ?? string.Empty)
                                            && !i.IOName.Contains("STF")
                                            && !i.IOName.Contains("STR")).ToList();
 
@@ -400,10 +400,14 @@ namespace KdxDesigner.Utils.Cylinder
                 });
             }
 
-            // 正転指令
+            // Fix for CS8604: Ensure 'recordName' is not null before passing it to 'GetSingleAddress'.
             var stfIO = _ioAddressService.GetSingleAddress(
-                sensors, "STF", true, cylinder.Cylinder.CYNum, 
-                cylinder.Cylinder.Id, null);
+                sensors,
+                "STF",
+                true,
+                cylinder.Cylinder.CYNum ?? string.Empty, // Use null-coalescing operator to provide a default value
+                cylinder.Cylinder.Id,
+                null);
             if (stfIO !=null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
@@ -423,8 +427,12 @@ namespace KdxDesigner.Utils.Cylinder
 
             // 逆転指令
             var strIO = _ioAddressService.GetSingleAddress(
-                sensors, "STR", true, cyNum + cyName, 
-                cylinder.Cylinder.Id, null);
+                                        sensors,
+                                        "STR",
+                                        true,
+                                        (cylinder.Cylinder.CYNum + cyName) ?? string.Empty, // Ensure concatenated string is not null
+                                        cylinder.Cylinder.Id,
+                                        null);
             if (strIO != null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));

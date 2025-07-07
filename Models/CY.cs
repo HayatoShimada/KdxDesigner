@@ -10,7 +10,7 @@ namespace KdxDesigner.Models
         public int Id { get; set; }
         public int PlcId { get; set; }
         public string? PUCO { get; set; }
-        public string? CYNum { get; set; }
+        public string CYNum { get; set; } = string.Empty;
         public string? Go { get; set; }
         public string? Back { get; set; }
         public string? OilNum { get; set; }

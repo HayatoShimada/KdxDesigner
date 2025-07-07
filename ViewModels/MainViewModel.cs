@@ -29,7 +29,7 @@ namespace KdxDesigner.ViewModels
         private readonly ProsTimeDeviceService? _prosTimeService;
         private readonly MnemonicSpeedDeviceService? _speedService; // クラス名が不明なため仮定
         private readonly MemoryService? _memoryService;
-        private readonly WpfIOSelectorService _ioSelectorService;
+        private readonly WpfIOSelectorService? _ioSelectorService;
 
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
@@ -56,6 +56,8 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int prosTimeStartZR = 10000;
         [ObservableProperty] private int prosTimePreviousStartZR = 20000;
         [ObservableProperty] private int cyTimeStartZR = 30000;
+        [ObservableProperty] private int timerStartZR = 3000;
+
         [ObservableProperty] private string valveSearchText = "SV";
 
         [ObservableProperty] private bool isProcessMemory = false;
@@ -101,8 +103,9 @@ namespace KdxDesigner.ViewModels
                     Application.Current.Shutdown();
                     return;
                 }
+
                 _mnemonicService = new MnemonicDeviceService(_repository);
-                _timerService = new MnemonicTimerDeviceService(_repository);
+                _timerService = new MnemonicTimerDeviceService(_repository, this);
                 _errorService = new ErrorService(_repository);
                 _prosTimeService = new ProsTimeDeviceService(_repository);
                 _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定
@@ -191,6 +194,12 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void OpenIoEditor()
         {
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             // Viewにリポジトリのインスタンスを渡して生成
             var view = new IoEditorView(_repository);
             view.Show(); // モードレスダイアログとして表示
@@ -199,9 +208,15 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void SaveOperation()
         {
+            if (_repository == null || SelectedPlc == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             foreach (var op in SelectedOperations)
             {
-                _repository!.UpdateOperation(op);
+                _repository.UpdateOperation(op);
             }
             MessageBox.Show("保存しました。");
         }
@@ -229,6 +244,12 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void OpenLinkDeviceManager()
         {
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             // Viewにリポジトリのインスタンスを渡す
             var view = new LinkDeviceView(_repository);
             view.ShowDialog(); // モーダルダイアログとして表示
@@ -244,9 +265,9 @@ namespace KdxDesigner.ViewModels
         {
             var errorMessages = ValidateProcessOutput();
 
-            if (errorMessages.Any())
+            if (_repository == null || SelectedPlc == null || _ioSelectorService == null)
             {
-                MessageBox.Show(string.Join("\n", errorMessages), "入力エラー");
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
                 return;
             }
 
@@ -273,7 +294,7 @@ namespace KdxDesigner.ViewModels
                 // ProcessDetailBuilder
                 var pdErrorAggregator = new ErrorAggregator((int)MnemonicType.ProcessDetail);
 
-                var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, selectedPlc.Id, _ioSelectorService);
+                var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService, _repository);
                 var detailRows = detailBuilder.GenerateAllLadderCsvRows(data.JoinedProcessList, data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.IoList, data.JoinedProcessDetailWithTimerList);
                 allOutputRows.AddRange(detailRows);
@@ -281,7 +302,7 @@ namespace KdxDesigner.ViewModels
 
                 // OperationBuilder
                 var opErrorAggregator = new ErrorAggregator((int)MnemonicType.Operation);
-                var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, selectedPlc.Id, _ioSelectorService);
+                var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var operationBuilder = new OperationBuilder(this, opErrorAggregator, opIoAddressService);
                 var operationRows = operationBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
                 allOutputRows.AddRange(operationRows);
@@ -289,7 +310,7 @@ namespace KdxDesigner.ViewModels
 
                 // CylinderBuilder
                 var cyErrorAggregator = new ErrorAggregator((int)MnemonicType.CY);
-                var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, selectedPlc.Id, _ioSelectorService);
+                var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var cylinderBuilder = new CylinderBuilder(this, cyErrorAggregator, cyIoAddressService);
                 var cylinderRows = cylinderBuilder.GenerateLadder(data.JoinedProcessDetailList, data.JoinedOperationList, data.JoinedCylinderList, data.JoinedOperationWithTimerList, data.JoinedCylinderWithTimerList, data.SpeedDevice, data.MnemonicErrors, data.ProsTime, data.IoList);
                 allOutputRows.AddRange(cylinderRows);
@@ -364,11 +385,18 @@ namespace KdxDesigner.ViewModels
                   List<ProsTime> ProsTime,
                   List<IO> IoList) Data, List<OutputError> Errors) PrepareDataForOutput()
         {
+
+            if (_repository == null || SelectedPlc == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return new();
+            }
+
             var plcId = SelectedPlc!.Id;
             var cycleId = SelectedCycle!.Id;
 
             var devices = _mnemonicService!.GetMnemonicDevice(plcId);
-            var timers = _repository!.GetTimersByCycleId(cycleId);
+            var timers = _repository.GetTimersByCycleId(cycleId);
             var operations = _repository.GetOperations();
             var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
 
@@ -464,14 +492,18 @@ namespace KdxDesigner.ViewModels
         // MemorySettingに必要なデータを準備するヘルパー
         private (List<ProcessDetail> details, List<CY> cylinders, List<Operation> operations, List<IO> ioList, List<Models.Timer> timers)? PrepareDataForMemorySetting()
         {
-            if (SelectedCycle == null || SelectedPlc == null) return null;
+            if (SelectedCycle == null || _repository == null || SelectedPlc == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return null;
+            }
 
-            List<ProcessDetail> details = _repository!.GetProcessDetails().Where(d => d.CycleId == SelectedCycle.Id).ToList();
-            List<CY> cylinders = _repository!.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
+            List<ProcessDetail> details = _repository.GetProcessDetails().Where(d => d.CycleId == SelectedCycle.Id).ToList();
+            List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
             var operationIds = details.Select(c => c.OperationId).ToHashSet();
             List<Operation> operations = _repository.GetOperations().Where(o => operationIds.Contains(o.Id)).ToList();
-            var ioList = _repository!.GetIoList();
-            var timers = _repository!.GetTimersByCycleId(SelectedCycle.Id);
+            var ioList = _repository.GetIoList();
+            var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
 
             return (details, cylinders, operations, ioList, timers);
         }

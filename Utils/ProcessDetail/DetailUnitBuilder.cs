@@ -148,13 +148,12 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             result.Add(CreateStatement());
+            
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             result.AddRange(detailFunctions.L0());
 
-
-            //3行目　センサー名称からIOリスト参照
-
+            // 3行目　センサー名称からIOリスト参照
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
             if (_detail.Detail.FinishSensor != null)
             {
@@ -192,25 +191,15 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             }
 
-            //4行目 
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
-
-            //3行目　M3300　の後
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
-
-            //3行目 OUT
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
-            //5行目
+            // L4 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-
-            //6行目
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
-
-            //5行目
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
-
             result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
 

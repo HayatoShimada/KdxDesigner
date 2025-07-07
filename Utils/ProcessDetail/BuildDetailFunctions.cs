@@ -125,7 +125,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 if (_detail.Detail.TimerId != null)
                 {
 
-                    MnemonicTimerDeviceService timerDeviceService = new(_repository);
+                    MnemonicTimerDeviceService timerDeviceService = new(_repository, _mainViewModel);
                     var timerDevice = timerDeviceService.GetMnemonicTimerDeviceByTimerId(_mainViewModel.SelectedPlc!.Id, _detail.Detail.TimerId.Value);
                     if (timerDevice == null)
                     {

@@ -348,8 +348,8 @@ namespace KdxDesigner.Utils.Cylinder
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
 
             // センサーの取得
-            var goSensor = _ioAddressService.GetSingleAddress(sensors, _cylinder.Cylinder.RetentionSensorGo, false, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, null);
-            var backSensor = _ioAddressService.GetSingleAddress(sensors, _cylinder.Cylinder.RetentionSensorBack, false, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, null);
+            var goSensor = _ioAddressService.GetSingleAddress(sensors, _cylinder.Cylinder.RetentionSensorGo ?? string.Empty, false, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, null);
+            var backSensor = _ioAddressService.GetSingleAddress(sensors, _cylinder.Cylinder.RetentionSensorBack ?? string.Empty, false, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, null);
 
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
