@@ -33,6 +33,9 @@ namespace KdxDesigner.Models
         public int? PIL { get; set; }
         public int? SC { get; set; }
         public int? FC { get; set; }
+        public int? CycleId { get; set; }
+        public int? SortNumber { get; set; }
+
     }
 }
 

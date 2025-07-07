@@ -69,6 +69,8 @@ namespace KdxDesigner.Services
             AddParameter(parameters, debugParams, "RecordId", memoryToSave.RecordId ?? 0, DbType.Int32);
             AddParameter(parameters, debugParams, "OutcoilNumber", memoryToSave.OutcoilNumber ?? 0, DbType.Int32);
 
+            Debug.WriteLine(memoryToSave.RecordId);
+
             if (existingRecord != null) // Update
             {
                 connection.Execute(@"

@@ -337,7 +337,7 @@ namespace KdxDesigner.Services
                     if (operation.CYId.HasValue)
                     {
                         // 2. IDを使ってCYオブジェクトを取得
-                        CY? cY = repository.GetCY(operation.CYId.Value);
+                        CY? cY = repository.GetCYById(operation.CYId.Value);
 
                         // 3. CYオブジェクトが取得でき、かつその中にMacineIdが存在するかチェック
                         if (cY != null && cY.MacineId.HasValue)
@@ -412,7 +412,7 @@ namespace KdxDesigner.Services
                             Confirm = "",
                             Note = "",
                             GOT = "False",
-                            MnemonicId = (int)MnemonicType.Process,
+                            MnemonicId = (int)MnemonicType.Operation,
                             RecordId = operation.Id,
                             OutcoilNumber = i
                         };
@@ -649,7 +649,7 @@ namespace KdxDesigner.Services
                             Confirm = "",
                             Note = "",
                             GOT = "False",
-                            MnemonicId = (int)MnemonicType.Process,
+                            MnemonicId = (int)MnemonicType.CY,
                             RecordId = cylinder.Id,
                             OutcoilNumber = i
                         };

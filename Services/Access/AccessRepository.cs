@@ -103,7 +103,7 @@ namespace KdxDesigner.Services.Access
             return connection.Query<CY>(sql).ToList();
         }
 
-        public CY? GetCY(int id)
+        public CY? GetCYById(int id)
         {
             using var connection = new OleDbConnection(ConnectionString);
             return connection.QueryFirstOrDefault<CY>(
@@ -121,10 +121,7 @@ namespace KdxDesigner.Services.Access
         public List<Operation> GetOperations()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = @"
-SELECT Id, OperationName, CYId, CategoryId, GoBack, Start, Finish, Valve1,
-       S1, S2, S3, S4, S5, SS1, SS2, SS3, SS4, PIL, SC, FC
-FROM Operation";
+            var sql = @"SELECT * FROM Operation";
             return connection.Query<Operation>(sql).ToList();
         }
 

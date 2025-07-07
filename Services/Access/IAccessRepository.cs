@@ -79,7 +79,7 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        CY? GetCY(int id);
+        CY? GetCYById(int id);
 
         /// <summary>
         /// 指定されたサイクルIDに紐づくタイマー情報を取得します。

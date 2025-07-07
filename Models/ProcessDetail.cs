@@ -25,7 +25,7 @@ namespace KdxDesigner.Models
         public int? TimerId { get; set; }
         public string? SkipMode { get; set; }
         public int? CycleId { get; set; }
-
+        public int? SortNumber { get; set; }
     }
 
 }

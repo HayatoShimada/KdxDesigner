@@ -571,10 +571,14 @@ namespace KdxDesigner.ViewModels
                 return null;
             }
 
-            List<ProcessDetail> details = _repository.GetProcessDetails().Where(d => d.CycleId == SelectedCycle.Id).ToList();
+            List<ProcessDetail> details = _repository
+                .GetProcessDetails()
+                .Where(d => d.CycleId == SelectedCycle.Id).OrderBy(d => d.SortNumber).ToList();
             List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
             var operationIds = details.Select(c => c.OperationId).ToHashSet();
-            List<Operation> operations = _repository.GetOperations().Where(o => operationIds.Contains(o.Id)).ToList();
+            List<Operation> operations = _repository.GetOperations()
+                .Where(o => operationIds.Contains(o.Id))
+                .OrderBy(o => o.SortNumber).ToList();
             var ioList = _repository.GetIoList();
             var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
 
