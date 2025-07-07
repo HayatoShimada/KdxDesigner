@@ -33,7 +33,13 @@ namespace KdxDesigner.Services
             return connection.Query<MemoryCategory>(sql).ToList();
         }
 
-        // MemoryService クラス内
+        /// <summary>
+        /// Memory オブジェクトをデータベースに保存または更新します。
+        /// </summary>
+        /// <param name="connection">リポジトリ接続情報</param>
+        /// <param name="transaction">データベースのトランザクション</param>
+        /// <param name="memoryToSave">保存するデータ</param>
+        /// <param name="existingRecord">保存したい場所に既にデータが存在する場合の処理</param>
         private void ExecuteUpsertMemory(OleDbConnection connection, OleDbTransaction transaction, Memory memoryToSave, Memory? existingRecord)
         {
             var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -180,6 +186,33 @@ namespace KdxDesigner.Services
                 Debug.WriteLine($"[ERROR] SaveMemories 処理中にエラーが発生しました (PlcId={plcId}): {ex.Message}");
                 progressCallback?.Invoke($"エラーが発生しました (PlcId={plcId}): {ex.Message}");
                 throw; // 上位の呼び出し元に例外を通知して処理を中断させる
+            }
+        }
+
+        /// <summary>
+        /// ★【新規】既存のトランザクション内でメモリリストを保存するための内部メソッド。
+        /// </summary>
+        internal void SaveMemoriesInternal(int plcId, List<Memory> memories, OleDbConnection connection, OleDbTransaction transaction, Action<string>? progressCallback = null)
+        {
+            var existingForThisPlcId = connection.Query<Memory>(
+                "SELECT * FROM Memory WHERE PlcId = @PlcId",
+                new { PlcId = plcId },
+                transaction
+            ).ToList();
+
+            var existingLookup = existingForThisPlcId
+                .Where(m => !string.IsNullOrEmpty(m.Device))
+                .ToDictionary(m => (m.PlcId, m.Device), m => m);
+
+            for (int i = 0; i < memories.Count; i++)
+            {
+                var memoryToSave = memories[i];
+                if (memoryToSave == null) continue;
+
+                progressCallback?.Invoke($"[{i + 1}/{memories.Count}] Memory保存中: {memoryToSave.Device}");
+
+                existingLookup.TryGetValue((memoryToSave.PlcId, memoryToSave.Device), out Memory? existingRecord);
+                ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
             }
         }
 

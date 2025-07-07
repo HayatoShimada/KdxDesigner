@@ -46,6 +46,13 @@ namespace KdxDesigner.Services.Access
         List<Models.Machine> GetMachines();
 
         /// <summary>
+        /// idで指定された機械情報を取得します。
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Models.Machine? GetMachineById(int id);
+
+        /// <summary>
         /// 全ての駆動部(主)情報を取得します。
         /// </summary>
         List<DriveMain> GetDriveMains();
@@ -56,9 +63,23 @@ namespace KdxDesigner.Services.Access
         List<DriveSub> GetDriveSubs();
 
         /// <summary>
+        /// 駆動部(副)情報をidで指定して取得します。
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        DriveSub? GetDriveSubById(int id);
+
+        /// <summary>
         /// 全てのシリンダー(CY)情報を取得します。
         /// </summary>
         List<CY> GetCYs();
+
+        /// <summary>
+        /// idで指定されたシリンダー(CY)情報を取得します。
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        CY? GetCY(int id);
 
         /// <summary>
         /// 指定されたサイクルIDに紐づくタイマー情報を取得します。

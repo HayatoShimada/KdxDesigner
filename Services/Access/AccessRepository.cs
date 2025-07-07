@@ -57,7 +57,7 @@ namespace KdxDesigner.Services.Access
         public List<Models.Process> GetProcesses()
         {
             using var connection = new OleDbConnection(ConnectionString);
-            var sql = "SELECT Id, ProcessName, CycleId, TestStart, TestCondition, TestMode, AutoCondition, AutoMode, AutoStart, ProcessCategoryId, FinishId, ILStart FROM Process";
+            var sql = "SELECT * FROM Process";
             return connection.Query<Models.Process>(sql).ToList();
         }
 
@@ -66,6 +66,13 @@ namespace KdxDesigner.Services.Access
             using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT Id, MacineName, ShortName FROM Macine";
             return connection.Query<Models.Machine>(sql).ToList();
+        }
+
+        public Models.Machine? GetMachineById(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            return connection.QueryFirstOrDefault<Models.Machine>(
+                "SELECT * FROM Macine WHERE Id = @Id", new { Id = id });
         }
 
         public List<DriveMain> GetDriveMains()
@@ -82,12 +89,27 @@ namespace KdxDesigner.Services.Access
             return connection.Query<DriveSub>(sql).ToList();
         }
 
+        public DriveSub? GetDriveSubById(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            return connection.QueryFirstOrDefault<DriveSub>(
+                "SELECT * FROM DriveSub WHERE Id = @Id", new { Id = id });
+        }
+
         public List<CY> GetCYs()
         {
             using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT * FROM CY";
             return connection.Query<CY>(sql).ToList();
         }
+
+        public CY? GetCY(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            return connection.QueryFirstOrDefault<CY>(
+                "SELECT * FROM CY WHERE Id = @Id", new { Id = id });
+        }
+
         public List<Models.Timer> GetTimersByCycleId(int cycleId)
         {
             using var connection = new OleDbConnection(ConnectionString);

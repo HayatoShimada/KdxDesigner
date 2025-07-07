@@ -21,6 +21,9 @@ namespace KdxDesigner.Models
         public int? ProcessCategoryId { get; set; }
         public int? FinishId { get; set; }
         public string? ILStart { get; set; }
+        public string? Comment1 { get; set; }
+        public string? Comment2 { get; set; }
+
 
     }
 }

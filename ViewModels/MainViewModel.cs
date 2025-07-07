@@ -128,29 +128,53 @@ namespace KdxDesigner.ViewModels
         #region Properties for Selected Operations
         private void LoadInitialData()
         {
-            Companies = new ObservableCollection<Company>(_repository!.GetCompanies());
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
+            Companies = new ObservableCollection<Company>(_repository.GetCompanies());
             allProcesses = _repository.GetProcesses();
             allDetails = _repository.GetProcessDetails();
         }
 
         partial void OnSelectedCompanyChanged(Company? value)
         {
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             if (value == null) return;
-            Models = new ObservableCollection<Model>(_repository!.GetModels().Where(m => m.CompanyId == value.Id));
+            Models = new ObservableCollection<Model>(_repository.GetModels().Where(m => m.CompanyId == value.Id));
             SelectedModel = null;
         }
 
         partial void OnSelectedModelChanged(Model? value)
         {
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             if (value == null) return;
-            Plcs = new ObservableCollection<PLC>(_repository!.GetPLCs().Where(p => p.ModelId == value.Id));
+            Plcs = new ObservableCollection<PLC>(_repository.GetPLCs().Where(p => p.ModelId == value.Id));
             SelectedPlc = null;
         }
 
         partial void OnSelectedPlcChanged(PLC? value)
         {
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             if (value == null) return;
-            Cycles = new ObservableCollection<Cycle>(_repository!.GetCycles().Where(c => c.PlcId == value.Id));
+            Cycles = new ObservableCollection<Cycle>(_repository.GetCycles().Where(c => c.PlcId == value.Id));
             SelectedCycle = null;
         }
 
@@ -165,9 +189,15 @@ namespace KdxDesigner.ViewModels
         }
         public void OnProcessDetailSelected(ProcessDetail selected)
         {
+            if (_repository == null || _ioSelectorService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
             if (selected?.OperationId != null)
             {
-                var op = _repository!.GetOperationById(selected.OperationId.Value);
+                var op = _repository.GetOperationById(selected.OperationId.Value);
                 if (op != null)
                 {
                     SelectedOperations.Clear();
