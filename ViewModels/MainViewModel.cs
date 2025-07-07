@@ -56,6 +56,8 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int prosTimeStartZR = 10000;
         [ObservableProperty] private int prosTimePreviousStartZR = 20000;
         [ObservableProperty] private int cyTimeStartZR = 30000;
+        [ObservableProperty] private int timerStartZR = 3000;
+
         [ObservableProperty] private string valveSearchText = "SV";
 
         [ObservableProperty] private bool isProcessMemory = false;
@@ -102,7 +104,7 @@ namespace KdxDesigner.ViewModels
                     return;
                 }
                 _mnemonicService = new MnemonicDeviceService(_repository);
-                _timerService = new MnemonicTimerDeviceService(_repository);
+                _timerService = new MnemonicTimerDeviceService(_repository, this);
                 _errorService = new ErrorService(_repository);
                 _prosTimeService = new ProsTimeDeviceService(_repository);
                 _speedService = new MnemonicSpeedDeviceService(_repository); // クラス名が不明なため仮定

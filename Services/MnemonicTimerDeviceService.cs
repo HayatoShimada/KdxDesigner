@@ -3,23 +3,32 @@
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Access;
+using KdxDesigner.ViewModels;
 
-using System; // Exception, Action のために追加
-using System.Collections.Generic; // List, Dictionary のために追加
 using System.Data;
 using System.Data.OleDb;
-using System.Diagnostics;
-using System.Linq; // ToList, GroupBy, FirstOrDefault, SingleOrDefault 等のために追加
 
 namespace KdxDesigner.Services
 {
+    /// <summary>
+    /// MnemonicTimerDeviceのデータ操作を行うサービスクラス
+    /// </summary>
     public class MnemonicTimerDeviceService
     {
         private readonly string _connectionString;
+        private readonly MainViewModel _mainViewModel;
 
-        public MnemonicTimerDeviceService(IAccessRepository repository)
+        /// <summary>
+        /// MnemonicTimerDeviceServiceのコンストラクタ
+        /// </summary>
+        /// <param name="repository"></param>
+        /// <param name="mainViewModel"></param>
+        public MnemonicTimerDeviceService(
+            IAccessRepository repository,
+            MainViewModel mainViewModel)
         {
             _connectionString = repository.ConnectionString;
+            _mainViewModel = mainViewModel;
         }
 
         /// <summary>
@@ -70,9 +79,9 @@ namespace KdxDesigner.Services
         /// <param name="deviceToSave"></param>
         /// <param name="existingRecord"></param>
         private void UpsertMnemonicTimerDevice(
-            OleDbConnection connection, 
-            OleDbTransaction transaction, 
-            MnemonicTimerDevice deviceToSave, 
+            OleDbConnection connection,
+            OleDbTransaction transaction,
+            MnemonicTimerDevice deviceToSave,
             MnemonicTimerDevice? existingRecord)
         {
             var parameters = new DynamicParameters(); // オブジェクトからパラメータを自動生成
@@ -140,10 +149,9 @@ namespace KdxDesigner.Services
                 var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.ProcessDetail);
                 var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerId: m.TimerId), m => m);
 
-                // 修正: 'int?' 型を 'int' 型に変換して、ToDictionary のキーとして使用可能にする
                 var timersByRecordId = timers
                     .Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail)
-                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
+                    .GroupBy(t => t.RecordId ?? 0)
                     .ToDictionary(g => g.Key, g => g.ToList());
 
                 foreach (ProcessDetail detail in details)
@@ -158,7 +166,7 @@ namespace KdxDesigner.Services
                         if (timer == null) continue;
 
                         var processTimerDevice = "ST" + (startNum + count).ToString();
-                        var timerDevice = "ZR" + timer.TimerNum.ToString();
+                        var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR).ToString();
 
                         // 複合キーで既存レコードを検索
                         existingLookup.TryGetValue((detail.Id, timer.ID), out var existingRecord);
@@ -237,7 +245,7 @@ namespace KdxDesigner.Services
                         if (timer == null) continue;
 
                         var processTimerDevice = "ST" + (startNum + count).ToString();
-                        var timerDevice = "ZR" + timer.TimerNum.ToString();
+                        var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR).ToString();
 
                         // 複合キーで既存レコードを検索
                         existingLookup.TryGetValue((operation.Id, timer.ID), out var existingRecord);
@@ -318,7 +326,7 @@ namespace KdxDesigner.Services
 
                     var category = timerCategory.FirstOrDefault(c => c.ID == timer.TimerCategoryId);
                     var processTimerDevice = "ST" + (startNum + count).ToString();
-                    var timerDevice = "ZR" + timer.TimerNum.ToString();
+                    var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR).ToString();
 
                     if (timer.RecordId == null) continue; // RecordIdがnullの場合はスキップ
 
