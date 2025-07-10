@@ -114,7 +114,7 @@ namespace KdxDesigner.Utils.Operation
                 return result;
             }
 
-            result.AddRange(LadderRow.AddMOVPSet(operation.Operation.Start, speedDevice));
+            result.AddRange(LadderRow.AddMOVPSet("K" + operation.Operation.Start.ToString(), speedDevice));
 
             // M10 : 速度変化の処理
             for (int i = 0; i < speedChangeCount; i++)
@@ -125,19 +125,19 @@ namespace KdxDesigner.Utils.Operation
                 {
                     case 0:
                         speedSensor = operation.Operation.SS1 ?? "";
-                        operationSpeed = operation.Operation.S2 ?? "";
+                        operationSpeed = operation.Operation.S1 ?? "";
                         break;
                     case 1:
                         speedSensor = operation.Operation.SS2 ?? "";
-                        operationSpeed = operation.Operation.S3 ?? "";
+                        operationSpeed = operation.Operation.S2 ?? "";
                         break;
                     case 2:
                         speedSensor = operation.Operation.SS3 ?? "";
-                        operationSpeed = operation.Operation.S4 ?? "";
+                        operationSpeed = operation.Operation.S3 ?? "";
                         break;
                     case 3:
                         speedSensor = operation.Operation.SS4 ?? "";
-                        operationSpeed = operation.Operation.S5 ?? "";
+                        operationSpeed = operation.Operation.S4 ?? "";
                         break;
 
                     default:
@@ -173,7 +173,7 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
             if (operationTimerStable != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.TimerDevice!));
+                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.ProcessTimerDevice!));
 
             }
             result.Add(LadderRow.AddOR(label + (outNum + 19).ToString()));

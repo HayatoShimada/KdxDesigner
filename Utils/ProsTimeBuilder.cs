@@ -72,10 +72,12 @@ namespace KdxDesigner.Utils
                 if (pros.SortId == 0) continue; // SortId 0は全体のCYタイムなのでスキップ
                 var previousDevice1 = pros.PreviousDevice;
                 var previousDevice2 = prosTimeList.SingleOrDefault(p => p.SortId == pros.SortId - 1)?.PreviousDevice ?? "";
+                string cylinderDeviceSort = prosTimeList.SingleOrDefault(p => p.SortId == pros.SortId)?.CylinderDevice ?? "";
+
                 result.AddRange(LadderRow.AddSUBP(
                 previousDevice1,
                 previousDevice2,
-                cylinderDevice));
+                cylinderDeviceSort));
             }
 
             return result;

@@ -117,6 +117,18 @@ namespace KdxDesigner.Services.Access
         List<ProcessDetail> GetProcessDetails();
 
         /// <summary>
+        /// 全ての工程詳細カテゴリを取得します。
+        /// </summary>
+        List<ProcessDetailCategory> GetProcessDetailCategories();
+
+        /// <summary>
+        /// idで指定されたの工程詳細カテゴリを取得します。
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        ProcessDetailCategory? GetProcessDetailCategoryById(int id);
+
+        /// <summary>
         /// 全てのIOリスト情報を取得します。
         /// </summary>
         List<IO> GetIoList();
@@ -136,6 +148,14 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         /// <param name="ioRecordsToUpdate">LinkDeviceが設定されたIOオブジェクトのリスト。</param>
         void UpdateIoLinkDevices(IEnumerable<IO> ioRecordsToUpdate);
+
+        /// <summary>
+        /// IOレコードのリストを更新し、同時に変更履歴を保存します。
+        /// これらの一連の処理は単一のトランザクション内で実行されます。
+        /// </summary>
+        /// <param name="iosToUpdate">更新対象のIOオブジェクトのリスト。</param>
+        /// <param name="histories">保存する変更履歴のリスト。</param>
+        void UpdateAndLogIoChanges(List<IO> iosToUpdate, List<IOHistory> histories);
 
     }
 }

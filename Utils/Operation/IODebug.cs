@@ -154,7 +154,6 @@ namespace KdxDesigner.Utils.Operation
         /// </summary>
         private void HandleSpeedAndFinishWithStart(List<LadderCsvRow> result, int speedCount)
         {
-            result.Add(LadderRow.AddMPS());
 
             HandleSpeedSensor(result, _operation.Operation.SS1, 7, 10);
             HandleSpeedSensor(result, _operation.Operation.SS2, 10, 11);

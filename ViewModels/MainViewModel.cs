@@ -31,7 +31,6 @@ namespace KdxDesigner.ViewModels
         protected private readonly MemoryService? _memoryService;
         protected private readonly WpfIOSelectorService? _ioSelectorService;
 
-
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
         [ObservableProperty] private ObservableCollection<PLC> plcs = new();
@@ -51,10 +50,10 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int operationDeviceStartM = 20000;
         [ObservableProperty] private int cylinderDeviceStartM = 30000;
         [ObservableProperty] private int cylinderDeviceStartD = 30000;
-        [ObservableProperty] private int errorDeviceStartM = 52000;
-        [ObservableProperty] private int deviceStartT = 2000;
-        [ObservableProperty] private int prosTimeStartZR = 10000;
-        [ObservableProperty] private int prosTimePreviousStartZR = 20000;
+        [ObservableProperty] private int errorDeviceStartM = 120000;
+        [ObservableProperty] private int deviceStartT = 0;
+        [ObservableProperty] private int prosTimeStartZR = 12000;
+        [ObservableProperty] private int prosTimePreviousStartZR = 24000;
         [ObservableProperty] private int cyTimeStartZR = 30000;
         [ObservableProperty] private int timerStartZR = 3000;
 
@@ -94,7 +93,6 @@ namespace KdxDesigner.ViewModels
                 string connectionString = pathManager.CreateConnectionString(dbPath);
 
                 // 2. ★★★ 修正箇所 ★★★
-                // リポジトリと、それに依存する全てのサービスをここで先に初期化してしまう
                 _repository = new AccessRepository(connectionString);
                 _mnemonicService = new MnemonicDeviceService(_repository);
                 _timerService = new MnemonicTimerDeviceService(_repository, this);
@@ -182,7 +180,8 @@ namespace KdxDesigner.ViewModels
             if (!CanExecute()) return;
 
             if (value == null) return;
-            Processes = new ObservableCollection<Models.Process>(allProcesses.Where(p => p.CycleId == value.Id));
+            Processes = new ObservableCollection<Models.Process>(
+                allProcesses.Where(p => p.CycleId == value.Id).OrderBy(p => p.SortNumber));
         }
         public void OnProcessDetailSelected(ProcessDetail selected)
         {
@@ -368,6 +367,8 @@ namespace KdxDesigner.ViewModels
 
                 // --- 3. 全てのエラーをUIに一度に反映 ---
                 OutputErrors = allGeneratedErrors.Distinct().ToList(); // 重複するエラーを除く場合
+
+
                 if (OutputErrors.Any())
                 {
                     MessageBox.Show("ラダー生成中にエラーが検出されました。エラーリストを確認してください。", "生成エラー");
@@ -380,7 +381,10 @@ namespace KdxDesigner.ViewModels
                     MessageBox.Show(MemoryStatusMessage, "エラー");
                     return;
                 }
-
+                ExportLadderCsvFile(processRows, "Process.csv", "全ラダー");
+                ExportLadderCsvFile(detailRows, "Detail.csv", "全ラダー");
+                ExportLadderCsvFile(operationRows, "Operation.csv", "全ラダー");
+                ExportLadderCsvFile(cylinderRows, "Cylinder.csv", "全ラダー");
                 ExportLadderCsvFile(allOutputRows, "KdxLadder_All.csv", "全ラダー");
                 MessageBox.Show("出力処理が完了しました。", "完了");
             }
@@ -448,16 +452,38 @@ namespace KdxDesigner.ViewModels
             var devices = _mnemonicService!.GetMnemonicDevice(plcId);
             var timers = _repository.GetTimersByCycleId(cycleId);
             var operations = _repository.GetOperations();
-            var cylinders = _repository.GetCYs().Where(c => c.PlcId == plcId).ToList();
+
+
+            // 1. まずPlcIdで絞り込む
+            var cylindersForPlc = _repository.GetCYs().Where(c => c.PlcId == plcId);
+
+            // 2. さらに、ProcessStartCycle に cycleId が含まれるものでフィルタリング
+            var filteredCylinders = cylindersForPlc
+                .Where(c =>
+                    // ProcessStartCycle が null や空でないことを最初に確認
+                    !string.IsNullOrWhiteSpace(c.ProcessStartCycle) &&
+
+                    // 文字列をセミコロンで分割し、空の要素は除去
+                    c.ProcessStartCycle.Split(';', StringSplitOptions.RemoveEmptyEntries)
+
+                    // 分割された各ID文字列のいずれか(Any)が cycleId と一致するかチェック
+                    .Any(idString =>
+                        // 安全に数値に変換し、cycleId と比較する
+                        int.TryParse(idString.Trim(), out int parsedId) && parsedId == cycleId
+                    )
+                )
+                .ToList().OrderBy(c => c.SortNumber);
+
+            var cylinders = filteredCylinders;
 
             var details = _repository.GetProcessDetails().Where(d => d.CycleId == cycleId).ToList();
             var ioList = _repository.GetIoList();
             selectedServo = _repository.GetServos(null, null);
 
-            var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
-            var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
-            var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
-            var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList();
+            var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList().OrderBy(p => p.StartNum);
+            var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList().OrderBy(d => d.StartNum);
+            var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList().OrderBy(o => o.StartNum);
+            var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList().OrderBy(c => c.StartNum);
 
             var timerDevices = _timerService!.GetMnemonicTimerDevice(plcId, cycleId);
             var prosTime = _prosTimeService!.GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
@@ -468,12 +494,10 @@ namespace KdxDesigner.ViewModels
             // JOIN処理
             var joinedProcessList = devicesP
                 .Join(Processes, m => m.RecordId, p => p.Id, (m, p) 
-                => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p })
-                .OrderBy(x => x.Process.Id).ToList();
+                => new MnemonicDeviceWithProcess { Mnemonic = m, Process = p }).ToList();
             var joinedProcessDetailList = devicesD
                 .Join(details, m => m.RecordId, d => d.Id, (m, d) 
-                => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d })
-                .OrderBy(x => x.Detail.Id).ToList();
+                => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d }).ToList();
 
             var timerDevicesDetail = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
 
@@ -484,17 +508,17 @@ namespace KdxDesigner.ViewModels
             var joinedOperationList = devicesO
                 .Join(operations, m => m.RecordId, o => o.Id, (m, o) 
                 => new MnemonicDeviceWithOperation { Mnemonic = m, Operation = o })
-                .OrderBy(x => x.Operation.Id).ToList();
+                .OrderBy(x => x.Mnemonic.StartNum).ToList();
             var joinedCylinderList = devicesC
                 .Join(cylinders, m => m.RecordId, c => c.Id, (m, c) 
                 => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c })
-                .OrderBy(x => x.Cylinder.Id).ToList();
+                .OrderBy(x => x.Mnemonic.StartNum).ToList();
 
             var timerDevicesOperation = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.Operation).ToList();
             var joinedOperationWithTimerList = timerDevicesOperation
                 .Join(operations, m => m.RecordId, o => o.Id, (m, o) 
                 => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o })
-                .OrderBy(x => x.Operation.Id).ToList();
+                .OrderBy(x => x.Operation.SortNumber).ToList();
 
             var timerDevicesCY = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.CY).ToList();
             var joinedCylinderWithTimerList = timerDevicesCY
@@ -575,14 +599,34 @@ namespace KdxDesigner.ViewModels
                 .GetProcessDetails()
                 .Where(d => d.CycleId == SelectedCycle.Id).OrderBy(d => d.SortNumber).ToList();
             List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
+
+            var filteredCylinders = cylinders
+                .Where(c =>
+                    // ProcessStartCycle が null や空でないことを最初に確認
+                    !string.IsNullOrWhiteSpace(c.ProcessStartCycle) &&
+
+                    // 文字列をセミコロンで分割し、空の要素は除去
+                    c.ProcessStartCycle.Split(';', StringSplitOptions.RemoveEmptyEntries)
+
+                    // 分割された各ID文字列のいずれか(Any)が cycleId と一致するかチェック
+                    .Any(idString =>
+                        // 安全に数値に変換し、cycleId と比較する
+                        int.TryParse(idString.Trim(), out int parsedId) && parsedId == SelectedCycle.Id
+                    )
+                )
+                .ToList();
+
+
             var operationIds = details.Select(c => c.OperationId).ToHashSet();
-            List<Operation> operations = _repository.GetOperations()
-                .Where(o => operationIds.Contains(o.Id))
+            List<Operation> operations = _repository.GetOperations().ToList();
+            
+            var op = operations
+                .Where(o => o.CycleId == SelectedCycle.Id)
                 .OrderBy(o => o.SortNumber).ToList();
             var ioList = _repository.GetIoList();
             var timers = _repository.GetTimersByCycleId(SelectedCycle.Id);
 
-            return (details, cylinders, operations, ioList, timers);
+            return (details, filteredCylinders, op, ioList, timers);
         }
 
         // Mnemonic* と Timer* テーブルへのデータ保存をまとめたヘルパー

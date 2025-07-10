@@ -73,17 +73,46 @@ namespace KdxDesigner.Services
 
             if (existingRecord != null) // Update
             {
-                connection.Execute(@"
-            UPDATE [Memory] SET
-                [MemoryCategory] = @MemoryCategory, [DeviceNumber] = @DeviceNumber,
-                [DeviceNumber1] = @DeviceNumber1, [DeviceNumber2] = @DeviceNumber2,
-                [Category] = @Category, [Row_1] = @Row_1, [Row_2] = @Row_2,
-                [Row_3] = @Row_3, [Row_4] = @Row_4, [Direct_Input] = @Direct_Input,
-                [Confirm] = @Confirm, [Note] = @Note, 
-                [GOT] = @GOT,
-                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [OutcoilNumber] = @OutcoilNumber
-            WHERE [PlcId] = @PlcId AND [Device] = @Device",
-                parameters, transaction);
+                // ★★★ 修正箇所 スタート ★★★
+
+                // 1. UPDATE文のプレースホルダを '?' に変更
+                var sqlUpdate = @"
+                    UPDATE [Memory] SET
+                        [MemoryCategory] = ?, [DeviceNumber] = ?, [DeviceNumber1] = ?, 
+                        [DeviceNumber2] = ?, [Category] = ?, [Row_1] = ?, [Row_2] = ?, 
+                        [Row_3] = ?, [Row_4] = ?, [Direct_Input] = ?, [Confirm] = ?, 
+                        [Note] = ?, [UpdatedAt] = ?, [GOT] = ?, [MnemonicId] = ?, 
+                        [RecordId] = ?, [OutcoilNumber] = ?
+                    WHERE [PlcId] = ? AND [Device] = ?";
+
+                var updateParams = new DynamicParameters();
+
+                // 2. パラメータをSQL文の '?' の出現順と完全に一致させる
+                // --- SET句のパラメータ ---
+                updateParams.Add("p1", memoryToSave.MemoryCategory ?? 0, DbType.Int32);
+                updateParams.Add("p2", memoryToSave.DeviceNumber ?? 0, DbType.Int32);
+                updateParams.Add("p3", memoryToSave.DeviceNumber1 ?? "", DbType.String);
+                updateParams.Add("p4", memoryToSave.DeviceNumber2 ?? "", DbType.String);
+                updateParams.Add("p5", memoryToSave.Category ?? "", DbType.String);
+                updateParams.Add("p6", memoryToSave.Row_1 ?? "", DbType.String);
+                updateParams.Add("p7", memoryToSave.Row_2 ?? "", DbType.String);
+                updateParams.Add("p8", memoryToSave.Row_3 ?? "", DbType.String);
+                updateParams.Add("p9", memoryToSave.Row_4 ?? "", DbType.String);
+                updateParams.Add("p10", memoryToSave.Direct_Input ?? "", DbType.String);
+                updateParams.Add("p11", memoryToSave.Confirm ?? "", DbType.String);
+                updateParams.Add("p12", memoryToSave.Note ?? "", DbType.String);
+                updateParams.Add("p13", now, DbType.String); // UpdatedAt
+                updateParams.Add("p14", "", DbType.String);
+                updateParams.Add("p15", memoryToSave.MnemonicId ?? 0, DbType.Int32);
+                updateParams.Add("p16", memoryToSave.RecordId ?? 0, DbType.Int32);
+                updateParams.Add("p17", memoryToSave.OutcoilNumber ?? 0, DbType.Int32);
+                // --- WHERE句のパラメータ ---
+                updateParams.Add("p18", memoryToSave.PlcId, DbType.Int32);
+                updateParams.Add("p19", memoryToSave.Device ?? "", DbType.String);
+
+                connection.Execute(sqlUpdate, updateParams, transaction);
+                
+                // ★★★ 修正箇所 エンド ★★★
             }
             else // Insert
             {

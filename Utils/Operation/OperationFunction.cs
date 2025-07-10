@@ -58,8 +58,8 @@ namespace KdxDesigner.Utils.Operation
                     var detailLabel = detail.Mnemonic.DeviceLabel; // 工程詳細のラベル取得
                     var detailOutNum = detail.Mnemonic.StartNum; // 工程詳細のラベル取得
 
-                    result.Add(LadderRow.AddLD(_label + (detailOutNum + 1).ToString()));
-                    result.Add(LadderRow.AddANI(_label + (detailOutNum + 4).ToString()));
+                    result.Add(LadderRow.AddLD(detailLabel + (detailOutNum + 1).ToString()));
+                    result.Add(LadderRow.AddANI(detailLabel + (detailOutNum + 4).ToString()));
                     if (notFirst) result.Add(LadderRow.AddORB());
                     notFirst = true;
                 }
@@ -82,7 +82,7 @@ namespace KdxDesigner.Utils.Operation
         {
             var result = new List<LadderCsvRow>();
 
-            result.Add(LadderRow.AddLD(_label + (_outNum + 1).ToString()));
+            result.Add(LadderRow.AddLD(_label + (_outNum + 0).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddLD(_label + (_outNum + 2).ToString()));
             result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
@@ -94,12 +94,14 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddANI(_label + (_outNum + 4).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 5).ToString()));
 
+            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
+
             // 関連するタイマがある場合
-            if (_timers.Count > 0)
+            if (thisTimer != null && thisTimer.Count > 0)
             {
                 result.Add(LadderRow.AddLDP(_label + (_outNum + 5).ToString()));
 
-                foreach (var timer in _timers)
+                foreach (var timer in thisTimer)
                 {
                     result.Add(LadderRow.AddRST(timer.Timer.ProcessTimerDevice));
                 }
@@ -223,9 +225,9 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
                 result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
-                result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_outNum + speedCount + 10).ToString()));
                 result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
-                result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount + 10).ToString()));
             }
             else
             {
@@ -264,13 +266,13 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
                 result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
-                result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 10 + speedCount).ToString()));
                 result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
-                result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_outNum + 10 + speedCount).ToString()));
 
                 // 速度指令
                 var speedDevice = speeds.FirstOrDefault(s => s.CylinderId == _operation.Operation.CYId)?.Device ?? "";
-                result.AddRange(LadderRow.AddMOVPSet(operationSpeed, speedDevice));
+                result.AddRange(LadderRow.AddMOVPSet("K"+operationSpeed.ToString(), speedDevice));
             }
 
             return result;
@@ -311,9 +313,9 @@ namespace KdxDesigner.Utils.Operation
                 }
             }
 
-            result.Add(LadderRow.AddOR(_label + (_outNum + 5).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_outNum + +10 + speedCount).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_outNum + speedCount).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_outNum + 10 + speedCount).ToString()));
 
             // 速度指令
             var speedDevice = _operation.Operation.Valve1;
@@ -414,7 +416,7 @@ namespace KdxDesigner.Utils.Operation
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.TimerDevice!));
+                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.ProcessTimerDevice!));
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 17).ToString()));
             result.Add(LadderRow.AddAND(_label + (_outNum + 16).ToString()));
@@ -430,7 +432,7 @@ namespace KdxDesigner.Utils.Operation
 
             if (operationTimerStable != null)
             {
-                result.Add(LadderRow.AddLD(_label + (_outNum + 18).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_outNum + 17).ToString()));
                 result.Add(LadderRow.AddANI(_label + (_outNum + 19).ToString()));
                 result.AddRange(LadderRow.AddTimer(
                     operationTimerStable.Timer.ProcessTimerDevice ?? "",
@@ -444,10 +446,10 @@ namespace KdxDesigner.Utils.Operation
             // 深当たりタイマがある場合
             if (operationTimerStable != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.TimerDevice!));
+                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.ProcessTimerDevice!));
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 19).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 18).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_outNum + 17).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 19).ToString()));
 
             return result;
@@ -472,7 +474,7 @@ namespace KdxDesigner.Utils.Operation
             var result = new List<LadderCsvRow>();
             var helper = new OperationHelper(_mainViewModel, _errorAggregator, _ioAddressService);
 
-            for (int i = 0; i < speedChangeCount -1; i++)
+            for (int i = 0; i < speedChangeCount; i++)
             {
                 if (i >= helper.s_speedChangeConfigs.Count) continue;
 

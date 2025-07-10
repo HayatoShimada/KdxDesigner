@@ -25,6 +25,8 @@ namespace KdxDesigner.Models
         public int? BackSensorCount { get; set; }
         public string? RetentionSensorGo { get; set; }
         public string? RetentionSensorBack { get; set; }
+        public int? SortNumber { get; set; }
+        public int? Cycle { get; set; }
 
     }
 

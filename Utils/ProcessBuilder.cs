@@ -23,6 +23,8 @@ namespace KdxDesigner.Utils
             var allRows = new List<LadderCsvRow>();             // ニモニック配列を格納するリスト
             errors = new List<OutputError>();                   // エラーリストの初期化
 
+            processes = processes.OrderBy(p => p.Process.SortNumber).ToList(); // 工程をカテゴリIDでソート
+
             // プロセスのニモニックを生成
             allRows = GenerateCsvRowsProcess(processes, details);
             // プロセス詳細のニモニックを生成
@@ -43,7 +45,7 @@ namespace KdxDesigner.Utils
                         mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     case 2:     // Single
-                        //mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
+                        mnemonic.AddRange(BuildProcess.BuildNormal(pros, details));
                         break;
                     case 3:     // リセット後工程 #issue16
                         mnemonic.AddRange(BuildProcess.BuildResetAfter(pros, details));

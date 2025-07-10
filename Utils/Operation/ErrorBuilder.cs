@@ -3,7 +3,7 @@ using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Utils.MnemonicCommon;
 
-namespace KdxDesigner.Utils
+namespace KdxDesigner.Utils.Operation
 {
     internal class ErrorBuilder
     {
@@ -40,14 +40,14 @@ namespace KdxDesigner.Utils
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 7).ToString()));
-                        result.Add(LadderRow.AddAND(label + (outNum + 18).ToString()));
+                        result.Add(LadderRow.AddAND(label + (outNum + 19).ToString()));
                         break;
 
                     case 3: // 途中TO
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 10 + countSpeed).ToString()));
-                        result.Add(LadderRow.AddANI(label + (outNum + 18).ToString()));
+                        result.Add(LadderRow.AddANI(label + (outNum + 19).ToString()));
                         countSpeed++;
                         break;
 
@@ -55,14 +55,15 @@ namespace KdxDesigner.Utils
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
                         result.Add(LadderRow.AddANI(label + (outNum + 10 + countSpeed).ToString()));
-                        result.Add(LadderRow.AddAND(label + (outNum + 18).ToString()));
+                        result.Add(LadderRow.AddAND(label + (outNum + 19).ToString()));
                         break;
 
                     case 5: // 完了TO
                         result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
                         result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
-                        result.Add(LadderRow.AddANI(label + (outNum + 18).ToString()));
+                        result.Add(LadderRow.AddANI(label + (outNum + 19).ToString()));
                         break;
+
                     default:
                         AddError("不明なエラータイプです。", each.Device ?? "", each.MnemonicId ?? 0, operation.Id);
                         continue;

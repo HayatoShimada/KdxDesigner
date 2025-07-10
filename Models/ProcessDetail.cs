@@ -26,6 +26,8 @@ namespace KdxDesigner.Models
         public string? SkipMode { get; set; }
         public int? CycleId { get; set; }
         public int? SortNumber { get; set; }
+        public string? Comment { get; set; }
+
     }
 
 }

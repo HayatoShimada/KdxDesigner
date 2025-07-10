@@ -87,16 +87,26 @@ namespace KdxDesigner.Utils.Cylinder
             var activeOperation = cylinderOperations.Where(o => o.Operation.GoBack == "A").ToList();    // 作動のOperationを取得  
 
             // 行き方向自動指令  
-            result.AddRange(functions.GoOperation(goOperation, activeOperation));
+            if (goOperation.Count != 0 && activeOperation.Count == 0)
+            {
+                result.AddRange(functions.GoOperation(goOperation));
+                // 帰り方向自動指令
+                result.AddRange(functions.BackOperation(backOperation));
+                result.AddRange(functions.GoManualOperation(goOperation));
+                result.AddRange(functions.BackManualOperation(backOperation));
 
-            // 帰り方向自動指令
-            result.AddRange(functions.BackOperation(backOperation));
+            }
+            // 行き方向自動指令がない場合は、行き方向手動指令を使用
+            else if (goOperation.Count == 0 && activeOperation.Count != 0)
+            {
 
-            // 行き方向手動指令
-            result.AddRange(functions.GoManualOperation(goOperation, activeOperation));
+                result.AddRange(functions.GoOperation(activeOperation));
+                // 帰り方向自動指令
+                result.AddRange(functions.BackOperation(backOperation));
+                result.AddRange(functions.GoManualOperation(activeOperation));
+                result.AddRange(functions.BackManualOperation(backOperation));
 
-            // 帰り方向手動指令  
-            result.AddRange(functions.BackManualOperation(backOperation));
+            }
             result.Add(LadderRow.AddNOP());
 
             // 行き方向自動

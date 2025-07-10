@@ -28,7 +28,11 @@ namespace KdxDesigner.Services
             _memoryService = new MemoryService(repository);
         }
 
-        // MnemonicDeviceテーブルからPlcIdに基づいてデータを取得する
+        /// <summary>
+        /// MnemonicDeviceテーブルから、指定されたPLCに基づいてデータを取得する。
+        /// </summary>
+        /// <param name="plcId"></param>
+        /// <returns></returns>
         public List<MnemonicDevice> GetMnemonicDevice(int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
@@ -36,7 +40,12 @@ namespace KdxDesigner.Services
             return connection.Query<MnemonicDevice>(sql, new { PlcId = plcId }).ToList();
         }
 
-        // MnemonicDeviceテーブルからPlcIdとMnemonicIdに基づいてデータを取得する
+        /// <summary>
+        /// MnemonicDeviceテーブルから、指定されたPLCとMnemonicIdに基づいてデータを取得する。
+        /// </summary>
+        /// <param name="plcId"></param>
+        /// <param name="mnemonicId"></param>
+        /// <returns></returns>
         public List<MnemonicDevice> GetMnemonicDeviceByMnemonic(int plcId, int mnemonicId)
         {
             using var connection = new OleDbConnection(_connectionString);
@@ -44,7 +53,12 @@ namespace KdxDesigner.Services
             return connection.Query<MnemonicDevice>(sql, new { PlcId = plcId, MnemonicId = mnemonicId }).ToList();
         }
 
-        // Processesのリストを受け取り、MnemonicDeviceテーブルに保存する
+        /// <summary>
+        /// Processesのリストを受け取り、MnemonicDeviceテーブルに保存する。
+        /// </summary>
+        /// <param name="processes"></param>
+        /// <param name="startNum"></param>
+        /// <param name="plcId"></param>
         public void SaveMnemonicDeviceProcess(List<Models.Process> processes, int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
@@ -76,16 +90,32 @@ namespace KdxDesigner.Services
                     parameters.Add("Comment1", process.Comment1, DbType.String); // Memoryのrow_3兼用
                     parameters.Add("Comment2", process.Comment2, DbType.String); // Memoryのrow_4兼用
 
-                    if (existing != null)
+                    if (existing != null) // Update
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
+                        var updateParams = new DynamicParameters();
+
+                        // 1. UPDATE文を位置プレースホルダ(?)に変更
+                        var sqlUpdate = @"
                             UPDATE [MnemonicDevice] SET
-                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
-                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
-                                [Comment1] = @Comment1, [Comment2] = @Comment2
-                            WHERE [ID] = @ID",
-                            parameters, transaction);
+                                [MnemonicId] = ?, [RecordId] = ?, [DeviceLabel] = ?,
+                                [StartNum] = ?, [OutCoilCount] = ?, [PlcId] = ?,
+                                [Comment1] = ?, [Comment2] = ?
+                            WHERE [ID] = ?";
+
+                        // 2. パラメータをSQL文の出現順と完全に一致させる
+                        // --- SET句のパラメータ ---
+                        updateParams.Add("p1", (int)MnemonicType.Process, DbType.Int32);
+                        updateParams.Add("p2", process.Id, DbType.Int32);
+                        updateParams.Add("p3", "L", DbType.String);
+                        updateParams.Add("p4", (count * 5 + startNum), DbType.Int32);
+                        updateParams.Add("p5", 5, DbType.Int32);
+                        updateParams.Add("p6", plcId, DbType.Int32);
+                        updateParams.Add("p7", process.Comment1 ?? "", DbType.String);
+                        updateParams.Add("p8", process.Comment2 ?? "", DbType.String);
+                        // --- WHERE句のパラメータ ---
+                        updateParams.Add("p9", existing.ID, DbType.Int32);
+
+                        connection.Execute(sqlUpdate, updateParams, transaction);
                     }
                     else
                     {
@@ -154,6 +184,12 @@ namespace KdxDesigner.Services
             }
         }
 
+        /// <summary>
+        /// processDetailのリストを受け取り、MnemonicDeviceテーブルに保存する。
+        /// </summary>
+        /// <param name="processes"></param>
+        /// <param name="startNum"></param>
+        /// <param name="plcId"></param>
         public void SaveMnemonicDeviceProcessDetail(List<ProcessDetail> processes, int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
@@ -167,7 +203,6 @@ namespace KdxDesigner.Services
                 var allMemoriesToSave = new List<Memory>();
                 int count = 0;
 
-                // ★★★ 修正箇所 スタート ★★★
                 foreach (ProcessDetail detail in processes)
                 {
                     // 1. detail自体がnullの場合のみスキップする
@@ -183,9 +218,59 @@ namespace KdxDesigner.Services
                         operation = _repository.GetOperationById(detail.OperationId.Value);
                     }
 
-                    // 3. operation の有無に応じて comment1 を安全に設定
-                    var comment1 = operation?.OperationName ?? "";
-                    var comment2 = detail.DetailName ?? "";
+                    string shortName = "";
+                    if (detail.CategoryId.HasValue)
+                    {
+                        // 3. CategoryId がある場合のみ、カテゴリ情報を取得
+                        var category = _repository.GetProcessDetailCategoryById(detail.CategoryId.Value);
+                        if (category != null)
+                        {
+                            shortName = category.ShortName ?? "";
+                        }
+                    }
+
+                    int mnemonicStartNum = (count * 5 + startNum);
+                    // AccessRepositoryは、このメソッドのクラスのフィールドとして保持されている
+                    // _repository を使うのが望ましいですが、ここでは元のコードの形式を維持します。
+                    var repository = new AccessRepository(_connectionString);
+
+                    // 結果を保持する変数を先に宣言し、デフォルト値を設定
+                    string comment1 = "";
+                    string comment2 = detail.Comment ?? "";
+
+                    // 1. CYIdが存在するかどうかを正しくチェック
+                    if (operation != null)
+                    {
+                        // 2. IDを使ってCYオブジェクトを取得
+                        CY? cY = repository.GetCYById(operation.CYId!.Value);
+
+                        // 3. CYオブジェクトが取得でき、かつその中にMacineIdが存在するかチェック
+                        if (cY != null && cY.MacineId.HasValue)
+                        {
+                            // 4. MacineIdを使ってMachineオブジェクトを取得
+                            Machine? machine = repository.GetMachineById(cY.MacineId.Value);
+
+                            // 5. Machineオブジェクトが取得できたことを確認してから、コメントを生成
+                            if (machine != null)
+                            {
+                                // CYNumやShortNameがnullの場合も考慮し、空文字列として結合
+                                comment1 = (cY.CYNum ?? "") + (machine.ShortName ?? "");
+                            }
+                            else
+                            {
+                                // Machineが見つからなかった場合のエラーハンドリング（任意）
+                                // 例: _errorAggregator.AddError(...);
+                            }
+                        }
+                        else
+                        {
+                            // CYが見つからなかったか、CYにMacineIdがなかった場合のエラーハンドリング（任意）
+                        }
+                    }
+                    else
+                    {
+                        comment1 = shortName; // Operationがない場合は、カテゴリのショートネームを使用
+                    }
 
                     // --- MnemonicDeviceのUPSERT ---
                     var parameters = new DynamicParameters();
@@ -198,16 +283,28 @@ namespace KdxDesigner.Services
                     parameters.Add("Comment1", comment1, DbType.String);
                     parameters.Add("Comment2", comment2, DbType.String);
 
-                    if (existing != null)
+                    if (existing != null) // Update
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
+                        var sqlUpdate = @"
                             UPDATE [MnemonicDevice] SET
-                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
-                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
-                                [Comment1] = @Comment1, [Comment2] = @Comment2
-                            WHERE [ID] = @ID",
-                            parameters, transaction);
+                                [MnemonicId] = ?, [RecordId] = ?, [DeviceLabel] = ?,
+                                [StartNum] = ?, [OutCoilCount] = ?, [PlcId] = ?,
+                                [Comment1] = ?, [Comment2] = ?
+                            WHERE [ID] = ?";
+
+                        var updateParams = new DynamicParameters();
+                        // パラメータをSQL文の '?' の出現順と完全に一致させる
+                        updateParams.Add("p1", (int)MnemonicType.ProcessDetail, DbType.Int32);
+                        updateParams.Add("p2", detail.Id, DbType.Int32);
+                        updateParams.Add("p3", "L", DbType.String);
+                        updateParams.Add("p4", (count * 5 + startNum), DbType.Int32); // ProcessDetailは10点区切り
+                        updateParams.Add("p5", 5, DbType.Int32);
+                        updateParams.Add("p6", plcId, DbType.Int32);
+                        updateParams.Add("p7", comment1, DbType.String);
+                        updateParams.Add("p8", comment2, DbType.String);
+                        updateParams.Add("p9", existing.ID, DbType.Int32); // WHERE句のパラメータ
+
+                        connection.Execute(sqlUpdate, updateParams, transaction);
                     }
                     else
                     {
@@ -221,7 +318,6 @@ namespace KdxDesigner.Services
                     }
 
                     // --- 対応するMemoryレコードを生成し、リストに蓄積 ---
-                    int mnemonicStartNum = (count * 5 + startNum);
                     for (int i = 0; i < 5; i++) // OutCoilCount=10
                     {
                         string row_2 = i switch
@@ -229,9 +325,8 @@ namespace KdxDesigner.Services
                             0 => "開始条件",
                             1 => "開始",
                             2 => "実行中",
-                            3 => "終了条件",
+                            3 => "操作釦",
                             4 => "終了",
-                            // 5以降も必要であれば定義を追加
                             _ => ""
                         };
 
@@ -255,7 +350,6 @@ namespace KdxDesigner.Services
                     }
                     count++;
                 }
-                // ★★★ 修正箇所 エンド ★★★
 
                 // --- ループ完了後、蓄積した全Memoryレコードを同じトランザクションで一括保存 ---
                 if (allMemoriesToSave.Any())
@@ -303,18 +397,29 @@ namespace KdxDesigner.Services
 
                     if (existing != null)
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
+                        var sqlUpdate = @"
                             UPDATE [MnemonicDevice] SET
-                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
-                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
-                                [Comment1] = @Comment1, [Comment2] = @Comment2
-                            WHERE [ID] = @ID",
-                            parameters, transaction);
+                                [MnemonicId] = ?, [RecordId] = ?, [DeviceLabel] = ?,
+                                [StartNum] = ?, [OutCoilCount] = ?, [PlcId] = ?,
+                                [Comment1] = ?, [Comment2] = ?
+                            WHERE [ID] = ?";
+
+                        var updateParams = new DynamicParameters();
+                        // パラメータをSQL文の '?' の出現順と完全に一致させる
+                        updateParams.Add("p1", (int)MnemonicType.Operation, DbType.Int32);
+                        updateParams.Add("p2", operation.Id, DbType.Int32);
+                        updateParams.Add("p3", "M", DbType.String);
+                        updateParams.Add("p4", (count * 20 + startNum), DbType.Int32);
+                        updateParams.Add("p5", 20, DbType.Int32);
+                        updateParams.Add("p6", plcId, DbType.Int32);
+                        updateParams.Add("p7", operation.OperationName ?? "", DbType.String);
+                        updateParams.Add("p8", operation.OperationName ?? "", DbType.String);
+                        updateParams.Add("p9", existing.ID, DbType.Int32); // WHERE句のパラメータ
+
+                        connection.Execute(sqlUpdate, updateParams, transaction);
                     }
                     else
                     {
-                        // ★修正: SQLのパラメータ名のタイプミスを修正
                         connection.Execute(@"
                             INSERT INTO [MnemonicDevice] (
                                 [MnemonicId], [RecordId], [DeviceLabel], [StartNum], [OutCoilCount], [PlcId], [Comment1], [Comment2]
@@ -463,16 +568,28 @@ namespace KdxDesigner.Services
                     parameters.Add("Comment1", cylinder.CYNum, DbType.String);
                     parameters.Add("Comment2", cylinder.CYNum, DbType.String);
 
-                    if (existing != null)
+                    if (existing != null) // Update
                     {
-                        parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
+                        var sqlUpdate = @"
                             UPDATE [MnemonicDevice] SET
-                                [MnemonicId] = @MnemonicId, [RecordId] = @RecordId, [DeviceLabel] = @DeviceLabel,
-                                [StartNum] = @StartNum, [OutCoilCount] = @OutCoilCount, [PlcId] = @PlcId,
-                                [Comment1] = @Comment1, [Comment2] = @Comment2
-                            WHERE [ID] = @ID",
-                            parameters, transaction);
+                                [MnemonicId] = ?, [RecordId] = ?, [DeviceLabel] = ?,
+                                [StartNum] = ?, [OutCoilCount] = ?, [PlcId] = ?,
+                                [Comment1] = ?, [Comment2] = ?
+                            WHERE [ID] = ?";
+
+                        var updateParams = new DynamicParameters();
+                        // パラメータをSQL文の '?' の出現順と完全に一致させる
+                        updateParams.Add("p1", (int)MnemonicType.CY, DbType.Int32);
+                        updateParams.Add("p2", cylinder.Id, DbType.Int32);
+                        updateParams.Add("p3", "M", DbType.String);
+                        updateParams.Add("p4", (count * 50 + startNum), DbType.Int32); // Cylinderは100点区切り
+                        updateParams.Add("p5", 50, DbType.Int32);
+                        updateParams.Add("p6", plcId, DbType.Int32);
+                        updateParams.Add("p7", cylinder.CYNum ?? "", DbType.String);
+                        updateParams.Add("p8", cylinder.CYNum ?? "", DbType.String);
+                        updateParams.Add("p9", existing.ID, DbType.Int32); // WHERE句のパラメータ
+
+                        connection.Execute(sqlUpdate, updateParams, transaction);
                     }
                     else
                     {

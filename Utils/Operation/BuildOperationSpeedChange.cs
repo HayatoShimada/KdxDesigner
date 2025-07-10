@@ -78,6 +78,12 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(operationFunction.GenerateM5());
             result.AddRange(operationFunction.GenerateM6());
 
+            if (operation.Operation.S1 != null)
+            {
+                var speedDevice = speeds.FirstOrDefault(s => s.CylinderId == operation.Operation.CYId)?.Device ?? "";
+                result.AddRange(LadderRow.AddMOVPSet("K" + operation.Operation.S1.ToString().Replace("A", "").Replace("B", ""), speedDevice));
+            }
+
             if (operation.Operation.Start != null)
             {
                 // ★★★ 修正: GenerateM7 がエラーを直接 _errorAggregator に追加するように変更 (OperationFunction側の修正も必要)

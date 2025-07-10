@@ -7,8 +7,11 @@ using KdxDesigner.Services.Access;
 
 using Microsoft.Win32;
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
 
@@ -16,16 +19,18 @@ namespace KdxDesigner.ViewModels
 {
     public partial class IoEditorViewModel : ObservableObject
     {
+        private readonly IAccessRepository _repository;
+        private readonly LinkDeviceService _linkDeviceService;
+
         /// <summary>
-        /// データベースから読み込んだ全てのIOレコードを保持します。
+        /// データベースから読み込んだ全てのIOレコードをラップしたViewModelのリスト。
         /// </summary>
-        private readonly List<IO> _allIoRecords;
+        private readonly List<IOViewModel> _allIoRecords;
 
         /// <summary>
         /// DataGridにバインドするための、フィルタリングとソートが可能なIOレコードのビュー。
         /// </summary>
         public ICollectionView IoRecordsView { get; }
-        private readonly LinkDeviceService _linkDeviceService;
 
         /// <summary>
         /// 全文検索テキストボックスにバインドされるプロパティ。
@@ -35,26 +40,54 @@ namespace KdxDesigner.ViewModels
 
         public IoEditorViewModel(IAccessRepository repository)
         {
-            // データベースから全てのIOレコードを読み込む
-            _allIoRecords = repository.GetIoList();
-            _linkDeviceService = new LinkDeviceService(repository);
-            // ICollectionViewを初期化し、フィルタリングロジックを割り当てる
+            _repository = repository;
+            _linkDeviceService = new LinkDeviceService(_repository);
+
+            // ★ IOをIOViewModelでラップしてリストを作成
+            _allIoRecords = repository.GetIoList().Select(io => new IOViewModel(io)).ToList();
+
             IoRecordsView = CollectionViewSource.GetDefaultView(_allIoRecords);
             IoRecordsView.Filter = FilterIoRecord;
         }
 
-        /// <summary>
-        /// 全文検索テキストが変更されたときに呼び出され、フィルタを再適用します。
-        /// </summary>
         partial void OnFullTextSearchChanged(string? value)
         {
             IoRecordsView.Refresh();
         }
 
+        private bool FilterIoRecord(object item)
+        {
+            if (string.IsNullOrWhiteSpace(FullTextSearch))
+            {
+                return true;
+            }
+
+            // ★★★ 修正箇所: itemをIOViewModelとして扱う ★★★
+            if (item is IOViewModel ioVm)
+            {
+                string searchTerm = FullTextSearch.ToLower();
+                // IOViewModelのプロパティを検索
+                return (ioVm.IOText?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.XComment?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.YComment?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.FComment?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.Address?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.IOName?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.IOExplanation?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.IOSpot?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.UnitName?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.System?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.StationNumber?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.IONameNaked?.ToLower().Contains(searchTerm) ?? false) ||
+                       (ioVm.LinkDevice?.ToLower().Contains(searchTerm) ?? false);
+            }
+
+            return false;
+        }
+
         [RelayCommand]
         private void ExportLinkDeviceCsv()
         {
-            // 1. ユーザーに保存場所を選んでもらう
             var dialog = new SaveFileDialog
             {
                 Filter = "CSVファイル (*.csv)|*.csv",
@@ -66,8 +99,9 @@ namespace KdxDesigner.ViewModels
             {
                 try
                 {
-                    // 2. Serviceのメソッドを呼び出してCSVを生成・保存
+                    // ★★★ 修正箇所: List<IOViewModel> を List<IO> に変換 ★★★
                     _linkDeviceService.ExportLinkDeviceCsv(dialog.FileName);
+
                     MessageBox.Show($"CSVファイルを出力しました。\nパス: {dialog.FileName}", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
@@ -77,43 +111,73 @@ namespace KdxDesigner.ViewModels
             }
         }
 
-
-        /// <summary>
-        /// ICollectionViewのフィルタリングロジック。
-        /// </summary>
-        /// <param name="item">コレクション内の各IOオブジェクト。</param>
-        /// <returns>表示する場合はtrue、非表示にする場合はfalse。</returns>
-        private bool FilterIoRecord(object item)
+        [RelayCommand]
+        private void SaveChanges()
         {
-            // 検索テキストが空の場合は、全ての項目を表示
-            if (string.IsNullOrWhiteSpace(FullTextSearch))
+            try
             {
-                return true;
-            }
+                // ★★★ 修正箇所: IsDirtyでフィルタリング ★★★
+                var changedVms = _allIoRecords.Where(vm => vm.IsDirty).ToList();
+                if (!changedVms.Any())
+                {
+                    MessageBox.Show("変更された項目はありません。", "情報");
+                    return;
+                }
 
-            if (item is IO io)
+                var histories = new List<IOHistory>();
+                var ioToUpdate = new List<IO>();
+
+                // ★★★ 修正箇所: 変数名を統一 ★★★
+                var changedIds = changedVms.Select(vm => vm.Id).ToHashSet();
+                var originalIos = _repository.GetIoList().Where(io => changedIds.Contains(io.Id))
+                                             .ToDictionary(io => io.Id);
+
+                foreach (var changedVm in changedVms)
+                {
+                    var updatedIo = changedVm.GetModel();
+                    ioToUpdate.Add(updatedIo);
+
+                    if (!originalIos.TryGetValue(changedVm.Id, out var originalIo)) continue;
+
+                    var properties = typeof(IO).GetProperties();
+                    foreach (var prop in properties)
+                    {
+                        if (prop.Name == "Id") continue;
+
+                        var oldValue = prop.GetValue(originalIo);
+                        var newValue = prop.GetValue(updatedIo);
+                        var oldValueStr = oldValue?.ToString() ?? "";
+                        var newValueStr = newValue?.ToString() ?? "";
+
+                        if (oldValueStr != newValueStr)
+                        {
+                            histories.Add(new IOHistory
+                            {
+                                IoId = updatedIo.Id,
+                                PropertyName = prop.Name,
+                                OldValue = oldValueStr,
+                                NewValue = newValueStr,
+                                ChangedAt = DateTime.Now.ToString(),
+                                ChangedBy = "user"
+                            });
+                        }
+                    }
+                }
+
+                // ★★★ 修正箇所: 正しいメソッドを呼び出す ★★★
+                if (ioToUpdate.Any())
+                {
+                    _repository.UpdateAndLogIoChanges(ioToUpdate, histories);
+                }
+
+                changedVms.ForEach(vm => vm.IsDirty = false);
+
+                MessageBox.Show($"{changedVms.Count}件の変更を保存しました。", "成功");
+            }
+            catch (Exception ex)
             {
-                // 検索テキストを小文字に変換（大文字・小文字を区別しない検索のため）
-                string searchTerm = FullTextSearch.ToLower();
-
-                // IOオブジェクトの全てのテキスト系プロパティを対象に、検索テキストが含まれるかチェック
-                // (nullでないプロパティのみを対象とする)
-                return (io.IOText?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.XComment?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.YComment?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.FComment?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.Address?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.IOName?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.IOExplanation?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.IOSpot?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.UnitName?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.System?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.StationNumber?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.IONameNaked?.ToLower().Contains(searchTerm) ?? false) ||
-                       (io.LinkDevice?.ToLower().Contains(searchTerm) ?? false);
+                MessageBox.Show($"保存中にエラーが発生しました: {ex.Message}", "エラー");
             }
-
-            return false;
         }
     }
 }

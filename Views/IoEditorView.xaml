@@ -22,14 +22,13 @@
 
         <DataGrid Grid.Row="1" Margin="5"
                   ItemsSource="{Binding IoRecordsView}"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
+                  IsReadOnly="False" CanUserAddRows="False"
                   AutoGenerateColumns="False"
                   HorizontalScrollBarVisibility="Visible"
                   VerticalScrollBarVisibility="Visible">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Id" Binding="{Binding Id}" />
-                <DataGridTextColumn Header="PlcId" Binding="{Binding PlcId}" />
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="PlcId" Binding="{Binding PlcId}" IsReadOnly="True" />
                 <DataGridTextColumn Header="Address" Binding="{Binding Address}" />
                 <DataGridTextColumn Header="LinkDevice" Binding="{Binding LinkDevice}" />
                 <DataGridTextColumn Header="IOName" Binding="{Binding IOName}" Width="*"/>
@@ -56,6 +55,7 @@
         </StackPanel>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Content="変更を保存" Width="100" Height="25" Margin="0,0,10,0" Command="{Binding SaveChangesCommand}"/>
             <Button Content="閉じる" Width="100" Height="25" Click="CloseButton_Click"/>
         </StackPanel>
     </Grid>

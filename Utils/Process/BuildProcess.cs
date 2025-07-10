@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Linq;
+﻿using KdxDesigner.Models.Define;
 using KdxDesigner.Utils.MnemonicCommon;
-using System.Runtime.ExceptionServices;
-using KdxDesigner.Models.Define;
 
 namespace KdxDesigner.Utils.Process
 {
@@ -101,9 +94,9 @@ namespace KdxDesigner.Utils.Process
             var debugCondition = process.Process.TestCondition;
             var startContact = process.Process.AutoStart;
 
-            if (debugContact == null 
-                || debugStartContact == null 
-                || debugCondition == null 
+            if (debugContact == null
+                || debugStartContact == null
+                || debugCondition == null
                 || startContact == null)
             {
                 // エラーを追加してください   issue#10
@@ -138,7 +131,7 @@ namespace KdxDesigner.Utils.Process
                 result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 4).ToString()));
                 result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 2).ToString()));
             }
-                
+
 
             // OUT L4 完了
             var completeContact = process.Process.FinishId;
@@ -247,8 +240,8 @@ namespace KdxDesigner.Utils.Process
             var debugStartContact = process.Process.TestStart;
             var startContact = process.Process.AutoStart;
 
-            if (debugContact == null 
-                || debugStartContact == null 
+            if (debugContact == null
+                || debugStartContact == null
                 || startContact == null)
             {
                 // エラーを追加してください   issue#10
@@ -278,7 +271,7 @@ namespace KdxDesigner.Utils.Process
                 result.Add(LadderRow.AddCJ("P0"));          // issue#11
             }
 
-            
+
 
             // OUT L2 実行中
             var completeContact = process.Process.FinishId;

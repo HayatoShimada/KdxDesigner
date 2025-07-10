@@ -66,6 +66,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             // _details や _ioList の初期化は不要（基底クラスのコンストラクタが実行するため）
         }
 
+        /// <summary>
+        /// L0 工程開始のLadderCsvRowを生成します。
+        /// </summary>
+        /// <returns></returns>
         public List<LadderCsvRow> L0()
         {
             List<LadderCsvRow> result = new();
@@ -174,13 +178,17 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             }
 
-            result.Add(LadderRow.AddANB());
             result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
+            result.Add(LadderRow.AddANB());
 
             result.Add(LadderRow.AddOUT(_label + (_outNum + 0).ToString()));
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public List<MnemonicDeviceWithProcessDetail> StartDevices()
         {
             var processDetailStartIds = _detail.Detail.StartIds?.Split(';')

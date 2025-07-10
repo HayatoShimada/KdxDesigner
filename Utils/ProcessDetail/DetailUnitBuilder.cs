@@ -301,12 +301,12 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.AddRange(detailFunctions.L0());
 
             // L1 操作開始
-            // StartSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.StartSensor != null)
+            // FinishSensorが設定されている場合は、IOリストからセンサーを取得
+            if (_detail.Detail.FinishSensor != null)
             {
                 var ioSensor = _ioAddressService.GetSingleAddress(
                     _ioList,
-                    _detail.Detail.StartSensor,
+                    _detail.Detail.FinishSensor,
                     false,
                     _detail.Detail.DetailName!,
                     _detail.Detail.Id,
@@ -318,7 +318,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 }
                 else
                 {
-                    if (_detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
+                    if (_detail.Detail.FinishSensor.Contains("_"))    // Containsではなく、先頭一文字
                     {
                         result.Add(LadderRow.AddLDI(ioSensor));
                     }
@@ -336,7 +336,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 _errorAggregator.AddError(new OutputError
                 {
-                    Message = "StartSensor が設定されていません。",
+                    Message = "FinishSensor が設定されていません。",
                     RecordName = _detail.Detail.DetailName,
                     MnemonicId = (int)MnemonicType.ProcessDetail,
                     RecordId = _detail.Detail.Id,
@@ -488,11 +488,64 @@ namespace KdxDesigner.Utils.ProcessDetail
         public List<LadderCsvRow> BuildDetailProcessOFF()
         {
             var result = new List<LadderCsvRow>();
-            List<OutputError> localErrors = new();
+            
+            // 行間ステートメントを追加
+            result.Add(CreateStatement());
+            // L0 工程開始
+            var detailFunctions = CreateDetailFunctions();
+            result.AddRange(detailFunctions.L0());
 
-            // L***0 ~ L***9のDeviceリストを取得
+            // L1 操作開始
+            var detailOffIds = _detail.Detail.FinishIds?.Split(';')
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList() ?? new List<int>();
 
-            // エラーをまとめて返す。
+            if (detailOffIds.Count != 1)
+            {
+                detailFunctions.DetailError("工程OFF確認にFinishIdsが複数設定されています。");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+
+            if (detailOffIds == null)
+            {
+                detailFunctions.DetailError("工程OFF確認にFinishIdsが設定されていません。");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+
+            var detailOffDevice = detailOffIds[0];
+
+            var detailOffDeviceMnemonic = _details
+                .FirstOrDefault(d => d.Mnemonic.RecordId == detailOffDevice);
+
+            if (detailOffDeviceMnemonic == null)
+            {
+                detailFunctions.DetailError($"工程OFF確認のFinishIdsに設定されているデバイスが見つかりません。ID: {detailOffDevice}");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+            else
+            {
+                result.Add(LadderRow.AddLD(detailOffDeviceMnemonic.Mnemonic.DeviceLabel 
+                    + detailOffDeviceMnemonic.Mnemonic.StartNum.ToString()));
+
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
+
+                
+                
+            }
+            result.Add(LadderRow.AddLD(_label + (_deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
+
+            result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
             return result;
         }
 

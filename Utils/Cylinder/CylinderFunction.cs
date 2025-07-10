@@ -34,9 +34,7 @@ namespace KdxDesigner.Utils.Cylinder
             _speedDevice = speedDevice;
         }
 
-        public List<LadderCsvRow> GoOperation(
-            List<MnemonicDeviceWithOperation> goOperation,
-            List<MnemonicDeviceWithOperation> activeOperation)
+        public List<LadderCsvRow> GoOperation(List<MnemonicDeviceWithOperation> goOperation)
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -57,28 +55,12 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
 
-            foreach (var go in activeOperation)
-            {
-                var operationLabel = go.Mnemonic.DeviceLabel; // 行きのラベル
-                var operationOutcoil = go.Mnemonic.StartNum; // 出力番号の取得
-                result.Add(LadderRow.AddLD(operationLabel + (operationOutcoil + 6).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddANI(operationLabel + (operationOutcoil + 17).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddAND(operationLabel + (operationOutcoil + 0).ToString())); // ラベルのLD命令を追加
-                if (isFirst)
-                {
-                    isFirst = false; // 最初のOperationの場合、フラグを更新
-                    continue;
-                }
-                result.Add(LadderRow.AddORB()); // 出力命令を追加
-            }
-
             result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public List<LadderCsvRow> BackOperation(
-            List<MnemonicDeviceWithOperation> backOperation)
+        public List<LadderCsvRow> BackOperation(List<MnemonicDeviceWithOperation> backOperation)
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -98,15 +80,12 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 1).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public List<LadderCsvRow> GoManualOperation(
-            List<MnemonicDeviceWithOperation> goOperation,
-            List<MnemonicDeviceWithOperation> activeOperation)
+        public List<LadderCsvRow> GoManualOperation(List<MnemonicDeviceWithOperation> goOperation)
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -127,28 +106,12 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
 
-            foreach (var go in activeOperation)
-            {
-                var operationLabel = go.Mnemonic.DeviceLabel; // 行きのラベル
-                var operationOutcoil = go.Mnemonic.StartNum; // 出力番号の取得
-                result.Add(LadderRow.AddLD(operationLabel + (operationOutcoil + 6).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddANI(operationLabel + (operationOutcoil + 17).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddAND(operationLabel + (operationOutcoil + 2).ToString())); // ラベルのLD命令を追加
-                if (isFirst)
-                {
-                    isFirst = false; // 最初のOperationの場合、フラグを更新
-                    continue;
-                }
-                result.Add(LadderRow.AddORB()); // 出力命令を追加
-            }
-
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 2).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public List<LadderCsvRow> BackManualOperation(
-            List<MnemonicDeviceWithOperation> backOperation)
+        public List<LadderCsvRow> BackManualOperation(List<MnemonicDeviceWithOperation> backOperation)
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
             bool isFirst = true; // 最初のOperationかどうかのフラグ
@@ -168,8 +131,7 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 0).ToString())); // ラベルのLD命令を追加
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 3).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -204,7 +166,6 @@ namespace KdxDesigner.Utils.Cylinder
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
-
 
         public List<LadderCsvRow> CyclePulse()
         {

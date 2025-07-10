@@ -106,8 +106,8 @@ namespace KdxDesigner.Utils.Operation
                 label,
                 outNum));
 
-            IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
-            result.AddRange(iODebug.GenerateCommon(0));
+            // IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
+            // result.AddRange(iODebug.GenerateCommon(0));
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -145,7 +145,6 @@ namespace KdxDesigner.Utils.Operation
 
             // OperationIdが一致する工程詳細のフィルタリング
             // M0
-            var detailList = details.Where(d => d.Detail.OperationId == operation.Operation.Id).ToList();
             result.AddRange(operationFunction.GenerateM0());
 
             // M2
@@ -182,9 +181,9 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
             // 深当たりタイマがある場合
-            if (operationTimerONWait != null && operationTimerONWait.Timer.TimerDevice != null)
+            if (operationTimerONWait != null && operationTimerONWait.Timer.ProcessTimerDevice != null)
             {
-                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.TimerDevice));
+                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.ProcessTimerDevice));
             }
             result.Add(LadderRow.AddOR(label + (outNum + 18).ToString()));
             result.Add(LadderRow.AddAND(label + (outNum + 17).ToString()));

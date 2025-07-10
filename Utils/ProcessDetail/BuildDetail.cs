@@ -165,13 +165,11 @@ namespace KdxDesigner.Utils.ProcessDetail
         /// <returns>工程詳細のニモニックリスト</returns>
         public List<LadderCsvRow> ProcessOFF(MnemonicDeviceWithProcessDetail detail)
         {
-            var result = new List<LadderCsvRow>();
-            List<OutputError> localErrors = new();
-
-            // L***0 ~ L***9のDeviceリストを取得
-
-            // エラーをまとめて返す。
-            return result;
+            var builder = new DetailUnitBuilder(
+                 detail, _details, _processes, _operations, _cylinders, _ioList,
+                 _mainViewModel, _ioAddressService, _errorAggregator, _repository
+             );
+            return builder.BuildDetailProcessOFF();
 
         }
 

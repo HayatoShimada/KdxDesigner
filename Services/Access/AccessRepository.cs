@@ -1,11 +1,9 @@
 ﻿using Dapper;
 
 using KdxDesigner.Models;
-using KdxDesigner.Models.Define;
 
+using System.Data;
 using System.Data.OleDb;
-
-
 
 namespace KdxDesigner.Services.Access
 {
@@ -23,7 +21,6 @@ namespace KdxDesigner.Services.Access
             }
             ConnectionString = connectionString;
         }
-
 
         public List<Company> GetCompanies()
         {
@@ -46,7 +43,6 @@ namespace KdxDesigner.Services.Access
             return connection.Query<PLC>(sql).ToList();
         }
 
-        // Cycle
         public List<Cycle> GetCycles()
         {
             using var connection = new OleDbConnection(ConnectionString);
@@ -178,7 +174,21 @@ WHERE Id = @Id";
             return connection.Query<ProcessDetail>(sql).ToList();
         }
 
-        
+        public List<ProcessDetailCategory> GetProcessDetailCategories()
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailCategory";
+            return connection.Query<ProcessDetailCategory>(sql).ToList();
+        }
+
+        public ProcessDetailCategory? GetProcessDetailCategoryById(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            return connection.QueryFirstOrDefault<ProcessDetailCategory>(
+                "SELECT * FROM ProcessDetailCategory WHERE ID = @ID", new { ID = id });
+        }
+
+
         public List<IO> GetIoList()
         {
             using var connection = new OleDbConnection(ConnectionString);
@@ -229,6 +239,89 @@ WHERE Id = @Id";
 
                 // DapperのExecuteはリストを渡すと自動的にループ処理してくれる
                 connection.Execute(sql, ioRecordsToUpdate.Select(io => new { io.LinkDevice, io.Id }), transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw; // エラーを上位に通知
+            }
+        }
+
+        /// <summary>
+        /// IOレコードのリストを更新し、同時に変更履歴を保存します。
+        /// これらの一連の処理は単一のトランザクション内で実行されます。
+        /// </summary>
+        public void UpdateAndLogIoChanges(List<IO> iosToUpdate, List<IOHistory> histories)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 1. IOテーブルの更新
+                if (iosToUpdate.Any())
+                {
+                    // ★★★ 修正箇所 1: SQL文を位置プレースホルダ (?) に変更 ★★★
+                    var sqlUpdate = @"UPDATE IO SET 
+                                        IOText = ?, XComment = ?, YComment = ?, 
+                                        FComment = ?, Address = ?, IOName = ?, 
+                                        IOExplanation = ?, IOSpot = ?, UnitName = ?, 
+                                        System = ?, StationNumber = ?, IONameNaked = ?, 
+                                        PlcId = ?, LinkDevice = ?
+                                    WHERE Id = ?";
+
+                    foreach (var io in iosToUpdate)
+                    {
+                        var parameters = new DynamicParameters();
+
+                        // ★★★ 修正箇所 2: パラメータを追加する順番をSQL文と完全に一致させる ★★★
+                        // --- SET句のパラメータ ---
+                        parameters.Add("p1", io.IOText ?? "", DbType.String);
+                        parameters.Add("p2", io.XComment ?? "", DbType.String);
+                        parameters.Add("p3", io.YComment ?? "", DbType.String);
+                        parameters.Add("p4", io.FComment ?? "", DbType.String);
+                        parameters.Add("p5", io.Address ?? "", DbType.String);
+                        parameters.Add("p6", io.IOName ?? "", DbType.String);
+                        parameters.Add("p7", io.IOExplanation ?? "", DbType.String);
+                        parameters.Add("p8", io.IOSpot ?? "", DbType.String);
+                        parameters.Add("p9", io.UnitName ?? "", DbType.String);
+                        parameters.Add("p10", io.System ?? "", DbType.String);
+                        parameters.Add("p11", io.StationNumber ?? "", DbType.String);
+                        parameters.Add("p12", io.IONameNaked ?? "", DbType.String);
+                        parameters.Add("p13", io.PlcId ?? 0, DbType.Int32);
+                        parameters.Add("p14", io.LinkDevice ?? "", DbType.String);
+                        // --- WHERE句のパラメータ ---
+                        parameters.Add("p15", io.Id, DbType.Int32);
+
+                        connection.Execute(sqlUpdate, parameters, transaction);
+                    }
+                }
+
+                // 2. IOHistoryテーブルへの挿入
+                if (histories.Any())
+                {
+                    var sqlInsertHistory = @"INSERT INTO IOHistory 
+                                               (IoId, PropertyName, OldValue, NewValue, ChangedAt, ChangedBy) 
+                                           VALUES 
+                                               (@IoId, @PropertyName, @OldValue, @NewValue, @ChangedAt, @ChangedBy)";
+
+                    // 各履歴をループし、DynamicParametersを使って型を明示的に指定する
+                    foreach (var history in histories)
+                    {
+                        var historyParams = new DynamicParameters();
+                        historyParams.Add("@IoId", history.IoId, DbType.Int32);
+                        historyParams.Add("@PropertyName", history.PropertyName, DbType.String);
+                        historyParams.Add("@OldValue", history.OldValue, DbType.String);
+                        historyParams.Add("@NewValue", history.NewValue, DbType.String);
+                        // DateTimeオブジェクトをDbType.DateTimeとして渡す
+                        historyParams.Add("@ChangedAt", history.ChangedAt, DbType.String);
+                        historyParams.Add("@ChangedBy", history.ChangedBy, DbType.String);
+
+                        connection.Execute(sqlInsertHistory, historyParams, transaction);
+                    }
+                }
 
                 transaction.Commit();
             }
