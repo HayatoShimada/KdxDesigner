@@ -113,7 +113,9 @@ namespace KdxDesigner.Utils.Operation
         {
             var result = new List<LadderCsvRow>();
             // 開始待ちタイマがある場合
-            var operationTimerWait = _timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 1);
+            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
+            var operationTimerWait = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 1);
+
             if (operationTimerWait != null)
             {
                 result.Add(LadderRow.AddLD(_label + (_outNum + 5).ToString()));
@@ -389,7 +391,7 @@ namespace KdxDesigner.Utils.Operation
                 }
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 16).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 5).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_outNum + 7).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 16).ToString()));
 
             return result;
@@ -397,7 +399,8 @@ namespace KdxDesigner.Utils.Operation
 
         public List<LadderCsvRow> GenerateM17()
         {
-            var operationTimerONWait = _timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
+            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
+            var operationTimerONWait = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
             var result = new List<LadderCsvRow>();
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
@@ -419,7 +422,7 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddAND(operationTimerONWait.Timer.ProcessTimerDevice!));
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 17).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 16).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_outNum + 7).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 17).ToString()));
 
             return result;

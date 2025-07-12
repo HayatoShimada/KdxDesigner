@@ -174,14 +174,20 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             foreach (var d in processDetailStartDevices)
             {
-                result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
-
+                if (_detail.Detail.StartSensor != null)
+                {
+                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
+                }
+                else
+                {
+                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
+                }
             }
 
             result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
             result.Add(LadderRow.AddANB());
-
             result.Add(LadderRow.AddOUT(_label + (_outNum + 0).ToString()));
+            
             return result;
         }
 

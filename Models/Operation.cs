@@ -35,6 +35,7 @@ namespace KdxDesigner.Models
         public int? FC { get; set; }
         public int? CycleId { get; set; }
         public int? SortNumber { get; set; }
+        public string? Con { get; set; }
 
     }
 }

@@ -106,8 +106,8 @@ namespace KdxDesigner.Utils.Operation
                 label,
                 outNum));
 
-            // IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
-            // result.AddRange(iODebug.GenerateCommon(0));
+            IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
+            result.AddRange(iODebug.GenerateValve());
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }

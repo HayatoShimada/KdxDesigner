@@ -114,6 +114,10 @@ namespace KdxDesigner.Utils.Operation
             ProsTimeBuilder prosTimeBuilder = new(_errorAggregator);
             result.AddRange(prosTimeBuilder.Common(operation.Operation, prosTimes, label, outNumValue));
 
+            // IO Debug
+            IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
+            result.AddRange(iODebug.GenerateSpeed(speedChangeCount));
+
             return result;
         }
 
@@ -130,10 +134,5 @@ namespace KdxDesigner.Utils.Operation
                 SensorPropertyName = sensorPropertyName;
             }
         }
-
-        
-
-
-        
     }
 }

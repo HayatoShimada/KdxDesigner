@@ -43,6 +43,10 @@ namespace KdxDesigner.Services.IOAddress
             Debug.WriteLine($"GetSingleAddress called with:{isOutput} recordId={recordId}, processName='{recordName}', ioText='{ioText}'");
             Debug.WriteLine(ioList.Count);
 
+            if (ioText == "null")
+            {
+                return null;
+            }
             // isOutput (Y/X) でフィルタリング
             ioList = isOutput
                 ? ioList.Where(io => io.Address != null && (io.Address.Contains("Y") || io.Address.Contains("Ｙ"))).ToList()
@@ -92,6 +96,77 @@ namespace KdxDesigner.Services.IOAddress
                             Message = $"IO '{ioText}' の選択がキャンセルされました。",
                             RecordName = recordName,
                             RecordId = recordId,
+                            IsCritical = true // 処理を続行できないため致命的なエラーとする
+                        });
+                        return null;
+                    }
+
+                case FindIOResultState.NotFound:
+                default:
+                    // 0件ヒットはエラー (既に内部でエラー追加済み)
+                    return null;
+            }
+        }
+
+        public string? GetSingleAddressOperation(
+            List<IO> ioList,
+            string ioText,
+            bool isOutput,
+            Operation operation,
+            string? isnotInclude)
+        {
+            Debug.WriteLine($"GetSingleAddress called with:{isOutput} recordId={operation.Id}, processName='{operation.OperationName}', ioText='{ioText}'");
+            Debug.WriteLine(ioList.Count);
+
+            // isOutput (Y/X) でフィルタリング
+            ioList = isOutput
+                ? ioList.Where(io => io.Address != null && (io.Address.Contains("Y") || io.Address.Contains("Ｙ"))).ToList()
+                : ioList.Where(io => io.Address != null && (io.Address.Contains("X") || io.Address.Contains("Ｘ"))).ToList();
+
+            // isnotInclude パラメータに値が指定されている場合、その単語を含むIOを除外する
+            // FindByIOTextInternal での検索対象である IOName プロパティに対してチェックを行う
+            if (!string.IsNullOrEmpty(isnotInclude))
+            {
+                ioList = ioList.Where(io => io.IOName != null && !io.IOName.Contains(isnotInclude)).ToList();
+            }
+
+            var workingList = isOutput
+                ? ioList.Where(io => io.Address != null && (io.Address.Contains("Y") || io.Address.Contains("Ｙ"))).ToList()
+                : ioList.Where(io => io.Address != null && (io.Address.Contains("X") || io.Address.Contains("Ｘ"))).ToList();
+            if (!string.IsNullOrEmpty(isnotInclude))
+            {
+                workingList = workingList.Where(io => io.IOName != null && !io.IOName.Contains(isnotInclude)).ToList();
+            }
+
+            var result = FindByIOTextInternal(workingList, ioText, operation.OperationName, operation.Id);
+
+            switch (result.State)
+            {
+                case FindIOResultState.FoundOne:
+                    return result.SingleAddress;
+
+                case FindIOResultState.FoundMultiple:
+                    // ★★★ 修正箇所 ★★★
+                    // 複数件ヒットした場合、UI選択サービスを呼び出す
+                    IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches!, operation.OperationName, operation.Id);
+
+                    if (selectedIo != null)
+                    {
+                        // ユーザーが項目を選択した場合、そのアドレスを返す
+                        // LinkDeviceが設定されていればそれを優先
+                        string? addressToReturn = !string.IsNullOrWhiteSpace(selectedIo.LinkDevice)
+                            ? selectedIo.LinkDevice
+                            : selectedIo.Address;
+                        return addressToReturn?.Normalize(NormalizationForm.FormKC);
+                    }
+                    else
+                    {
+                        // ユーザーが選択をキャンセルした場合、エラーとして報告
+                        _errorAggregator.AddError(new OutputError
+                        {
+                            Message = $"IO '{ioText}' の選択がキャンセルされました。",
+                            RecordName = operation.OperationName,
+                            RecordId = operation.Id,
                             IsCritical = true // 処理を続行できないため致命的なエラーとする
                         });
                         return null;

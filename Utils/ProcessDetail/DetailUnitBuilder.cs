@@ -183,6 +183,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
                     }
                 }
+                result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
 
             }
@@ -253,6 +254,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
                     }
                 }
+                result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
 
             }
@@ -463,6 +465,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 detailFunctions.DetailError("FinishSensor が設定されていません。");
             }
+            result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
@@ -637,9 +640,9 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
-            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_deviceNum + 2).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));

@@ -451,7 +451,7 @@ namespace KdxDesigner.Utils.Cylinder
                 for (int i = 1; i <= multiSensorCount.Value; i++)
                 {
                     // シリンダ設定のGoサフィックス（例: "G"）と連番で検索文字列を作成
-                    string searchName = _cylinder.Cylinder.RetentionSensorGo + i;
+                    string searchName = _cylinder.Cylinder.Go + i;
                     var foundValve = _ioAddressService.GetSingleAddress(
                         sensors,
                         searchName,
@@ -651,7 +651,9 @@ namespace KdxDesigner.Utils.Cylinder
                 char lastChar = candidate.IOName.Last();
                 if (int.TryParse(lastChar.ToString(), out int valveNum) && valveNum >= 1 && valveNum <= 6)
                 {
-                    valveMap[valveNum] = candidate.Address!;
+                    valveMap[valveNum] = !string.IsNullOrEmpty(candidate.LinkDevice)
+        ? candidate.LinkDevice
+        : candidate.Address!;
                 }
             }
 
@@ -762,7 +764,9 @@ namespace KdxDesigner.Utils.Cylinder
 
                     if (foundValve != null)
                     {
-                        foundAddresses.Add(foundValve.Address!);
+                        foundAddresses.Add(!string.IsNullOrEmpty(foundValve.LinkDevice)
+                    ? foundValve.LinkDevice
+                    : foundValve.Address!);
                     }
                     else
                     {
@@ -784,7 +788,9 @@ namespace KdxDesigner.Utils.Cylinder
 
                 if (foundValve != null)
                 {
-                    foundAddresses.Add(foundValve.Address!);
+                    foundAddresses.Add(!string.IsNullOrEmpty(foundValve.LinkDevice)
+                ? foundValve.LinkDevice
+                : foundValve.Address!);
                 }
                 else
                 {
