@@ -119,7 +119,8 @@ namespace KdxDesigner.Utils.Operation
                 {
                     case "A5:B5": return (speedValue + 5).ToString();
                     case "A6:B4": return (speedValue + 6).ToString();
-                    case "A7:B3": return (speedValue + 8).ToString();
+                    case "A7:B3": return (speedValue + 7).ToString();
+                    case "A10:B0": return (speedValue + 10).ToString();
                     default:
                         CreateOperationError(operation, $"操作「{operation.Operation.OperationName}」(ID: {operation.Operation.Id}) の FlowType '{flow}' は未対応です。");
                         return speedValueStr; // 元の数値を返す

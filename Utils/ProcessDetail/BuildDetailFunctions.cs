@@ -89,13 +89,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             // L0 工程開始
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
             if (_detail.Detail.StartSensor != null)
-            {
-                if (_detail.Detail.TimerId != null)
-                {
-                    DetailError("StartSensorが設定されている場合は、TimerIdを設定しないでください。");
-                    return result; // エラーがある場合は、空のリストを返す
-                }
-
+            { 
                 var ioSensor = _ioAddressService.GetSingleAddress(
                     _ioList,
                     _detail.Detail.StartSensor,
@@ -126,28 +120,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
             else
             {
-                if (_detail.Detail.TimerId != null)
-                {
-
-                    MnemonicTimerDeviceService timerDeviceService = new(_repository, _mainViewModel);
-                    var timerDevice = timerDeviceService.GetMnemonicTimerDeviceByTimerId(_mainViewModel.SelectedPlc!.Id, _detail.Detail.TimerId.Value);
-                    if (timerDevice == null)
-                    {
-                        DetailError($"TimerIdが設定されている場合は、StartSensorを設定しないでください。");
-                        return result; // エラーがある場合は、空のリストを返す
-                    }
-                    else
-                    {
-                        // タイマーデバイスが取得できた場合は、LDコマンドを追加
-                        result.Add(LadderRow.AddLD(timerDevice.ProcessTimerDevice));
-                        result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
-                        result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-                    }
-                }
-                else
-                {
-                    result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-                }
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
 
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 0).ToString()));

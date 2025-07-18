@@ -122,8 +122,7 @@ namespace KdxDesigner.Utils.Operation
                 result.Add(LadderRow.AddANI(_label + (_outNum + 6).ToString()));
                 result.AddRange(LadderRow.AddTimer(
                     operationTimerWait.Timer.ProcessTimerDevice ?? "",
-                    operationTimerWait.Timer.TimerDevice ?? ""
-                    ));
+                    operationTimerWait.Timer.TimerDevice ?? ""));
             }
 
             // M6

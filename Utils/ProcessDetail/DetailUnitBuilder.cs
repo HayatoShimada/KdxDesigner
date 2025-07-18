@@ -96,6 +96,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             var opFinishLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
             result.Add(LadderRow.AddLD(opFinishLabel + (opFinishNum + 19).ToString()));
+
+            if (_detail.Detail.SkipMode != null)
+            {
+                if (_detail.Detail.SkipMode.Contains("_"))
+                {
+                    var skipDevice = _detail.Detail.SkipMode.Replace("_", string.Empty);
+                    result.Add(LadderRow.AddORI(skipDevice));
+                }
+                else
+                {
+                    var skipDevice = _detail.Detail.SkipMode;
+                    result.Add(LadderRow.AddOR(skipDevice));
+                }
+            }
+
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
@@ -184,6 +199,23 @@ namespace KdxDesigner.Utils.ProcessDetail
                     }
                 }
                 result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
+
+                // skipModeが設定されている場合は、スキップ処理を追加
+                if (_detail.Detail.SkipMode != null)
+                {
+                    if (_detail.Detail.SkipMode.Contains("_"))
+                    {
+                        var skipDevice = _detail.Detail.SkipMode.Replace("_", string.Empty);
+                        result.Add(LadderRow.AddORI(skipDevice));
+
+                    }
+                    else
+                    {
+                        var skipDevice = _detail.Detail.SkipMode;
+                        result.Add(LadderRow.AddOR(skipDevice));
+                    }
+                }
+
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
 
             }
@@ -255,6 +287,23 @@ namespace KdxDesigner.Utils.ProcessDetail
                     }
                 }
                 result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
+
+                // skipModeが設定されている場合は、スキップ処理を追加
+                if (_detail.Detail.SkipMode != null)
+                {
+                    if (_detail.Detail.SkipMode.Contains("_"))
+                    {
+                        var skipDevice = _detail.Detail.SkipMode.Replace("_", string.Empty);
+                        result.Add(LadderRow.AddORI(skipDevice));
+
+                    }
+                    else
+                    {
+                        var skipDevice = _detail.Detail.SkipMode;
+                        result.Add(LadderRow.AddOR(skipDevice));
+                    }
+                }
+
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
 
             }
@@ -334,7 +383,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
             else
             {
-                // StartSensornの設定ナシ
+                // FinishSensorの設定ナシ
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
                 _errorAggregator.AddError(new OutputError
                 {
@@ -453,6 +502,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             var detailFunctions = CreateDetailFunctions();
             result.AddRange(detailFunctions.L0());
 
+            
+
             // L1 操作開始
             if (_detail.Detail.FinishSensor != null)
             {
@@ -467,12 +518,33 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
             result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
-            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
+            // skipModeが設定されている場合は、スキップ処理を追加
+            if (_detail.Detail.SkipMode != null)
+            {
+                if (_detail.Detail.SkipMode.Contains("_"))
+                {
+                    var skipDevice = _detail.Detail.SkipMode.Replace("_", string.Empty);
+                    result.Add(LadderRow.AddORI(skipDevice));
+
+                }
+                else
+                {
+                    var skipDevice = _detail.Detail.SkipMode;
+                    result.Add(LadderRow.AddOR(skipDevice));
+                }
+            }
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
-            // L5 工程完了
+
+            if (_detail.Detail.ILStart != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
+                result.Add(LadderRow.AddANI(_label + (_deviceNum + 1).ToString()));
+                result.Add(LadderRow.AddOUT(_detail.Detail.ILStart));
+            }
+
+            // L4 工程完了
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
@@ -531,6 +603,22 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 result.Add(LadderRow.AddLD(detailOffDeviceMnemonic.Mnemonic.DeviceLabel 
                     + detailOffDeviceMnemonic.Mnemonic.StartNum.ToString()));
+
+                // skipModeが設定されている場合は、スキップ処理を追加
+                if (_detail.Detail.SkipMode != null)
+                {
+                    if (_detail.Detail.SkipMode.Contains("_"))
+                    {
+                        var skipDevice = _detail.Detail.SkipMode.Replace("_", string.Empty);
+                        result.Add(LadderRow.AddORI(skipDevice));
+
+                    }
+                    else
+                    {
+                        var skipDevice = _detail.Detail.SkipMode;
+                        result.Add(LadderRow.AddOR(skipDevice));
+                    }
+                }
 
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
@@ -609,10 +697,6 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             }
 
-            result.Add(LadderRow.AddOR(_label + (_deviceNum + 2).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
-
-
             var processDetailFinishDevices = detailFunctions.FinishDevices();
             if (_detail.Detail.FinishSensor != null)
             {
@@ -632,6 +716,25 @@ namespace KdxDesigner.Utils.ProcessDetail
                     result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString()));
                 }
             }
+
+            // skipModeが設定されている場合は、スキップ処理を追加
+            if (_detail.Detail.SkipMode != null)
+            {
+                if (_detail.Detail.SkipMode.Contains("_"))
+                {
+                    var skipDevice = _detail.Detail.SkipMode.Replace("_", string.Empty);
+                    result.Add(LadderRow.AddORI(skipDevice));
+
+                }
+                else
+                {
+                    var skipDevice = _detail.Detail.SkipMode;
+                    result.Add(LadderRow.AddOR(skipDevice));
+                }
+            }
+
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 2).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 2).ToString()));
 
             // L4 工程完了
@@ -666,6 +769,24 @@ namespace KdxDesigner.Utils.ProcessDetail
             var detailFunctions = CreateDetailFunctions();
             result.AddRange(detailFunctions.L0());
 
+            var timers = detailTimers.Where(t => t.Timer.RecordId == _detail.Detail.Id);
+
+            if (timers != null)
+            {
+                result.Add(LadderRow.AddLDP(_label + (_deviceNum + 0).ToString()));
+
+                foreach (var timer in timers)
+                {
+                    // タイマの開始デバイスを取得
+                    result.Add(LadderRow.AddRST(timer.Timer.ProcessTimerDevice));
+                }
+            }
+            else
+            {
+                detailFunctions.DetailError("タイマー工程にタイマが設定されていません。");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+
             // L1 操作開始
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
@@ -696,6 +817,27 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
             result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
+
+            var processDetailFinishDevices = detailFunctions.FinishDevices();
+            if (_detail.Detail.FinishSensor != null)
+            {
+                // FinishSensorが設定されている場合
+                // FinishIdsのStartNum+1を出力
+                foreach (var d in processDetailFinishDevices)
+                {
+                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
+                }
+            }
+            else
+            {
+                // FinishSensorが設定されていない場合
+                // FinishIdsのStartNum+5を出力
+                foreach (var d in processDetailFinishDevices)
+                {
+                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString()));
+                }
+            }
+
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
@@ -721,13 +863,45 @@ namespace KdxDesigner.Utils.ProcessDetail
             var detailFunctions = CreateDetailFunctions();
             result.AddRange(detailFunctions.L0());
 
-            // L4 工程完了
-            // detailのoperationIdからOperationの先頭デバイスを取得
-            var operationFinish = _operations.FirstOrDefault(o => o.Mnemonic.RecordId == _detail.Detail.OperationId);
-            var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
-            var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
+            var timers = detailTimers.Where(t => t.Timer.RecordId == _detail.Detail.Id);
 
-            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
+            if (timers != null)
+            {
+                result.Add(LadderRow.AddLDP(_label + (_deviceNum + 0).ToString()));
+
+                foreach (var timer in timers)
+                {
+                    // タイマの開始デバイスを取得
+                    result.Add(LadderRow.AddRST(timer.Timer.ProcessTimerDevice));
+                }
+            }
+            else
+            {
+                detailFunctions.DetailError("タイマー工程にタイマが設定されていません。");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+
+            // L1 操作開始
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
+
+            // L2 タイマ開始
+            var stopTimer = detailTimers.FirstOrDefault(t => t.Timer.RecordId == _detail.Detail.Id);
+
+            if (stopTimer == null)
+            {
+                detailFunctions.DetailError("タイマー工程にタイマが設定されていません。");
+                return result; // エラーがある場合は、空のリストを返す
+            }
+
+            result.Add(LadderRow.AddLD(_label + (_deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_deviceNum + 4).ToString()));
+            result.AddRange(LadderRow.AddTimer(stopTimer.Timer.ProcessTimerDevice, stopTimer.Timer.TimerDevice));
+            result.Add(LadderRow.AddLD(stopTimer.Timer.ProcessTimerDevice));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
@@ -773,7 +947,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 var finishLabel = processDetailFinishDevices.First().Mnemonic.DeviceLabel ?? string.Empty;
                 var finishNum = processDetailFinishDevices.First().Mnemonic.StartNum;    
                 result.Add(LadderRow.AddLD(finishLabel + (finishNum + 5).ToString()));
-                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
                 result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
                 result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));

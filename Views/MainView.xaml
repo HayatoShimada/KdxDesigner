@@ -115,6 +115,10 @@
                                     <CheckBox Content="メモリ保存" IsChecked="{Binding IsTimerMemory}" Margin="10,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="5">
+                                    <TextBlock Text="ZR [タイマ]" Width="150"/>
+                                    <TextBox Text="{Binding TimerStartZR}" Width="100" PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="5">
                                     <TextBlock Text="ZR [工程タイム現在]" Width="150"/>
                                     <TextBox Text="{Binding ProsTimeStartZR}" Width="100" PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"/>
                                     <CheckBox Content="メモリ保存" IsChecked="{Binding IsProsTimeMemory}" Margin="10,0"/>
@@ -132,6 +136,7 @@
                                     <TextBlock Text="D [速度変化指令]" Width="150"/>
                                     <TextBox Text="{Binding CylinderDeviceStartD}" Width="100" PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"/>
                                 </StackPanel>
+
                             </UniformGrid>
                         </GroupBox>
 

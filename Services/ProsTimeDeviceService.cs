@@ -14,12 +14,10 @@ namespace KdxDesigner.Services
         private readonly string _connectionString;
         private readonly Dictionary<int, OperationProsTimeConfig> _loadedOperationConfigs; // ★変更: staticでなくインスタンスフィールドに
 
-        // OperationProsTimeConfig クラスは以前の回答と同じものを内部クラスまたは別ファイルで定義
         public class OperationProsTimeConfig
         {
             public int TotalProsTimeCount { get; set; }
             public Dictionary<int, int> SortIdToCategoryIdMap { get; set; }
-
             public OperationProsTimeConfig()
             {
                 SortIdToCategoryIdMap = new Dictionary<int, int>();

@@ -45,17 +45,31 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private Cycle? selectedCycle;
         [ObservableProperty] private Models.Process? selectedProcess;
 
-        [ObservableProperty] private int processDeviceStartL = 14000;
-        [ObservableProperty] private int detailDeviceStartL = 15000;
-        [ObservableProperty] private int operationDeviceStartM = 20000;
-        [ObservableProperty] private int cylinderDeviceStartM = 30000;
-        [ObservableProperty] private int cylinderDeviceStartD = 30000;
-        [ObservableProperty] private int errorDeviceStartM = 120000;
+        // ﾗｲﾝ
+        //[ObservableProperty] private int processDeviceStartL = 14000;
+        //[ObservableProperty] private int detailDeviceStartL = 15000;
+        //[ObservableProperty] private int operationDeviceStartM = 20000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 30000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5000;
+        //[ObservableProperty] private int errorDeviceStartM = 120000;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 12000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 24000;
+        //[ObservableProperty] private int cyTimeStartZR = 30000;
+
+        // 造型機
+        [ObservableProperty] private int processDeviceStartL = 14300;
+        [ObservableProperty] private int detailDeviceStartL = 17000;
+        [ObservableProperty] private int operationDeviceStartM = 26000;
+        [ObservableProperty] private int cylinderDeviceStartM = 50000;
+        [ObservableProperty] private int cylinderDeviceStartD = 5200;
+        [ObservableProperty] private int errorDeviceStartM = 121000;
         [ObservableProperty] private int deviceStartT = 0;
-        [ObservableProperty] private int prosTimeStartZR = 12000;
-        [ObservableProperty] private int prosTimePreviousStartZR = 24000;
-        [ObservableProperty] private int cyTimeStartZR = 30000;
         [ObservableProperty] private int timerStartZR = 3000;
+        [ObservableProperty] private int prosTimeStartZR = 14000;
+        [ObservableProperty] private int prosTimePreviousStartZR = 26000;
+        [ObservableProperty] private int cyTimeStartZR = 32000;
 
         [ObservableProperty] private string valveSearchText = "SV";
 
@@ -92,7 +106,6 @@ namespace KdxDesigner.ViewModels
                 string dbPath = pathManager.ResolveDatabasePath();
                 string connectionString = pathManager.CreateConnectionString(dbPath);
 
-                // 2. ★★★ 修正箇所 ★★★
                 _repository = new AccessRepository(connectionString);
                 _mnemonicService = new MnemonicDeviceService(_repository);
                 _timerService = new MnemonicTimerDeviceService(_repository, this);
@@ -246,8 +259,8 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void OpenSettings()
         {
-            var view = new SettingsView();  // Views/SettingsView.xaml
-            view.ShowDialog();              // モーダルで表示
+            var view = new SettingsView();
+            view.ShowDialog();
         }
 
         [RelayCommand]
@@ -281,7 +294,6 @@ namespace KdxDesigner.ViewModels
 
         // 出力処理
         #region ProcessOutput
-
         [RelayCommand]
         private void ProcessOutput()
         {
@@ -641,10 +653,20 @@ namespace KdxDesigner.ViewModels
             _mnemonicService!.SaveMnemonicDeviceOperation(prepData.operations, OperationDeviceStartM, SelectedPlc!.Id);
             _mnemonicService!.SaveMnemonicDeviceCY(prepData.cylinders, CylinderDeviceStartM, SelectedPlc!.Id);
 
+            if (_repository == null || _timerService == null || _errorService == null || _prosTimeService == null || _speedService == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+            var timer = _repository.GetTimers();
+            var details = _repository.GetProcessDetails();
+            var operations = _repository.GetOperations();
+            var cylinders = _repository.GetCYs();
+
             int timerCount = 0;
-            _timerService!.SaveWithDetail(prepData.timers, prepData.details, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
-            _timerService!.SaveWithOperation(prepData.timers, prepData.operations, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, out timerCount);
-            _timerService!.SaveWithCY(prepData.timers, prepData.cylinders, DeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id, ref timerCount);
+            _timerService!.SaveWithDetail(timer, details, DeviceStartT, SelectedPlc!.Id, ref timerCount);
+            _timerService!.SaveWithOperation(timer, operations, DeviceStartT, SelectedPlc!.Id, ref timerCount);
+            _timerService!.SaveWithCY(timer, cylinders, DeviceStartT, SelectedPlc!.Id, ref timerCount);
 
             _errorService!.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM, SelectedPlc!.Id, SelectedCycle!.Id);
             _prosTimeService!.SaveProsTime(prepData.operations, ProsTimeStartZR, ProsTimePreviousStartZR, CyTimeStartZR, SelectedPlc!.Id);

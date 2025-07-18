@@ -106,6 +106,13 @@ namespace KdxDesigner.Services.Access
                 "SELECT * FROM CY WHERE Id = @Id", new { Id = id });
         }
 
+        public List<Models.Timer> GetTimers()
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM Timer";
+            return connection.Query<Models.Timer>(sql).ToList();
+        }
+
         public List<Models.Timer> GetTimersByCycleId(int cycleId)
         {
             using var connection = new OleDbConnection(ConnectionString);

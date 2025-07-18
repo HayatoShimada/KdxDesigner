@@ -40,8 +40,6 @@ namespace KdxDesigner.Services.IOAddress
             int? recordId,
             string? isnotInclude)
         {
-            Debug.WriteLine($"GetSingleAddress called with:{isOutput} recordId={recordId}, processName='{recordName}', ioText='{ioText}'");
-            Debug.WriteLine(ioList.Count);
 
             if (ioText == "null")
             {
@@ -115,8 +113,6 @@ namespace KdxDesigner.Services.IOAddress
             Operation operation,
             string? isnotInclude)
         {
-            Debug.WriteLine($"GetSingleAddress called with:{isOutput} recordId={operation.Id}, processName='{operation.OperationName}', ioText='{ioText}'");
-            Debug.WriteLine(ioList.Count);
 
             // isOutput (Y/X) でフィルタリング
             ioList = isOutput
@@ -146,7 +142,6 @@ namespace KdxDesigner.Services.IOAddress
                     return result.SingleAddress;
 
                 case FindIOResultState.FoundMultiple:
-                    // ★★★ 修正箇所 ★★★
                     // 複数件ヒットした場合、UI選択サービスを呼び出す
                     IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches!, operation.OperationName, operation.Id);
 
@@ -209,9 +204,9 @@ namespace KdxDesigner.Services.IOAddress
                     RecordId = recordId
                 });
             }
-
             return matches;
         }
+
         private FindIOResult FindByIOTextInternal(
             List<IO> ioList,
             string ioText,
@@ -227,8 +222,6 @@ namespace KdxDesigner.Services.IOAddress
             if (ioText.StartsWith(LengthPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 var lengthList = _repository.GetLengthByPlcId(_plcId);
-
-                // ★★★ 修正箇所 スタート ★★★
 
                 // Step 1: まず、条件に一致するオブジェクト自体を検索して変数に格納します。
                 //         リストや各要素、プロパティがnullの可能性も考慮し、安全に検索します。
@@ -253,7 +246,6 @@ namespace KdxDesigner.Services.IOAddress
                     _errorAggregator.AddError(new OutputError { Message = $"指定されたアドレス '{ioText}' (検索値: '{ioText}') が見つかりませんでした。", RecordName = recordName, RecordId = recordId });
                     return new FindIOResult { State = FindIOResultState.NotFound };
                 }
-                // ★★★ 修正箇所 エンド ★★★
             }
 
             string searchText = ioText.StartsWith("_") ? ioText.Substring(1) : ioText;

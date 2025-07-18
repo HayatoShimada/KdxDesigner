@@ -1,9 +1,11 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
+
+using System;
 
 namespace KdxDesigner.Utils.Cylinder
 {
@@ -633,91 +635,124 @@ namespace KdxDesigner.Utils.Cylinder
         }
 
 
-        public List<LadderCsvRow> FlowValve(List<IO> sensors)
+        public List<LadderCsvRow> FlowValve(List<IO> sensors, string speedDevice)
         {
             var result = new List<LadderCsvRow>();
             const string valveSearchString = "IN";
 
-            // 1. "IN" を含むIO候補を全て取得する。見つからない場合はサービスがエラーを報告する。
-            var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString, _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, errorIfNotFound: true);
+            string cyNum = _cylinder.Cylinder.CYNum ?? ""; // シリンダー名の取得  
+            string cyNumSub = _cylinder.Cylinder.CYNameSub.ToString() ?? ""; // シリンダー名の取得  
+            string cyName = cyNum + cyNumSub; // シリンダー名の組み合わせ  
 
-            // 2. 見つかった候補を、末尾の番号をキーとする辞書に変換する
-            var valveMap = new Dictionary<int, string>();
-            foreach (var candidate in valveCandidates)
+            var stpIO = _ioAddressService.GetSingleAddress(sensors, "STP", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+            var in1IO = _ioAddressService.GetSingleAddress(sensors, "IN1", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+            var in2IO = _ioAddressService.GetSingleAddress(sensors, "IN2", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+            var in3IO = _ioAddressService.GetSingleAddress(sensors, "IN3", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+            var in4IO = _ioAddressService.GetSingleAddress(sensors, "IN4", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+            var in5IO = _ioAddressService.GetSingleAddress(sensors, "IN5", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+            var in6IO = _ioAddressService.GetSingleAddress(sensors, "IN6", true, cyNum + cyName, _cylinder.Cylinder.Id, null);
+
+
+            if (in1IO != null)
             {
-                if (string.IsNullOrEmpty(candidate.IOName)) continue;
-
-                // IONameの末尾が1-6の数字であるものを抽出
-                char lastChar = candidate.IOName.Last();
-                if (int.TryParse(lastChar.ToString(), out int valveNum) && valveNum >= 1 && valveNum <= 6)
+                result.AddRange(LadderRow.AddLDG(speedDevice, "K5"));
+                result.AddRange(LadderRow.AddANDN(speedDevice, "K0"));
+                result.Add(LadderRow.AddOUT(in1IO));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
                 {
-                    valveMap[valveNum] = !string.IsNullOrEmpty(candidate.LinkDevice)
-        ? candidate.LinkDevice
-        : candidate.Address!;
-                }
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum,
+                    Message = $"CY{_cylinder.Cylinder.CYNum}のIN1 IOが見つかりません。",
+                });
             }
 
-            // 2. 共通のラダーロジックを生成
-            result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
-
-            result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
-            result.Add(LadderRow.AddORB());
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString()));
-
-            // 3. ループを使って、IN1～IN6のラダー生成とエラー処理を共通化
-            for (int i = 1; i <= 6; i++)
+            if (in2IO != null)
             {
-                // 辞書にバルブが存在するか確認
-                if (valveMap.TryGetValue(i, out string? valveAddress))
+                result.Add(LadderRow.AddLD(_label + (_startNum + 21).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOR(_label + (_startNum + 26).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOUT(in2IO));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
                 {
-                    // バルブが見つかった場合：ラダーを生成
-                    if (i == 1) // IN1 のみ特殊なロジック
-                    {
-                        if (_speedDevice != null)
-                        {
-                            result.AddRange(LadderRow.AddLDG(_speedDevice, "K5"));
-                            result.AddRange(LadderRow.AddANDN(_speedDevice, "K0"));
-                            result.Add(LadderRow.AddOUT(valveAddress));
-                        }
-                        else
-                        {
-                            // speedDevice がない場合のエラー
-                            _errorAggregator.AddError(new OutputError
-                            {
-                                RecordName = _cylinder.Cylinder.CYNum ?? "",
-                                Message = $"流量バルブIN1のロジック生成に失敗しました。速度制御デバイスが見つかりません。",
-                                MnemonicId = (int)MnemonicType.CY,
-                                RecordId = _cylinder.Cylinder.Id
-                            });
-                        }
-                    }
-                    else // IN2 から IN6 までの共通ロジック
-                    {
-                        // ラダーアドレスのオフセットを計算
-                        // IN2 -> 21, 26 | IN3 -> 22, 27 ...
-                        int ldOffset = 19 + i;
-                        int orOffset = 24 + i;
-                        result.Add(LadderRow.AddLD(_label + (_startNum + ldOffset).ToString()));
-                        result.Add(LadderRow.AddOR(_label + (_startNum + orOffset).ToString()));
-                        result.Add(LadderRow.AddOUT(valveAddress));
-                    }
-                }
-                else
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum,
+                    Message = $"CY{_cylinder.Cylinder.CYNum}のIN2 IOが見つかりません。",
+                });
+            }
+
+            if (in3IO != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 22).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOR(_label + (_startNum + 27).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOUT(in3IO));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
                 {
-                    // バルブが見つからなかった場合：エラーを追加
-                    _errorAggregator.AddError(new OutputError
-                    {
-                        RecordName = _cylinder.Cylinder.CYNum ?? "",
-                        Message = $"'{_cylinder.Cylinder.CYNum}' の流量バルブIN{i}がIOリストに見つかりませんでした。",
-                        MnemonicId = (int)MnemonicType.CY,
-                        RecordId = _cylinder.Cylinder.Id
-                    });
-                }
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum,
+                    Message = $"CY{_cylinder.Cylinder.CYNum}のIN3 IOが見つかりません。",
+                });
+            }
+
+            if (in4IO != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 23).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOR(_label + (_startNum + 28).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOUT(in4IO));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum,
+                    Message = $"CY{_cylinder.Cylinder.CYNum}のIN4 IOが見つかりません。",
+                });
+            }
+
+            if (in5IO != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 24).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOR(_label + (_startNum + 29).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOUT(in5IO));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum,
+                    Message = $"CY{_cylinder.Cylinder.CYNum}のIN5 IOが見つかりません。",
+                });
+            }
+
+            if (in6IO != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 25).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOR(_label + (_startNum + 30).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddOUT(in6IO));
+            }
+            else
+            {
+                _errorAggregator.AddError(new OutputError
+                {
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id,
+                    RecordName = _cylinder.Cylinder.CYNum,
+                    Message = $"CY{_cylinder.Cylinder.CYNum}のIN6 IOが見つかりません。",
+                });
             }
 
             return result;

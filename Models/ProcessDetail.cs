@@ -22,13 +22,11 @@ namespace KdxDesigner.Models
         public int? CategoryId { get; set; }
         public string? FinishSensor { get; set; }
         public int? BlockNumber { get; set; }
-        public int? TimerId { get; set; }
         public string? SkipMode { get; set; }
         public int? CycleId { get; set; }
         public int? SortNumber { get; set; }
         public string? Comment { get; set; }
-
+        public string? ILStart { get; set; }
     }
-
 }
 

@@ -51,11 +51,25 @@ namespace KdxDesigner.Services
         /// <param name="cycleId">CycleId</param>
         /// <param name="mnemonicId">MnemonicId</param>
         /// <returns>MnemonicTimerDeviceのリスト</returns>
-        public List<MnemonicTimerDevice> GetMnemonicTimerDeviceByMnemonic(int plcId, int cycleId, int mnemonicId)
+        public List<MnemonicTimerDevice> GetMnemonicTimerDeviceByCycle(int plcId, int cycleId, int mnemonicId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND CycleId = @CycleId AND MnemonicId = @MnemonicId";
             return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, CycleId = cycleId, MnemonicId = mnemonicId }).ToList();
+        }
+
+        /// <summary>
+        /// MnemonicTimerDeviceをPlcIdとMnemonicIdで取得するヘルパーメソッド
+        /// </summary>
+        /// <param name="plcId">PlcId</param>
+        /// <param name="cycleId">CycleId</param>
+        /// <param name="mnemonicId">MnemonicId</param>
+        /// <returns>MnemonicTimerDeviceのリスト</returns>
+        public List<MnemonicTimerDevice> GetMnemonicTimerDeviceByMnemonic(int plcId, int mnemonicId)
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND MnemonicId = @MnemonicId";
+            return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, MnemonicId = mnemonicId }).ToList();
         }
 
         /// <summary>
@@ -135,57 +149,74 @@ namespace KdxDesigner.Services
         public void SaveWithDetail(
             List<Models.Timer> timers,
             List<ProcessDetail> details,
-            int startNum, int plcId, int cycleId, out int count)
+            int startNum, int plcId, ref int count)
         {
-            count = 0; // outパラメータの初期化
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
 
             try
             {
-                // 既存データを取得し、高速検索用に辞書に変換
-                // キー: (RecordId, TimerId) でユニークと仮定
-                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.ProcessDetail);
-                var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerId: m.TimerId), m => m);
+                // 1. 既存データを取得し、(RecordId, TimerId)の複合キーを持つ辞書に変換
+                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
+                var existingLookup = allExisting.ToDictionary(m => (m.RecordId, m.TimerId), m => m);
 
-                var timersByRecordId = timers
-                    .Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail)
-                    .GroupBy(t => t.RecordId ?? 0)
-                    .ToDictionary(g => g.Key, g => g.ToList());
+                // 2. ProcessDetailに関連するタイマーをRecordIdごとに整理した辞書を作成
+                var timersByRecordId = new Dictionary<int, List<Models.Timer>>();
+                var detailTimersSource = timers.Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail);
 
+                foreach (var timer in detailTimersSource)
+                {
+                    if (string.IsNullOrWhiteSpace(timer.RecordIds)) continue;
+
+                    // RecordIdsをセミコロンで分割し、各IDに対して処理
+                    var recordIdStrings = timer.RecordIds.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var idStr in recordIdStrings)
+                    {
+                        if (int.TryParse(idStr.Trim(), out int recordId))
+                        {
+                            if (!timersByRecordId.ContainsKey(recordId))
+                            {
+                                timersByRecordId[recordId] = new List<Models.Timer>();
+                            }
+                            timersByRecordId[recordId].Add(timer);
+                        }
+                    }
+                }
+
+                // 3. ProcessDetailをループし、関連するタイマーを処理
                 foreach (ProcessDetail detail in details)
                 {
-                    if (detail == null || !timersByRecordId.TryGetValue(detail.Id, out var operationTimers))
+                    if (detail == null) continue;
+
+                    // 現在のProcessDetailに対応するタイマーがあるか、辞書から取得
+                    if (timersByRecordId.TryGetValue(detail.Id, out var detailTimers))
                     {
-                        continue; // 操作データがない、または関連するタイマーがない場合はスキップ
-                    }
-
-                    foreach (Models.Timer timer in operationTimers)
-                    {
-                        if (timer == null) continue;
-
-                        var processTimerDevice = "ST" + (startNum + count).ToString();
-                        var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR).ToString();
-
-                        // 複合キーで既存レコードを検索
-                        existingLookup.TryGetValue((detail.Id, timer.ID), out var existingRecord);
-
-                        var deviceToSave = new MnemonicTimerDevice
+                        foreach (Models.Timer timer in detailTimers)
                         {
-                            // IDはUPDATE時にのみ必要。Upsertヘルパー内で処理
-                            MnemonicId = (int)MnemonicType.ProcessDetail,
-                            RecordId = detail.Id,
-                            TimerId = timer.ID,
-                            TimerCategoryId = timer.TimerCategoryId,
-                            ProcessTimerDevice = processTimerDevice,
-                            TimerDevice = timerDevice,
-                            PlcId = plcId,
-                            CycleId = cycleId
-                        };
+                            if (timer == null) continue;
 
-                        UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
-                        count++;
+                            var processTimerDevice = "ST" + (count + _mainViewModel.DeviceStartT);
+                            var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
+
+                            // 複合キー (Detail.Id, Timer.ID) で既存レコードを検索
+                            existingLookup.TryGetValue((detail.Id, timer.ID), out var existingRecord);
+
+                            var deviceToSave = new MnemonicTimerDevice
+                            {
+                                MnemonicId = (int)MnemonicType.ProcessDetail,
+                                RecordId = detail.Id, // ★ 現在のdetail.IdをRecordIdとして設定
+                                TimerId = timer.ID,
+                                TimerCategoryId = timer.TimerCategoryId,
+                                ProcessTimerDevice = processTimerDevice,
+                                TimerDevice = timerDevice,
+                                PlcId = plcId,
+                                CycleId = timer.CycleId
+                            };
+
+                            UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                            count++;
+                        }
                     }
                 }
 
@@ -213,58 +244,77 @@ namespace KdxDesigner.Services
         public void SaveWithOperation(
             List<Models.Timer> timers,
             List<Operation> operations,
-            int startNum, int plcId, int cycleId, out int count)
+            int startNum, int plcId, ref int count)
         {
-            count = 0; // outパラメータの初期化
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
 
             try
             {
-                // 既存データを取得し、高速検索用に辞書に変換
-                // キー: (RecordId, TimerId) でユニークと仮定
-                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.Operation);
-                var existingLookup = allExisting.ToDictionary(m => (RecordId: m.RecordId, TimerId: m.TimerId), m => m);
+                // 1. 既存データを取得し、(RecordId, TimerId)の複合キーを持つ辞書に変換
+                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, (int)MnemonicType.Operation);
+                var existingLookup = allExisting.ToDictionary(m => (m.RecordId, m.TimerId), m => m);
 
-                // 修正: 'int?' 型を 'int' 型に変換して、ToDictionary のキーとして使用可能にする
-                var timersByRecordId = timers
-                    .Where(t => t.MnemonicId == (int)MnemonicType.Operation)
-                    .GroupBy(t => t.RecordId ?? 0) // Null 許容型 'int?' をデフォルト値 '0' に変換
-                    .ToDictionary(g => g.Key, g => g.ToList());
+                // 2. タイマーをRecordIdごとに整理した辞書を作成
+                var timersByRecordId = new Dictionary<int, List<Models.Timer>>();
+                var operationTimersSource = timers.Where(t => t.MnemonicId == (int)MnemonicType.Operation);
 
+                foreach (var timer in operationTimersSource)
+                {
+                    if (string.IsNullOrWhiteSpace(timer.RecordIds)) continue;
+
+                    // RecordIdsをセミコロンで分割し、各IDに対して処理
+                    var recordIdStrings = timer.RecordIds.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var idStr in recordIdStrings)
+                    {
+                        if (int.TryParse(idStr.Trim(), out int recordId))
+                        {
+                            // 辞書にキーがなければ新しいリストを作成
+                            if (!timersByRecordId.ContainsKey(recordId))
+                            {
+                                timersByRecordId[recordId] = new List<Models.Timer>();
+                            }
+                            // 対応するIDのリストにタイマーを追加
+                            timersByRecordId[recordId].Add(timer);
+                        }
+                    }
+                }
+
+                // 3. Operationをループし、関連するタイマーを処理
                 foreach (Operation operation in operations)
                 {
-                    if (operation == null || !timersByRecordId.TryGetValue(operation.Id, out var operationTimers))
+                    if (operation == null) continue;
+
+                    // 現在のOperationに対応するタイマーがあるか、辞書から取得
+                    if (timersByRecordId.TryGetValue(operation.Id, out var operationTimers))
                     {
-                        continue; // 操作データがない、または関連するタイマーがない場合はスキップ
-                    }
-
-                    foreach (Models.Timer timer in operationTimers)
-                    {
-                        if (timer == null) continue;
-
-                        var processTimerDevice = "ST" + (startNum + count).ToString();
-                        var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR).ToString();
-
-                        // 複合キーで既存レコードを検索
-                        existingLookup.TryGetValue((operation.Id, timer.ID), out var existingRecord);
-
-                        var deviceToSave = new MnemonicTimerDevice
+                        foreach (Models.Timer timer in operationTimers)
                         {
-                            // IDはUPDATE時にのみ必要。Upsertヘルパー内で処理
-                            MnemonicId = (int)MnemonicType.Operation,
-                            RecordId = operation.Id,
-                            TimerId = timer.ID,
-                            TimerCategoryId = timer.TimerCategoryId,
-                            ProcessTimerDevice = processTimerDevice,
-                            TimerDevice = timerDevice,
-                            PlcId = plcId,
-                            CycleId = cycleId
-                        };
+                            if (timer == null) continue;
 
-                        UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
-                        count++;
+                            // デバイス番号の計算
+                            var processTimerDevice = "ST" + (count + _mainViewModel.DeviceStartT);
+                            var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
+
+                            // 複合キーで既存レコードを検索
+                            existingLookup.TryGetValue((operation.Id, timer.ID), out var existingRecord);
+
+                            var deviceToSave = new MnemonicTimerDevice
+                            {
+                                MnemonicId = (int)MnemonicType.Operation,
+                                RecordId = operation.Id, // ★ TimerのRecordIdsではなく、現在のoperation.Idを使う
+                                TimerId = timer.ID,
+                                TimerCategoryId = timer.TimerCategoryId,
+                                ProcessTimerDevice = processTimerDevice,
+                                TimerDevice = timerDevice,
+                                PlcId = plcId,
+                                CycleId = timer.CycleId
+                            };
+
+                            UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                            count++;
+                        }
                     }
                 }
 
@@ -280,7 +330,6 @@ namespace KdxDesigner.Services
             }
         }
 
-        // count変数を参照渡し(ref)に変更し、呼び出し元でインクリメントされた値を維持できるようにする
         /// <summary>
         /// Cylinderのリストを受け取り、MnemonicTimerDeviceテーブルに保存する
         /// </summary>
@@ -288,12 +337,11 @@ namespace KdxDesigner.Services
         /// <param name="cylinders"></param>
         /// <param name="startNum"></param>
         /// <param name="plcId"></param>
-        /// <param name="cycleId"></param>
         /// <param name="count"></param>
         public void SaveWithCY(
             List<Models.Timer> timers,
             List<CY> cylinders,
-            int startNum, int plcId, int cycleId, ref int count)
+            int startNum, int plcId, ref int count)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
@@ -301,50 +349,68 @@ namespace KdxDesigner.Services
 
             try
             {
-                // 既存データを取得し、高速検索用に辞書に変換
-                // キー: (RecordId, TimerCategoryId) でユニークと仮定
-                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, cycleId, (int)MnemonicType.CY);
+                // 1. 既存データを取得し、(RecordId, TimerId)の複合キーを持つ辞書に変換
+                var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, (int)MnemonicType.CY);
+                var existingLookup = allExisting.ToDictionary(m => (m.RecordId, m.TimerId), m => m);
 
-                // 処理対象のタイマーをRecordId(Cylinder.Id)でグループ化
-                var timersCylinder = timers
-                    .Where(t => t.MnemonicId == (int)MnemonicType.CY)
-                    .Where(t => t.CycleId == cycleId) // CycleIdでフィルタリング
-                    .ToList();
-                var repository = new AccessRepository(_connectionString);
-                var timerCategory = repository.GetTimerCategory();
+                // 2. CYに関連するタイマーをRecordIdごとに整理した辞書を作成
+                var timersByRecordId = new Dictionary<int, List<Models.Timer>>();
+                var cylinderTimersSource = timers.Where(t => t.MnemonicId == (int)MnemonicType.CY);
 
-                foreach (var timer in timersCylinder)
+                foreach (var timer in cylinderTimersSource)
                 {
-                    if (timer == null)
+                    if (string.IsNullOrWhiteSpace(timer.RecordIds)) continue;
+
+                    var recordIdStrings = timer.RecordIds.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var idStr in recordIdStrings)
                     {
-                        continue; // このカテゴリのタイマーは存在しないのでスキップ
+                        if (int.TryParse(idStr.Trim(), out int recordId))
+                        {
+                            if (!timersByRecordId.ContainsKey(recordId))
+                            {
+                                timersByRecordId[recordId] = new List<Models.Timer>();
+                            }
+                            timersByRecordId[recordId].Add(timer);
+                        }
                     }
-
-                    var existingRecord = allExisting
-                        .FirstOrDefault(m => m.RecordId == timer.RecordId
-                        && m.TimerCategoryId == timer.TimerCategoryId);
-
-                    var category = timerCategory.FirstOrDefault(c => c.ID == timer.TimerCategoryId);
-                    var processTimerDevice = "ST" + (startNum + count).ToString();
-                    var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR).ToString();
-
-                    if (timer.RecordId == null) continue; // RecordIdがnullの場合はスキップ
-
-                    var deviceToSave = new MnemonicTimerDevice
-                    {
-                        MnemonicId = (int)MnemonicType.CY,
-                        RecordId = timer.RecordId.Value,
-                        TimerId = timer.ID,
-                        TimerCategoryId = timer.TimerCategoryId,
-                        ProcessTimerDevice = processTimerDevice,
-                        TimerDevice = timerDevice,
-                        PlcId = plcId,
-                        CycleId = cycleId
-                    };
-
-                    UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
-                    count++;
                 }
+
+                // 3. Cylinderをループし、関連するタイマーを処理
+                foreach (CY cylinder in cylinders)
+                {
+                    if (cylinder == null) continue;
+
+                    // 現在のCylinderに対応するタイマーがあるか、辞書から取得
+                    if (timersByRecordId.TryGetValue(cylinder.Id, out var cylinderTimers))
+                    {
+                        foreach (Models.Timer timer in cylinderTimers)
+                        {
+                            if (timer == null) continue;
+
+                            var processTimerDevice = "ST" + (count + _mainViewModel.DeviceStartT);
+                            var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
+
+                            // 複合キー (Cylinder.Id, Timer.ID) で既存レコードを検索
+                            existingLookup.TryGetValue((cylinder.Id, timer.ID), out var existingRecord);
+
+                            var deviceToSave = new MnemonicTimerDevice
+                            {
+                                MnemonicId = (int)MnemonicType.CY,
+                                RecordId = cylinder.Id, // ★ 現在のcylinder.IdをRecordIdとして設定
+                                TimerId = timer.ID,
+                                TimerCategoryId = timer.TimerCategoryId,
+                                ProcessTimerDevice = processTimerDevice,
+                                TimerDevice = timerDevice,
+                                PlcId = plcId,
+                                CycleId = timer.CycleId
+                            };
+
+                            UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
+                            count++;
+                        }
+                    }
+                }
+                // ★★★ 修正箇所 エンド ★★★
 
                 transaction.Commit();
             }

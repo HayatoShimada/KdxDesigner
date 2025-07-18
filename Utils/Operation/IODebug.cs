@@ -399,21 +399,43 @@ namespace KdxDesigner.Utils.Operation
             string? valve1Address = SettingsManager.Settings.AlwaysON;
 
             // --- Valve1 の処理 (バルブは出力なので isOutput: true) ---
-            if (!string.IsNullOrEmpty(_operation.Operation.Valve1) && _operation.Operation.CategoryId != 20)
+
+            switch (_operation.Operation.CategoryId)
             {
-                // ★修正: GetSingleAddress の引数を最新のI/Fに合わせる
-                valve1Address = _ioAddressService.GetSingleAddress(
-                    _ioList,
-                    _operation.Operation.Valve1,
-                    isOutput: true,
-                    _operation.Operation.OperationName!,
-                    _operation.Operation.Id,
-                    isnotInclude: null);
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                case 15:
+                case 16:
+                case 17:
+                case 18:
+                case 19:
+                case 23:
+                case 24:
+                case 25:
+                case 26:
+                    break;
+                default:
+                    if (!string.IsNullOrEmpty(_operation.Operation.Valve1) && _operation.Operation.CategoryId != 20)
+                    {
+                        // ★修正: GetSingleAddress の引数を最新のI/Fに合わせる
+                        valve1Address = _ioAddressService.GetSingleAddress(
+                            _ioList,
+                            _operation.Operation.Valve1,
+                            isOutput: true,
+                            _operation.Operation.OperationName!,
+                            _operation.Operation.Id,
+                            isnotInclude: null);
 
-                if (valve1Address == null) valve1Address = SettingsManager.Settings.AlwaysON;
+                        if (valve1Address == null) valve1Address = SettingsManager.Settings.AlwaysON;
 
-            }
-            result.Add(LadderRow.AddAND(valve1Address));
+                    }
+                    result.Add(LadderRow.AddAND(valve1Address));
+                    break;
+                }
+
             return result;
 
         }

@@ -107,17 +107,12 @@ namespace KdxDesigner.Utils.Process
 
                 // 試運転実行処理
                 result.Add(LadderRow.AddLD(debugStartContact));
-
                 result.Add(LadderRow.AddAND(debugCondition));
-
                 result.Add(LadderRow.AddAND(debugContact));
                 result.Add(LadderRow.AddORB());
-
-                // アウトコイルまで
                 result.Add(LadderRow.AddAND(outcoilLabel + outcoilNum.ToString()));
                 result.Add(LadderRow.AddANI(outcoilLabel + (outcoilNum + 1).ToString()));
                 result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 1).ToString()));
-
                 result.Add(LadderRow.AddAND(startContact));
                 result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 1).ToString()));
 
@@ -415,8 +410,9 @@ namespace KdxDesigner.Utils.Process
                 result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 3).ToString()));
 
                 // OUT L4 完了
-                result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
-                result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 3).ToString()));
+                result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 3).ToString()));
+                result.Add(LadderRow.AddOR(outcoilLabel + (outcoilNum + 4).ToString()));
+                result.Add(LadderRow.AddAND(outcoilLabel + (outcoilNum + 1).ToString()));
                 result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 4).ToString()));
             }
             return result;

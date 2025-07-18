@@ -117,115 +117,19 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.FlowOK());
             result.Add(LadderRow.AddNOP());
 
-            var stpIO = _ioAddressService.GetSingleAddress(sensors, "STP", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-            var in1IO = _ioAddressService.GetSingleAddress(sensors, "IN1", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-            var in2IO = _ioAddressService.GetSingleAddress(sensors, "IN2", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-            var in3IO = _ioAddressService.GetSingleAddress(sensors, "IN3", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-            var in4IO = _ioAddressService.GetSingleAddress(sensors, "IN4", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-            var in5IO = _ioAddressService.GetSingleAddress(sensors, "IN5", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-            var in6IO = _ioAddressService.GetSingleAddress(sensors, "IN6", true, cyNum + cyName, cylinder.Cylinder.Id, null);
-
-            
-            if (in1IO != null)
+            // バルブ指令
+            if (cylinder.Cylinder.FlowCount != null)
             {
-                result.AddRange(LadderRow.AddLDG(speedDevice, "K5"));
-                result.AddRange(LadderRow.AddANDN(speedDevice, "K0"));
-                result.Add(LadderRow.AddOUT(in1IO));
+                for(int i = 1; i <= cylinder.Cylinder.FlowCount; i++)
+                {
+                    string countFlowName = cyName + i.ToString();
+                    var flowSensors = sensors.Where(i => i.IOName.Contains(countFlowName)).ToList();
+                    result.AddRange(functions.FlowValve(flowSensors, speedDevice));
+                }
             }
             else
             {
-                _errorAggregator.AddError(new OutputError
-                {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = cylinder.Cylinder.Id,
-                    RecordName = cylinder.Cylinder.CYNum,
-                    Message = $"CY{cylinder.Cylinder.CYNum}のIN1 IOが見つかりません。",
-                });
-            }
-
-            if(in2IO != null)
-            {
-                result.Add(LadderRow.AddLD(label + (startNum + 21).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOR(label + (startNum + 26).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOUT(in2IO));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = cylinder.Cylinder.Id,
-                    RecordName = cylinder.Cylinder.CYNum,
-                    Message = $"CY{cylinder.Cylinder.CYNum}のIN2 IOが見つかりません。",
-                });
-            }
-
-            if(in3IO != null)
-            {
-                result.Add(LadderRow.AddLD(label + (startNum + 22).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOR(label + (startNum + 27).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOUT(in3IO));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = cylinder.Cylinder.Id,
-                    RecordName = cylinder.Cylinder.CYNum,
-                    Message = $"CY{cylinder.Cylinder.CYNum}のIN3 IOが見つかりません。",
-                });
-            }
-
-            if(in4IO != null)
-            {
-                result.Add(LadderRow.AddLD(label + (startNum + 23).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOR(label + (startNum + 28).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOUT(in4IO));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = cylinder.Cylinder.Id,
-                    RecordName = cylinder.Cylinder.CYNum,
-                    Message = $"CY{cylinder.Cylinder.CYNum}のIN4 IOが見つかりません。",
-                });
-            }
-
-            if(in5IO != null)
-            {
-                result.Add(LadderRow.AddLD(label + (startNum + 24).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOR(label + (startNum + 29).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOUT(in5IO));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = cylinder.Cylinder.Id,
-                    RecordName = cylinder.Cylinder.CYNum,
-                    Message = $"CY{cylinder.Cylinder.CYNum}のIN5 IOが見つかりません。",
-                });
-            }
-
-            if (in6IO != null)
-            {
-                result.Add(LadderRow.AddLD(label + (startNum + 25).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOR(label + (startNum + 30).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddOUT(in6IO));
-            }
-            else
-            {
-                _errorAggregator.AddError(new OutputError
-                {
-                    MnemonicId = (int)MnemonicType.CY,
-                    RecordId = cylinder.Cylinder.Id,
-                    RecordName = cylinder.Cylinder.CYNum,
-                    Message = $"CY{cylinder.Cylinder.CYNum}のIN6 IOが見つかりません。",
-                });
+                result.AddRange(functions.FlowValve(sensors, speedDevice));
             }
 
             return result;
