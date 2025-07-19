@@ -467,7 +467,7 @@ namespace KdxDesigner.ViewModels
 
 
             // 1. まずPlcIdで絞り込む
-            var cylindersForPlc = _repository.GetCYs().Where(c => c.PlcId == plcId);
+            var cylindersForPlc = _repository.GetCYs().Where(c => c.PlcId == plcId).OrderBy(c => c.SortNumber);
 
             // 2. さらに、ProcessStartCycle に cycleId が含まれるものでフィルタリング
             var filteredCylinders = cylindersForPlc
@@ -610,7 +610,7 @@ namespace KdxDesigner.ViewModels
             List<ProcessDetail> details = _repository
                 .GetProcessDetails()
                 .Where(d => d.CycleId == SelectedCycle.Id).OrderBy(d => d.SortNumber).ToList();
-            List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).ToList();
+            List<CY> cylinders = _repository.GetCYs().Where(o => o.PlcId == SelectedPlc.Id).OrderBy(c => c.SortNumber).ToList();
 
             var filteredCylinders = cylinders
                 .Where(c =>
@@ -679,6 +679,12 @@ namespace KdxDesigner.ViewModels
             List<CY> cylinders, 
             List<Operation> operations, List<IO> ioList, List<Models.Timer> timers) prepData)
         {
+            if (_memoryService == null)
+            {
+                MessageBox.Show("MemoryServiceが初期化されていません。", "エラー");
+                return;
+            }
+
             var devices = _mnemonicService!.GetMnemonicDevice(SelectedPlc!.Id);
             var timerDevices = _timerService!.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);
 
@@ -687,18 +693,15 @@ namespace KdxDesigner.ViewModels
             var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
             var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList();
 
-            // ★注意: IsErrorMemory の処理対象が devicesC になっています。これは意図通りでしょうか？
-            // errorDevices のような別のリストを使うべきかもしれません。現状は元のコードのままにしています。
-
             MemoryProgressMax = (IsProcessMemory ? devicesP.Count : 0) +
                                 (IsDetailMemory ? devicesD.Count : 0) +
                                 (IsOperationMemory ? devicesO.Count : 0) +
                                 (IsCylinderMemory ? devicesC.Count : 0) +
-                                (IsErrorMemory ? devicesC.Count : 0) + // ★
+                                (IsErrorMemory ? devicesC.Count : 0) +
                                 (IsTimerMemory ? timerDevices.Count * 2 : 0);
             MemoryProgressValue = 0;
 
-            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService.SaveMnemonicMemories, "エラー")) return; // ★
+            if (!await ProcessAndSaveMemoryAsync(IsErrorMemory, devicesC, _memoryService.SaveMnemonicMemories, "エラー")) return;
 
             if (IsTimerMemory)
             {

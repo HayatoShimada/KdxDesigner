@@ -1,7 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
@@ -33,7 +33,7 @@ namespace KdxDesigner.Utils.Cylinder
         {
             var result = new List<LadderCsvRow>();
             var servo = _mainViewModel.selectedServo.FirstOrDefault(s => s.CylinderId == cylinder.Cylinder.Id); // 選択されたサーボの取得
-            if(servo == null)
+            if (servo == null)
             {
                 _errorAggregator.AddError(new OutputError
                 {

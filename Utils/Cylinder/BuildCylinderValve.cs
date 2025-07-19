@@ -1,7 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
@@ -100,6 +100,8 @@ namespace KdxDesigner.Utils.Cylinder
                     result.AddRange(functions.Excitation(sensors));
                     break;
                 default:
+                    // 保持
+                    result.AddRange(functions.OutputRetention());
                     result.AddRange(functions.Retention(sensors));
                     break;
             }
@@ -182,6 +184,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.CyclePulse());
 
             // 保持出力
+            result.AddRange(functions.OutputRetention());
             result.AddRange(functions.Retention(sensors));
 
             // 出力検索

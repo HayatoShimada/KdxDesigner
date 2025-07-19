@@ -5,8 +5,6 @@ using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-using System;
-
 namespace KdxDesigner.Utils.Cylinder
 {
     internal class CylinderFunction
@@ -161,10 +159,6 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddLDP(_label + (_startNum + 5).ToString()));
             result.Add(LadderRow.AddORP(SettingsManager.Settings.SoftResetSignal));
             result.Add(LadderRow.AddRST(_label + (_startNum + 6).ToString()));
-
-            // 保持出力行き
-            result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
-            result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -638,7 +632,6 @@ namespace KdxDesigner.Utils.Cylinder
         public List<LadderCsvRow> FlowValve(List<IO> sensors, string speedDevice)
         {
             var result = new List<LadderCsvRow>();
-            const string valveSearchString = "IN";
 
             string cyNum = _cylinder.Cylinder.CYNum ?? ""; // シリンダー名の取得  
             string cyNumSub = _cylinder.Cylinder.CYNameSub.ToString() ?? ""; // シリンダー名の取得  

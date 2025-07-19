@@ -1,12 +1,9 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
-
-using System.Diagnostics;
-using System.Reflection.Emit;
 
 namespace KdxDesigner.Utils.Cylinder
 {
@@ -105,6 +102,9 @@ namespace KdxDesigner.Utils.Cylinder
             // Cycleスタート時の方向自動指令
             result.AddRange(functions.CyclePulse());
 
+            // 保持
+            result.AddRange(functions.OutputRetention());
+
             // 保持出力
             result.AddRange(functions.RetentionFlow(sensors));
             result.Add(LadderRow.AddNOP());
@@ -118,18 +118,21 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddNOP());
 
             // バルブ指令
-            if (cylinder.Cylinder.FlowCount != null)
+            if (speedDevice != null)
             {
-                for(int i = 1; i <= cylinder.Cylinder.FlowCount; i++)
+                if (cylinder.Cylinder.FlowCount != null)
                 {
-                    string countFlowName = cyName + i.ToString();
-                    var flowSensors = sensors.Where(i => i.IOName.Contains(countFlowName)).ToList();
-                    result.AddRange(functions.FlowValve(flowSensors, speedDevice));
+                    for (int i = 1; i <= cylinder.Cylinder.FlowCount; i++)
+                    {
+                        string countFlowName = cyName + i.ToString();
+                        var flowSensors = sensors.Where(i => i.IOName!.Contains(countFlowName)).ToList();
+                        result.AddRange(functions.FlowValve(flowSensors, speedDevice));
+                    }
                 }
-            }
-            else
-            {
-                result.AddRange(functions.FlowValve(sensors, speedDevice));
+                else
+                {
+                    result.AddRange(functions.FlowValve(sensors, speedDevice));
+                }
             }
 
             return result;
@@ -244,7 +247,7 @@ namespace KdxDesigner.Utils.Cylinder
             var nbtTimer = timerList.FirstOrDefault(t => t.Timer.TimerCategoryId == 7); // 正常時BKタイマ
 
             if (fltTimer == null)
-            { 
+            {
                 _errorAggregator.AddError(new OutputError
                 {
                     MnemonicId = (int)MnemonicType.CY,
@@ -260,8 +263,8 @@ namespace KdxDesigner.Utils.Cylinder
                     // 強制減速タイマがある場合の処理
                     result.AddRange(LadderRow.AddLDN(speedDevice, "K1"));
                     result.AddRange(LadderRow.AddANDN(speedDevice, "K5"));
-                    result.AddRange(LadderRow.AddTimer(fltTimer.Timer.ProcessTimerDevice, fltTimer.Timer.TimerDevice)); // 
-                    result.Add(LadderRow.AddLD(fltTimer.Timer.ProcessTimerDevice)); // 
+                    result.AddRange(LadderRow.AddTimer(fltTimer.Timer.ProcessTimerDevice, fltTimer.Timer.TimerDevice));
+                    result.Add(LadderRow.AddLD(fltTimer.Timer.ProcessTimerDevice));
                     result.Add(LadderRow.AddMPS());
                     result.Add(LadderRow.AddAND(label + (startNum + 35).ToString()));
                     result.AddRange(LadderRow.AddMOVSet("K1", speedDevice));
@@ -327,7 +330,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.FlowOK());
             result.Add(LadderRow.AddNOP());
 
-            
+
             if (speedDevice != null)
             {
                 // 高速停止記憶
@@ -383,10 +386,10 @@ namespace KdxDesigner.Utils.Cylinder
 
             var breakeIO = _ioAddressService.
                 GetSingleAddress(
-                breakeList, 
-                cylinder.Cylinder.CYNum + "S", 
+                breakeList,
+                cylinder.Cylinder.CYNum + "S",
                 true,
-                cylinder.Cylinder.CYNum!, 
+                cylinder.Cylinder.CYNum!,
                 recordId: cylinder.Cylinder.Id,
                 null);
 
@@ -439,7 +442,7 @@ namespace KdxDesigner.Utils.Cylinder
                 cylinder.Cylinder.CYNum ?? string.Empty, // Use null-coalescing operator to provide a default value
                 cylinder.Cylinder.Id,
                 null);
-            if (stfIO !=null)
+            if (stfIO != null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
                 result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));
@@ -482,7 +485,7 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // 逆転指令
-            var rlIO = _ioAddressService.GetSingleAddress(sensors, "RL", true, cyNum+cyName, cylinder.Cylinder.Id, null);
+            var rlIO = _ioAddressService.GetSingleAddress(sensors, "RL", true, cyNum + cyName, cylinder.Cylinder.Id, null);
             var rmIO = _ioAddressService.GetSingleAddress(sensors, "RM", true, cyNum + cyName, cylinder.Cylinder.Id, null);
             var rhIO = _ioAddressService.GetSingleAddress(sensors, "RH", true, cyNum + cyName, cylinder.Cylinder.Id, null);
 
