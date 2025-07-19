@@ -2,16 +2,16 @@
 using CommunityToolkit.Mvvm.Input;
 
 using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
 using KdxDesigner.Services.Access;
+using KdxDesigner.Utils;
 
 using Microsoft.Win32;
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 
@@ -112,6 +112,32 @@ namespace KdxDesigner.ViewModels
         }
 
         [RelayCommand]
+        public void ExportLinkDeviceLadder()
+        {
+            try
+            {
+                var allOutputRows = new List<LadderCsvRow>();
+
+                var plcList = _repository.GetPLCs();
+
+                foreach (var plc in plcList)
+                {
+                    // ★★★ 修正箇所: PLCごとにラダー出力を取得 ★★★
+                    var ladderRows = _linkDeviceService.CreateLadderCsvRows(plc);
+                    if (ladderRows.Any())
+                    {
+                        allOutputRows.AddRange(ladderRows);
+                    }
+                    ExportLadderCsvFile(allOutputRows, $"LinkDevice_{plc.PlcName}.csv", "全ラダー");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"CSVの出力中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
         private void SaveChanges()
         {
             try
@@ -177,6 +203,25 @@ namespace KdxDesigner.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"保存中にエラーが発生しました: {ex.Message}", "エラー");
+            }
+        }
+
+        /// <summary>
+        /// CSVファイルのエクスポート処理を共通化するヘルパーメソッド
+        /// </summary>
+        public void ExportLadderCsvFile(List<LadderCsvRow> rows, string fileName, string categoryName)
+        {
+            if (!rows.Any()) return; // 出力する行がなければ何もしない
+
+            try
+            {
+                string csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+                LadderCsvExporter.ExportLadderCsv(rows, csvPath);
+            }
+            catch (Exception ex)
+            {
+
+                Debug.WriteLine(ex);
             }
         }
     }

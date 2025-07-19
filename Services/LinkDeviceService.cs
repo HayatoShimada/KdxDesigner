@@ -1,10 +1,9 @@
 ﻿using KdxDesigner.Models;
+using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Access;
 using KdxDesigner.Utils;
+using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
-
-using System.Collections.Generic;
-using System.Linq;
 
 namespace KdxDesigner.Services
 {
@@ -141,6 +140,66 @@ namespace KdxDesigner.Services
 
             // 4. 汎用エクスポーターを呼び出してファイルに書き込み
             CsvExporter.Export(filePath, csvData);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="plc"></param>
+        /// <returns></returns>
+        public List<LadderCsvRow> CreateLadderCsvRows(PLC plc)
+        {
+            // 1. PLCに紐づくLinkDeviceが設定されているIOを取得
+            var result = new List<LadderCsvRow>(); // 生成されるLadderCsvRowのリスト
+            var allIo = _repository.GetIoList();
+            var linkedIoList = allIo.Where(io => !string.IsNullOrWhiteSpace(io.LinkDevice) && io.PlcId == plc.Id).ToList();
+            string? previousWordPart = null;
+
+            // 2. LinkDeviceを16進数として解釈し、正しくソート
+            var sortedIo = linkedIoList
+                .Select(io =>
+                {
+                    // ソートキーとしてアドレスの数値表現を取得
+                    LinkDeviceCalculator.TryParseLinkAddress(io.LinkDevice, out _, out long sortKey);
+                    return new { IO = io, SortKey = sortKey };
+                })
+                .OrderBy(item => item.SortKey)
+                .Select(item => item.IO)
+                .ToList();
+
+            foreach (var io in sortedIo)
+            {
+                string linkDevice = io.LinkDevice!;
+                // 現在のワード部を取得 (例: "W01B5.F" -> "W01B5")
+                string currentWordPart = linkDevice.Split('.')[0];
+
+
+                if (io.LinkDevice == null || io.Address == null)
+                {
+                    // LinkDeviceがnullの場合はスキップ
+                    continue;
+                }
+
+                // ★ ワード部が前回と変わったタイミングで空行を挿入
+                if (previousWordPart != null && currentWordPart != previousWordPart)
+                {
+                    result.Add(LadderRow.AddStatement(currentWordPart));
+                }
+
+                if (io.Address.StartsWith("X"))
+                {
+                    result.Add(LadderRow.AddLD(io.Address));
+                    result.Add(LadderRow.AddOUT(io.LinkDevice));
+                }
+                else if (io.Address.StartsWith("Y"))
+                {
+                    result.Add(LadderRow.AddLD(io.LinkDevice));
+                    result.Add(LadderRow.AddOUT(io.Address));
+                }
+                previousWordPart = currentWordPart;
+
+            }
+            return result;
         }
     }
 }

@@ -412,7 +412,7 @@ namespace KdxDesigner.ViewModels
         /// <summary>
         /// CSVファイルのエクスポート処理を共通化するヘルパーメソッド
         /// </summary>
-        private void ExportLadderCsvFile(List<LadderCsvRow> rows, string fileName, string categoryName)
+        public void ExportLadderCsvFile(List<LadderCsvRow> rows, string fileName, string categoryName)
         {
             if (!rows.Any()) return; // 出力する行がなければ何もしない
 

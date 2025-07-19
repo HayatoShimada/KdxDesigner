@@ -49,6 +49,8 @@
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
             <Button Content="CSV出力" HorizontalAlignment="Left" 
             Width="100" Height="25" Margin="0,0,10,0" Command="{Binding ExportLinkDeviceCsvCommand}"/>
+            <Button Content="ラダー出力" HorizontalAlignment="Left" 
+            Width="100" Height="25" Margin="0,0,10,0" Command="{Binding ExportLinkDeviceLadder}"/>
             <Button Content="リンク実行"
             Width="100" Height="25" Margin="5" Command="{Binding ExecuteLinkCommand}"/>
         </StackPanel>
