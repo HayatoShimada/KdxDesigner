@@ -116,12 +116,13 @@ namespace KdxDesigner.ViewModels
         {
             try
             {
-                var allOutputRows = new List<LadderCsvRow>();
 
                 var plcList = _repository.GetPLCs();
 
                 foreach (var plc in plcList)
                 {
+                    var allOutputRows = new List<LadderCsvRow>();
+
                     // ★★★ 修正箇所: PLCごとにラダー出力を取得 ★★★
                     var ladderRows = _linkDeviceService.CreateLadderCsvRows(plc);
                     if (ladderRows.Any())

@@ -115,8 +115,11 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(prosTimeBuilder.Common(operation.Operation, prosTimes, label, outNumValue));
 
             // IO Debug
-            IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
-            result.AddRange(iODebug.GenerateSpeed(speedChangeCount));
+            if (_mainViewModel.IsDebug)
+            {
+                IODebug iODebug = new(_mainViewModel, operation, cylinders, ioList, _errorAggregator, _ioAddressService);
+                result.AddRange(iODebug.GenerateSpeed(speedChangeCount));
+            }
 
             return result;
         }

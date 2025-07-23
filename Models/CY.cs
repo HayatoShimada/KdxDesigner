@@ -28,6 +28,7 @@ namespace KdxDesigner.Models
         public int? SortNumber { get; set; }
         public int? Cycle { get; set; }
         public int? FlowCount { get; set; }
+        public string ManualButton { get; set; }
 
     }
 

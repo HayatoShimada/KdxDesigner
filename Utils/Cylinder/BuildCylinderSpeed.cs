@@ -232,10 +232,10 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddLD(label + (startNum + 12).ToString()));
             result.Add(LadderRow.AddOR(label + (startNum + 13).ToString()));
             result.Add(LadderRow.AddLD(label + (startNum + 7).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddORB());
             result.Add(LadderRow.AddLD(label + (startNum + 8).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddORB());
             result.Add(LadderRow.AddOUT(label + (startNum + 10).ToString()));
             result.Add(LadderRow.AddNOP());
@@ -274,12 +274,12 @@ namespace KdxDesigner.Utils.Cylinder
 
                     // 手動JOG指令 行き
                     result.Add(LadderRow.AddLD(label + (startNum + 7).ToString()));
-                    result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                    result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
                     result.AddRange(LadderRow.AddMOVSet("K1", speedDevice));
 
                     // 手動JOG指令 帰り
                     result.Add(LadderRow.AddLD(label + (startNum + 8).ToString()));
-                    result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                    result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
                     result.AddRange(LadderRow.AddMOVSet("K5", speedDevice));
                 }
                 else
@@ -301,7 +301,7 @@ namespace KdxDesigner.Utils.Cylinder
             if (speedDevice != null)
             {
                 result.Add(LadderRow.AddLD(label + (startNum + 10).ToString()));
-                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(label + (startNum + 12).ToString()));
                 result.Add(LadderRow.AddAND(label + (startNum + 13).ToString()));
                 result.AddRange(LadderRow.AddMOVSet("K1", speedDevice));

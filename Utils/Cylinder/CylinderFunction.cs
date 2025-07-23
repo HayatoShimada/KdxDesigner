@@ -402,11 +402,11 @@ namespace KdxDesigner.Utils.Cylinder
             // 行きOK
             result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
-            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
             result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
             result.Add(LadderRow.AddORB()); // 出力命令を追加
             result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
@@ -415,11 +415,11 @@ namespace KdxDesigner.Utils.Cylinder
             // 帰りOK
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
 
             result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
             result.Add(LadderRow.AddORB()); // 出力命令を追加
             result.Add(LadderRow.AddOUT(_label + (_startNum + 36)));
@@ -491,11 +491,11 @@ namespace KdxDesigner.Utils.Cylinder
             // 片ソレノイドのため、帰り方向は内部リレーをONする
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
 
             result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
-            result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
             result.Add(LadderRow.AddORB());
             // 出力は内部リレー
@@ -507,11 +507,11 @@ namespace KdxDesigner.Utils.Cylinder
                 // --- 条件ブロック (共通) ---
                 result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
                 result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
-                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
                 result.Add(LadderRow.AddORB());
 
@@ -573,11 +573,11 @@ namespace KdxDesigner.Utils.Cylinder
                 // --- 条件ブロック (このブロックは共通) ---
                 result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
                 result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
-                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
                 result.Add(LadderRow.AddORB());
 
@@ -602,11 +602,11 @@ namespace KdxDesigner.Utils.Cylinder
                 // --- 条件ブロック (このブロックは共通) ---
                 result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
                 result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
 
                 result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
-                result.Add(LadderRow.AddANI(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
                 result.Add(LadderRow.AddORB());
 
