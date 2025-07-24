@@ -389,11 +389,9 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 7).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
-                result.AddRange(LadderRow.AddMOVSet("K1", _speedDevice)); // スピードデバイスの設定
 
                 result.Add(LadderRow.AddLD(_label + (_startNum + 8).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
-                result.AddRange(LadderRow.AddMOVSet("K5", _speedDevice)); // スピードデバイスの設定
             }
 
             // JOG
@@ -425,7 +423,9 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddOUT(_label + (_startNum + 13).ToString()));
 
             // アウトコイル
-            result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_startNum + 11).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_startNum + 12).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 13).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_startNum + 14).ToString()));
 
