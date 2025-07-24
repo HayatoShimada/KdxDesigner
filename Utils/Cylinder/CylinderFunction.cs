@@ -310,6 +310,7 @@ namespace KdxDesigner.Utils.Cylinder
 
             result.Add(LadderRow.AddLDI(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 2).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 7).ToString()));
             if (goSensor != null)
             {
                 result.Add(LadderRow.AddAND(goSensor));
@@ -340,6 +341,7 @@ namespace KdxDesigner.Utils.Cylinder
             // 保持出力行き
             result.Add(LadderRow.AddLDI(_label + (_startNum + 1).ToString()));
             result.Add(LadderRow.AddANI(_label + (_startNum + 3).ToString()));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 8).ToString()));
             if (backSensor != null)
             {
                 result.Add(LadderRow.AddAND(backSensor));
@@ -368,6 +370,68 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
+        public List<LadderCsvRow> ManualReset()
+        {
+            List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
+            result.Add(LadderRow.AddLDF(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddRST(_label + (_startNum + 7).ToString()));
+            result.Add(LadderRow.AddRST(_label + (_startNum + 8).ToString()));
+
+            return result;
+
+        }
+
+        public List<LadderCsvRow> ManualButton()
+        {
+            List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
+
+            if (_speedDevice != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 7).ToString()));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+                result.AddRange(LadderRow.AddMOVSet("K1", _speedDevice)); // スピードデバイスの設定
+
+                result.Add(LadderRow.AddLD(_label + (_startNum + 8).ToString()));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+                result.AddRange(LadderRow.AddMOVSet("K5", _speedDevice)); // スピードデバイスの設定
+            }
+
+            // JOG
+            result.Add(LadderRow.AddLD(_label + (_startNum + 7).ToString()));
+            // マニュアル出力
+            result.Add(LadderRow.AddOR(_label + (_startNum + 2).ToString()));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 10).ToString()));
+
+            // 保持出力
+            result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
+            // 自動出力
+            result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 12).ToString()));
+
+            // JOG
+            result.Add(LadderRow.AddLD(_label + (_startNum + 8).ToString()));
+            // マニュアル出力
+            result.Add(LadderRow.AddOR(_label + (_startNum + 3).ToString()));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 11).ToString()));
+
+            // 保持出力
+            result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
+            // 自動出力
+            result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 13).ToString()));
+
+            // アウトコイル
+            result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_startNum + 13).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 14).ToString()));
+
+            return result;
+        }
+
         public List<LadderCsvRow> FlowOperate()
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
@@ -388,7 +452,7 @@ namespace KdxDesigner.Utils.Cylinder
             for (int i = 0; i < 10; i++)
             {
                 result.AddRange(LadderRow.AddLDE(_speedDevice, ("K" + i.ToString())));
-                result.Add(LadderRow.AddAND(_label + (_startNum + (10)).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 14).ToString()));
                 result.Add(LadderRow.AddOUT(_label + (_startNum + (i + 20)).ToString()));
             }
 
@@ -400,28 +464,21 @@ namespace KdxDesigner.Utils.Cylinder
             var result = new List<LadderCsvRow>();
 
             // 行きOK
-            result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
-            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
-            result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
-
-            result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
-            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
             result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
-            result.Add(LadderRow.AddORB()); // 出力命令を追加
+            result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
+            result.Add(LadderRow.AddORB());
+
             result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_startNum + 35)));
 
             // 帰りOK
-            result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
-            result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
-
-            result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
-            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
-            result.Add(LadderRow.AddORB()); // 出力命令を追加
+            result.Add(LadderRow.AddLD(_label + (_startNum + 13).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
+            result.Add(LadderRow.AddORB());
             result.Add(LadderRow.AddOUT(_label + (_startNum + 36)));
 
             // 指令OK

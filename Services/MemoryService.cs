@@ -308,7 +308,7 @@ namespace KdxDesigner.Services
                         Device = deviceString,
                         Category = mnemonicTypeBasedCategoryString,
                         Row_1 = difinitions.Where(d => d.Label == "").Single(d => d.OutCoilNumber == i).Comment1,
-                        Row_2 = difinitions.Single(d => d.OutCoilNumber == i).Comment1,
+                        Row_2 = difinitions.Single(d => d.OutCoilNumber == i).Comment2,
                         Row_3 = device.Comment2, // Outcoilのインデックスとして
                         Row_4 = device.Comment2,
                         Direct_Input = "",

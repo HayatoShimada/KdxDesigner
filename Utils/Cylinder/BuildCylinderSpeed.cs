@@ -97,6 +97,8 @@ namespace KdxDesigner.Utils.Cylinder
 
             }
 
+            result.AddRange(functions.ManualReset());
+
             result.Add(LadderRow.AddNOP());
 
             // Cycleスタート時の方向自動指令
@@ -108,6 +110,11 @@ namespace KdxDesigner.Utils.Cylinder
             // 保持出力
             result.AddRange(functions.RetentionFlow(sensors));
             result.Add(LadderRow.AddNOP());
+
+            // マニュアル
+            result.AddRange(functions.ManualButton());
+            result.Add(LadderRow.AddNOP());
+
 
             // 速度指令
             result.AddRange(functions.FlowOperate());
