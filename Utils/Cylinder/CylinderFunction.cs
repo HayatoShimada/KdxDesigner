@@ -449,7 +449,7 @@ namespace KdxDesigner.Utils.Cylinder
                 return result; // スピードデバイスがない場合は空のリストを返す
             }
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 1; i < 11; i++)
             {
                 result.AddRange(LadderRow.AddLDE(_speedDevice, ("K" + i.ToString())));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 14).ToString()));
