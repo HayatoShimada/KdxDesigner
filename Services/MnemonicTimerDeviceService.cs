@@ -108,6 +108,8 @@ namespace KdxDesigner.Services
             parameters.Add("TimerDevice", deviceToSave.TimerDevice, DbType.String);
             parameters.Add("PlcId", deviceToSave.PlcId, DbType.Int32); // result[0]は常に安全
             parameters.Add("CycleId", deviceToSave.CycleId, DbType.Int32); // result[1]も常に安全
+            parameters.Add("Comment1", deviceToSave.Comment1, DbType.String);
+
 
             if (existingRecord != null)
             {
@@ -121,7 +123,8 @@ namespace KdxDesigner.Services
                         [ProcessTimerDevice] = @ProcessTimerDevice,
                         [TimerDevice] = @TimerDevice,
                         [PlcId] = @PlcId,
-                        [CycleId] = @CycleId
+                        [CycleId] = @CycleId,
+                        [Comment1] = @Comment1
                     WHERE [ID] = @ID",
                     parameters, transaction);
             }
@@ -129,9 +132,9 @@ namespace KdxDesigner.Services
             {
                 connection.Execute(@"
                     INSERT INTO [MnemonicTimerDevice] (
-                        [MnemonicId], [RecordId], [TimerId], [TimerCategoryId], [ProcessTimerDevice], [TimerDevice], [PlcId], [CycleId]
+                        [MnemonicId], [RecordId], [TimerId], [TimerCategoryId], [ProcessTimerDevice], [TimerDevice], [PlcId], [CycleId], [Comment1]
                     ) VALUES (
-                        @MnemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId
+                        @MnemonicId, @RecordId, @TimerId, @TimerCategoryId, @ProcessTimerDevice, @TimerDevice, @PlcId, @CycleId, @Comment1
                     )",
                     parameters, transaction);
             }
@@ -211,7 +214,8 @@ namespace KdxDesigner.Services
                                 ProcessTimerDevice = processTimerDevice,
                                 TimerDevice = timerDevice,
                                 PlcId = plcId,
-                                CycleId = timer.CycleId
+                                CycleId = timer.CycleId,
+                                Comment1 = timer.TimerName
                             };
 
                             UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
@@ -309,7 +313,8 @@ namespace KdxDesigner.Services
                                 ProcessTimerDevice = processTimerDevice,
                                 TimerDevice = timerDevice,
                                 PlcId = plcId,
-                                CycleId = timer.CycleId
+                                CycleId = timer.CycleId,
+                                Comment1 = timer.TimerName
                             };
 
                             UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);
@@ -402,7 +407,8 @@ namespace KdxDesigner.Services
                                 ProcessTimerDevice = processTimerDevice,
                                 TimerDevice = timerDevice,
                                 PlcId = plcId,
-                                CycleId = timer.CycleId
+                                CycleId = timer.CycleId,
+                                Comment1 = timer.TimerName
                             };
 
                             UpsertMnemonicTimerDevice(connection, transaction, deviceToSave, existingRecord);

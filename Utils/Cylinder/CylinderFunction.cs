@@ -1,4 +1,6 @@
-﻿using KdxDesigner.Models;
+﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+
+using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Error;
 using KdxDesigner.Services.IOAddress;
@@ -148,6 +150,7 @@ namespace KdxDesigner.Utils.Cylinder
             // 帰り方向自動保持
             result.Add(LadderRow.AddLDP(_label + (_startNum + 1).ToString()));
             result.Add(LadderRow.AddORP(_label + (_startNum + 3).ToString()));
+            result.Add(LadderRow.AddORP(_label + (_startNum + 4).ToString()));
             result.Add(LadderRow.AddSET(_label + (_startNum + 6).ToString()));
 
             // 行き方向自動保持
@@ -196,7 +199,8 @@ namespace KdxDesigner.Utils.Cylinder
 
                         // Cycleに関連する処理をここに追加
                         result.Add(LadderRow.AddLDP(eachCycle.StartDevice));
-                        result.Add(LadderRow.AddAND(SettingsManager.Settings.AlwaysON));
+                        result.Add(LadderRow.AddANI(_label + (_startNum + 0).ToString()));
+                        result.Add(LadderRow.AddANI(_label + (_startNum + 1).ToString()));
 
                         isFirstCycleInLoop = false; // フラグを更新
                     }
@@ -205,7 +209,7 @@ namespace KdxDesigner.Utils.Cylinder
                 // ★ 3. ループで有効なサイクルが1つでも処理された場合にのみ、PLSを出力
                 if (!isFirstCycleInLoop)
                 {
-                    result.Add(LadderRow.AddPLS(_label + (_startNum + 4)));
+                    result.Add(LadderRow.AddPLS(_label + (_startNum + 4).ToString()));
                 }
             }
 
@@ -297,6 +301,30 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddAND(_label + (_startNum + 6)));
             result.Add(LadderRow.AddOUT(_label + (_startNum + 20)));
 
+            // 行きチェック
+            if (goSensorAddresses.Any())
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_startNum + 12).ToString()));
+                foreach (var address in goSensorAddresses)
+                {
+                    result.Add(LadderRow.AddANI(address));
+                }
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 48).ToString()));
+            }
+
+            // 帰りﾁｪｯｸ
+            if (backSensorAddresses.Any())
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_startNum + 13).ToString()));
+                foreach (var address in backSensorAddresses)
+                {
+                    result.Add(LadderRow.AddANI(address));
+                }
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 49).ToString()));
+            }
+
             return result;
         }
 
@@ -317,6 +345,7 @@ namespace KdxDesigner.Utils.Cylinder
             }
             else
             {
+                result.Add(LadderRow.AddANI(SettingsManager.Settings.AlwaysON));
             }
             result.Add(LadderRow.AddAND(_label + (_startNum + 5).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_startNum + 19).ToString()));
@@ -348,6 +377,7 @@ namespace KdxDesigner.Utils.Cylinder
             }
             else
             {
+                result.Add(LadderRow.AddANI(SettingsManager.Settings.AlwaysON));
             }
             result.Add(LadderRow.AddAND(_label + (_startNum + 6).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_startNum + 20).ToString()));
@@ -367,6 +397,27 @@ namespace KdxDesigner.Utils.Cylinder
                     IsCritical = false
                 });
             }
+
+
+            // 行きチェック
+            if (goSensor != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_startNum + 12).ToString()));
+                result.Add(LadderRow.AddANI(goSensor));
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 48).ToString()));
+            }
+
+            // 帰りﾁｪｯｸ
+            if (backSensor != null)
+            {
+                result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
+                result.Add(LadderRow.AddOR(_label + (_startNum + 13).ToString()));
+                result.Add(LadderRow.AddANI(backSensor));
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 49).ToString()));
+            }
+
+
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
@@ -384,15 +435,6 @@ namespace KdxDesigner.Utils.Cylinder
         public List<LadderCsvRow> ManualButton()
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
-
-            if (_speedDevice != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_startNum + 7).ToString()));
-                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
-
-                result.Add(LadderRow.AddLD(_label + (_startNum + 8).ToString()));
-                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
-            }
 
             // JOG
             result.Add(LadderRow.AddLD(_label + (_startNum + 7).ToString()));
@@ -459,7 +501,7 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
-        public List<LadderCsvRow> FlowOK()
+        public List<LadderCsvRow> ILOK()
         {
             var result = new List<LadderCsvRow>();
 
@@ -546,12 +588,12 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // 片ソレノイドのため、帰り方向は内部リレーをONする
-            result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
-            result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 13).ToString()));
+            result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
 
-            result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
             result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
             result.Add(LadderRow.AddORB());
@@ -562,12 +604,12 @@ namespace KdxDesigner.Utils.Cylinder
             if (goValveAddresses.Any()) // 行き方向のバルブが1つでも見つかっていれば
             {
                 // --- 条件ブロック (共通) ---
-                result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
-                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+                result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
-                result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
                 result.Add(LadderRow.AddORB());
@@ -628,12 +670,13 @@ namespace KdxDesigner.Utils.Cylinder
             if (goValveAddresses.Any()) // 見つかったアドレスが1つ以上あれば
             {
                 // --- 条件ブロック (このブロックは共通) ---
-                result.Add(LadderRow.AddLD(_label + (_startNum + 19).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
-                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+                result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
                 result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
-                result.Add(LadderRow.AddLD(_label + (_startNum + 2).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
                 result.Add(LadderRow.AddORB());
@@ -657,12 +700,13 @@ namespace KdxDesigner.Utils.Cylinder
             if (backValveAddresses.Any()) // 見つかったアドレスが1つ以上あれば
             {
                 // --- 条件ブロック (このブロックは共通) ---
-                result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
-                result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
-                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 13).ToString()));
+                result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
                 result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
 
-                result.Add(LadderRow.AddLD(_label + (_startNum + 3).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
                 result.Add(LadderRow.AddORB());
@@ -683,6 +727,114 @@ namespace KdxDesigner.Utils.Cylinder
             // elseの場合、エラーはFindMultipleValveAddresses内で記録済み
 
             return result;
+        }
+
+        public List<LadderCsvRow> Motor(List<IO> sensors, int? multiSensorCount)
+        {
+            var result = new List<LadderCsvRow>();
+            string valveSearchString = "CM-";
+
+            // 行き方向のバルブアドレスをリストとして保持する
+            var goValveAddresses = new List<string>();
+
+            // multiSensorCount の有無でバルブの検索方法を分岐
+            if (multiSensorCount.HasValue && multiSensorCount.Value > 0)
+            {
+                // multiSensorCountが指定されている場合： "G1", "G2"... のように複数のバルブを検索
+                for (int i = 1; i <= multiSensorCount.Value; i++)
+                {
+                    // シリンダ設定のGoサフィックス（例: "G"）と連番で検索文字列を作成
+                    string searchName = _cylinder.Cylinder.Go + i;
+                    var foundValve = _ioAddressService.GetSingleAddress(
+                        sensors,
+                        searchName,
+                        true, // errorIfNotFound
+                        _cylinder.Cylinder.CYNum!,
+                        _cylinder.Cylinder.Id,
+                        null);
+
+                    if (foundValve != null)
+                    {
+                        goValveAddresses.Add(foundValve);
+                    }
+                    // 見つからない場合のエラーは GetSingleAddress 内で記録される
+                }
+            }
+            else
+            {
+                // multiSensorCountが指定されていない場合： 従来のロジックで単一のバルブを検索
+                string? goValve = _cylinder.Cylinder.CYNameSub != null
+                    ? _ioAddressService.GetSingleAddress(
+                        sensors,
+                        _cylinder.Cylinder.Go + _cylinder.Cylinder.CYNameSub,
+                        true, // errorIfNotFound
+                        _cylinder.Cylinder.CYNum!,
+                        _cylinder.Cylinder.Id,
+                        null)
+                    : _ioAddressService.GetSingleAddress(
+                        sensors,
+                        valveSearchString,
+                        true, // errorIfNotFound
+                        _cylinder.Cylinder.CYNum!,
+                        _cylinder.Cylinder.Id,
+                        null);
+                if (goValve != null)
+                {
+                    goValveAddresses.Add(goValve);
+                }
+                // 見つからない場合のエラーは GetSingleAddress 内で記録される
+            }
+
+            // 片ソレノイドのため、帰り方向は内部リレーをONする
+            result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+            result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
+
+            result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
+            result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
+            result.Add(LadderRow.AddORB());
+            // 出力は内部リレー
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString()));
+
+            // ■■■ 行き方向のバルブ出力 (複数対応) ■■■
+            if (goValveAddresses.Any()) // 行き方向のバルブが1つでも見つかっていれば
+            {
+                // --- 条件ブロック (共通) ---
+                result.Add(LadderRow.AddLD(_label + (_startNum + 13).ToString()));
+                result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
+
+                result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
+                result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
+                result.Add(LadderRow.AddORB());
+
+                // 帰り用内部リレーとのインターロック
+                result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+
+                // --- 出力ブロック (見つかったアドレスの数だけOUTを並列で追加) ---
+                foreach (var goAddress in goValveAddresses)
+                {
+                    result.Add(LadderRow.AddOUT(goAddress));
+                }
+            }
+            else
+            {
+                // goValveAddressesが空の場合、GetSingleAddressが既にエラーを記録しているため
+                // ここでの追加エラーは不要かもしれないが、念のため残す場合は以下のようにする
+                _errorAggregator.AddError(new OutputError
+                {
+                    RecordName = _cylinder.Cylinder.CYNum ?? "",
+                    Message = $"行き方向のバルブが見つかりませんでした。検索文字列: '{_cylinder.Cylinder.Go}' など",
+                    MnemonicId = (int)MnemonicType.CY,
+                    RecordId = _cylinder.Cylinder.Id
+                });
+            }
+
+            return result; // 生成されたLadderCsvRowのリストを返す
         }
 
 
@@ -724,6 +876,8 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 21).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOR(_label + (_startNum + 26).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
+
                 result.Add(LadderRow.AddOUT(in2IO));
             }
             else
@@ -741,6 +895,8 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 22).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOR(_label + (_startNum + 27).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
+
                 result.Add(LadderRow.AddOUT(in3IO));
             }
             else
@@ -758,6 +914,8 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 23).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOR(_label + (_startNum + 28).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
+
                 result.Add(LadderRow.AddOUT(in4IO));
             }
             else
@@ -775,6 +933,8 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 24).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOR(_label + (_startNum + 29).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
+
                 result.Add(LadderRow.AddOUT(in5IO));
             }
             else
@@ -792,6 +952,8 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.Add(LadderRow.AddLD(_label + (_startNum + 25).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOR(_label + (_startNum + 30).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
+
                 result.Add(LadderRow.AddOUT(in6IO));
             }
             else

@@ -121,7 +121,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddNOP());
 
             // 出力OK
-            result.AddRange(functions.FlowOK());
+            result.AddRange(functions.ILOK());
             result.Add(LadderRow.AddNOP());
 
             // バルブ指令
@@ -223,6 +223,13 @@ namespace KdxDesigner.Utils.Cylinder
                 result.AddRange(functions.BackManualOperation(backOperation));
 
             }
+
+            result.AddRange(functions.ManualReset());
+
+            result.Add(LadderRow.AddNOP());
+
+            // マニュアル
+            result.AddRange(functions.ManualButton());
             result.Add(LadderRow.AddNOP());
 
             // 行き方向自動
@@ -313,7 +320,7 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddAND(label + (startNum + 13).ToString()));
                 result.AddRange(LadderRow.AddMOVSet("K1", speedDevice));
 
-                for (int i = 1; i < 10; i++)
+                for (int i = 1; i < 11; i++)
                 {
                     result.AddRange(LadderRow.AddLDE(speedDevice, "K" + i.ToString()));
                     result.Add(LadderRow.AddAND(label + (startNum + 10).ToString()));
@@ -334,7 +341,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddNOP());
 
             // 出力OK
-            result.AddRange(functions.FlowOK());
+            result.AddRange(functions.ILOK());
             result.Add(LadderRow.AddNOP());
 
 

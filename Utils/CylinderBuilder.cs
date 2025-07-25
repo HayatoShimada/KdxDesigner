@@ -55,6 +55,17 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList));
                         break;
+                    case 15:
+                        result.AddRange(builder.Motor(
+                            cylinder,
+                            details,
+                            operations,
+                            cylinders,
+                            timers,
+                            mnemonicErrors,
+                            prosTimes,
+                            ioList));
+                        break;
                     case 2:
                     case 3:
                     case 5:
@@ -96,7 +107,7 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList));
                         break;
-                    case 17:
+                    case 16:
                         result.AddRange(speedBuilder.Inverter(
                             cylinder,
                             details,
