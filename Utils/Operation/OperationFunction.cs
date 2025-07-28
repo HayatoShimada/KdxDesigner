@@ -353,11 +353,12 @@ namespace KdxDesigner.Utils.Operation
                     _operation.Operation.OperationName!,
                     _operation.Operation.Id);
 
-                if (ioSensorMulti! == null)
+                if (ioSensorMulti != null && ioSensorMulti.Count != 0)
                 {
                     foreach (var io in ioSensorMulti)
                     {
-                        result.Add(LadderRow.AddAND(io.Address!));
+                        if (io.Address!.StartsWith("X"))
+                            result.Add(LadderRow.AddAND(io.Address!));
                     }
                 }
             }
@@ -390,42 +391,13 @@ namespace KdxDesigner.Utils.Operation
                 }
             }
             result.Add(LadderRow.AddOR(_label + (_outNum + 16).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 7).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 16).ToString()));
 
             return result;
         }
 
-        public List<LadderCsvRow> GenerateM17()
-        {
-            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
-            var operationTimerONWait = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
-            var result = new List<LadderCsvRow>();
-            // 深当たりタイマがある場合
-            if (operationTimerONWait != null)
-            {
-                result.Add(LadderRow.AddLD(_label + (_outNum + 16).ToString()));
-                result.Add(LadderRow.AddANI(_label + (_outNum + 17).ToString()));
-                result.AddRange(LadderRow.AddTimer(
-                    operationTimerONWait.Timer.ProcessTimerDevice ?? "",
-                    operationTimerONWait.Timer.TimerDevice ?? ""
-                    ));
-            }
-
-            // M17
-            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
-            // 深当たりタイマがある場合
-            if (operationTimerONWait != null)
-            {
-                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.ProcessTimerDevice!));
-            }
-            result.Add(LadderRow.AddOR(_label + (_outNum + 17).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_outNum + 7).ToString()));
-            result.Add(LadderRow.AddOUT(_label + (_outNum + 17).ToString()));
-
-            return result;
-        }
+        
 
         public List<LadderCsvRow> GenerateM19()
         {

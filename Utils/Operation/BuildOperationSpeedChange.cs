@@ -98,8 +98,37 @@ namespace KdxDesigner.Utils.Operation
             {
                 result.AddRange(operationFunction.GenerateM16());
             }
+            else
+            {
+                helper.CreateOperationError(operation!, $"Finishが入力されていません。");
+                return result;
+            }
+
             // M17
-            result.AddRange(operationFunction.GenerateM17());
+            var thisTimer = timers.Where(t => t.Timer.RecordId == operation.Operation.Id).ToList();
+            var operationTimerONWait = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
+            // 深当たりタイマがある場合
+            if (operationTimerONWait != null)
+            {
+                result.Add(LadderRow.AddLD(label + (outNum + 16).ToString()));
+                result.Add(LadderRow.AddANI(label + (outNum + 17).ToString()));
+                result.AddRange(LadderRow.AddTimer(
+                    operationTimerONWait.Timer.ProcessTimerDevice ?? "",
+                    operationTimerONWait.Timer.TimerDevice ?? ""
+                    ));
+            }
+
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
+            // 深当たりタイマがある場合
+            if (operationTimerONWait != null)
+            {
+                result.Add(LadderRow.AddAND(operationTimerONWait.Timer.ProcessTimerDevice!));
+            }
+            result.Add(LadderRow.AddOR(label + (outNum + 17).ToString()));
+            result.Add(LadderRow.AddAND(label + (outNum + 16).ToString()));
+            result.Add(LadderRow.AddOUT(label + (outNum + 17).ToString()));
+
             // M19
             result.AddRange(operationFunction.GenerateM19());
             // Reset信号の生成

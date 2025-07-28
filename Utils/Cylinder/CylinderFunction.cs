@@ -62,6 +62,30 @@ namespace KdxDesigner.Utils.Cylinder
             return result; // 生成されたLadderCsvRowのリストを返す
         }
 
+        public List<LadderCsvRow> OffOperation(List<MnemonicDeviceWithOperation> offOperation)
+        {
+            List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
+            bool isFirst = true; // 最初のOperationかどうかのフラグ
+
+            foreach (var off in offOperation)
+            {
+                var operationLabel = off.Mnemonic.DeviceLabel; // 行きのラベル
+                var operationOutcoil = off.Mnemonic.StartNum; // 出力番号の取得
+                result.Add(LadderRow.AddLD(operationLabel + (operationOutcoil + 6).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddANI(operationLabel + (operationOutcoil + 17).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(operationLabel + (operationOutcoil + 2).ToString())); // ラベルのLD命令を追加
+                if (isFirst)
+                {
+                    isFirst = false; // 最初のOperationの場合、フラグを更新
+                    continue;
+                }
+                result.Add(LadderRow.AddORB()); // 出力命令を追加
+            }
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString())); // ラベルのLD命令を追加
+
+            return result; // 生成されたLadderCsvRowのリストを返す
+        }
+
         public List<LadderCsvRow> BackOperation(List<MnemonicDeviceWithOperation> backOperation)
         {
             List<LadderCsvRow> result = new(); // 生成されるLadderCsvRowのリスト
@@ -441,6 +465,8 @@ namespace KdxDesigner.Utils.Cylinder
             // マニュアル出力
             result.Add(LadderRow.AddOR(_label + (_startNum + 2).ToString()));
             result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+
             result.Add(LadderRow.AddOUT(_label + (_startNum + 10).ToString()));
 
             // 保持出力
@@ -448,6 +474,8 @@ namespace KdxDesigner.Utils.Cylinder
             // 自動出力
             result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+
             result.Add(LadderRow.AddOUT(_label + (_startNum + 12).ToString()));
 
             // JOG
@@ -455,6 +483,8 @@ namespace KdxDesigner.Utils.Cylinder
             // マニュアル出力
             result.Add(LadderRow.AddOR(_label + (_startNum + 3).ToString()));
             result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+
             result.Add(LadderRow.AddOUT(_label + (_startNum + 11).ToString()));
 
             // 保持出力
@@ -462,6 +492,8 @@ namespace KdxDesigner.Utils.Cylinder
             // 自動出力
             result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
             result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
+            result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+
             result.Add(LadderRow.AddOUT(_label + (_startNum + 13).ToString()));
 
             // アウトコイル
@@ -469,6 +501,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddOR(_label + (_startNum + 11).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 12).ToString()));
             result.Add(LadderRow.AddOR(_label + (_startNum + 13).ToString()));
+
             result.Add(LadderRow.AddOUT(_label + (_startNum + 14).ToString()));
 
             return result;
@@ -598,7 +631,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
             result.Add(LadderRow.AddORB());
             // 出力は内部リレー
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 45).ToString()));
 
             // ■■■ 行き方向のバルブ出力 (複数対応) ■■■
             if (goValveAddresses.Any()) // 行き方向のバルブが1つでも見つかっていれば
@@ -615,7 +648,7 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB());
 
                 // 帰り用内部リレーとのインターロック
-                result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+                result.Add(LadderRow.AddANI(_label + (_startNum + 45).ToString()));
 
                 // --- 出力ブロック (見つかったアドレスの数だけOUTを並列で追加) ---
                 foreach (var goAddress in goValveAddresses)
@@ -786,26 +819,26 @@ namespace KdxDesigner.Utils.Cylinder
             }
 
             // 片ソレノイドのため、帰り方向は内部リレーをONする
-            result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 13).ToString()));
             result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddAND(_label + (_startNum + 16).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
             result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
             result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
             result.Add(LadderRow.AddORB());
             // 出力は内部リレー
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_startNum + 45).ToString()));
 
             // ■■■ 行き方向のバルブ出力 (複数対応) ■■■
             if (goValveAddresses.Any()) // 行き方向のバルブが1つでも見つかっていれば
             {
                 // --- 条件ブロック (共通) ---
-                result.Add(LadderRow.AddLD(_label + (_startNum + 13).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 12).ToString()));
                 result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-                result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_startNum + 14).ToString()));
 
                 result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
@@ -813,7 +846,7 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB());
 
                 // 帰り用内部リレーとのインターロック
-                result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
+                result.Add(LadderRow.AddANI(_label + (_startNum + 45).ToString()));
 
                 // --- 出力ブロック (見つかったアドレスの数だけOUTを並列で追加) ---
                 foreach (var goAddress in goValveAddresses)

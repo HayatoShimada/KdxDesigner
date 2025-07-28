@@ -323,7 +323,7 @@ namespace KdxDesigner.Utils.Cylinder
                 for (int i = 1; i < 11; i++)
                 {
                     result.AddRange(LadderRow.AddLDE(speedDevice, "K" + i.ToString()));
-                    result.Add(LadderRow.AddAND(label + (startNum + 10).ToString()));
+                    result.Add(LadderRow.AddAND(label + (startNum + 14).ToString()));
                     result.Add(LadderRow.AddOUT(label + (startNum + 20 + i).ToString()));
                 }
 
@@ -415,7 +415,6 @@ namespace KdxDesigner.Utils.Cylinder
                     result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
                     result.Add(LadderRow.AddOR(label + (startNum + 36).ToString()));
                     result.Add(LadderRow.AddOR(label + (startNum + 34).ToString()));
-                    result.Add(LadderRow.AddOUT(label + (startNum + 36).ToString()));
                     result.Add(LadderRow.AddOUT(breakeIO));
                     result.AddRange(LadderRow.AddTimer(nbtTimer.Timer.ProcessTimerDevice, nbtTimer.Timer.TimerDevice));
 
@@ -483,7 +482,7 @@ namespace KdxDesigner.Utils.Cylinder
                                         null);
             if (strIO != null)
             {
-                result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
+                result.Add(LadderRow.AddLD(label + (startNum + 36).ToString()));
                 result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));
                 result.Add(LadderRow.AddOUT(strIO));
             }
@@ -506,7 +505,7 @@ namespace KdxDesigner.Utils.Cylinder
             if (rlIO != null && rmIO != null && rhIO != null)
             {
                 // RL
-                result.Add(LadderRow.AddLD(label + (startNum + 23).ToString()));
+                result.Add(LadderRow.AddLD(label + (startNum + 21).ToString()));
                 result.Add(LadderRow.AddOR(label + (startNum + 24).ToString()));
                 result.Add(LadderRow.AddOR(label + (startNum + 25).ToString()));
                 result.Add(LadderRow.AddOR(label + (startNum + 27).ToString()));
@@ -522,7 +521,7 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddOUT(rmIO));
 
                 // RH
-                result.Add(LadderRow.AddLD(label + (startNum + 21).ToString()));
+                result.Add(LadderRow.AddLD(label + (startNum + 23).ToString()));
                 result.Add(LadderRow.AddOR(label + (startNum + 25).ToString()));
                 result.Add(LadderRow.AddOR(label + (startNum + 26).ToString()));
                 result.Add(LadderRow.AddOR(label + (startNum + 27).ToString()));

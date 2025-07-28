@@ -54,6 +54,8 @@ namespace KdxDesigner.Utils.Cylinder
             var goOperation = cylinderOperations.Where(o => o.Operation.GoBack == "G").ToList();        // 行きのOperationを取得  
             var backOperation = cylinderOperations.Where(o => o.Operation.GoBack == "B").ToList();      // 帰りのOperationを取得  
             var activeOperation = cylinderOperations.Where(o => o.Operation.GoBack == "A").ToList();    // 作動のOperationを取得  
+            var offOperation = cylinderOperations.Where(o => o.Operation.GoBack == "O").ToList();    // 励磁切のOperationを取得  
+
 
             // 行き方向自動指令  
             if (goOperation.Count != 0 && activeOperation.Count == 0)
@@ -75,6 +77,12 @@ namespace KdxDesigner.Utils.Cylinder
                 result.AddRange(functions.GoManualOperation(activeOperation));
                 result.AddRange(functions.BackManualOperation(backOperation));
 
+            }
+
+            if (offOperation.Count != 0)
+            {
+                // 励磁切指令
+                result.AddRange(functions.OffOperation(offOperation));
             }
 
             result.AddRange(functions.ManualReset());
@@ -168,6 +176,8 @@ namespace KdxDesigner.Utils.Cylinder
             var goOperation = cylinderOperations.Where(o => o.Operation.GoBack == "G").ToList();        // 行きのOperationを取得  
             var backOperation = cylinderOperations.Where(o => o.Operation.GoBack == "B").ToList();      // 帰りのOperationを取得  
             var activeOperation = cylinderOperations.Where(o => o.Operation.GoBack == "A").ToList();    // 作動のOperationを取得  
+            var offOperation = cylinderOperations.Where(o => o.Operation.GoBack == "O").ToList();    // 励磁切のOperationを取得  
+
 
             // 行き方向自動指令  
             if (goOperation.Count != 0 && activeOperation.Count == 0)
@@ -190,6 +200,13 @@ namespace KdxDesigner.Utils.Cylinder
                 result.AddRange(functions.BackManualOperation(backOperation));
 
             }
+
+            if (offOperation.Count != 0)
+            {
+                // 励磁切指令
+                result.AddRange(functions.OffOperation(offOperation));
+            }
+
 
             result.AddRange(functions.ManualReset());
 
@@ -259,6 +276,8 @@ namespace KdxDesigner.Utils.Cylinder
             var goOperation = cylinderOperations.Where(o => o.Operation.GoBack == "G").ToList();        // 行きのOperationを取得  
             var backOperation = cylinderOperations.Where(o => o.Operation.GoBack == "B").ToList();      // 帰りのOperationを取得  
             var activeOperation = cylinderOperations.Where(o => o.Operation.GoBack == "A").ToList();    // 作動のOperationを取得  
+            var offOperation = cylinderOperations.Where(o => o.Operation.GoBack == "O").ToList();    // 励磁切のOperationを取得  
+
 
             // 行き方向自動指令  
             if (goOperation.Count != 0 && activeOperation.Count == 0)
@@ -281,6 +300,13 @@ namespace KdxDesigner.Utils.Cylinder
                 result.AddRange(functions.BackManualOperation(backOperation));
 
             }
+
+            if (offOperation.Count != 0)
+            {
+                // 励磁切指令
+                result.AddRange(functions.OffOperation(offOperation));
+            }
+
 
             result.AddRange(functions.ManualReset());
 

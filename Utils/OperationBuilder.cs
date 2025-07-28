@@ -56,7 +56,7 @@ namespace KdxDesigner.Utils
                             ioList
                             ));
                         break;
-                    case 2 or 14 or 20:     // 保持
+                    case 2 or 20:     // 保持
                         allRows.AddRange(buildOperationSingle.Retention(
                             operation,
                             details,
@@ -67,6 +67,18 @@ namespace KdxDesigner.Utils
                             prosTimes,
                             ioList
                             ));
+                        break;
+                    case 14:
+                        allRows.AddRange(buildOperationSingle.ExcitationOFF(
+                        operation,
+                        details,
+                        operations,
+                        cylinders,
+                        timers,
+                        mnemonicErrors,
+                        prosTimes,
+                        ioList
+                        ));
                         break;
                     case 3 or 9 or 15:      // 速度変化1回
                         allRows.AddRange(buildOperationSpeed.Inverter(
