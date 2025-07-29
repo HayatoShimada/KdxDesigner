@@ -467,8 +467,8 @@ namespace KdxDesigner.Utils.ProcessDetail
             foreach (var d in processDetailStartDevices)
             {
                 var row = first
-                    ? LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString())
-                    : LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString());
+                    ? LadderRow.AddLD(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString())
+                    : LadderRow.AddOR(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString());
 
                 result.Add(row);
                 first = false;
@@ -713,7 +713,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 // FinishIdsのStartNum+5を出力
                 foreach (var d in processDetailFinishDevices)
                 {
-                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString()));
+                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
                 }
             }
 
@@ -816,30 +816,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             var operationFinishStartNum = operationFinish?.Mnemonic.StartNum ?? 0;
             var operationFinishDeviceLabel = operationFinish?.Mnemonic.DeviceLabel ?? string.Empty;
 
-            result.Add(LadderRow.AddLD(operationFinishDeviceLabel + (operationFinishStartNum + 19).ToString()));
-
-            var processDetailFinishDevices = detailFunctions.FinishDevices();
-            if (_detail.Detail.FinishSensor != null)
-            {
-                // FinishSensorが設定されている場合
-                // FinishIdsのStartNum+1を出力
-                foreach (var d in processDetailFinishDevices)
-                {
-                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
-                }
-            }
-            else
-            {
-                // FinishSensorが設定されていない場合
-                // FinishIdsのStartNum+5を出力
-                foreach (var d in processDetailFinishDevices)
-                {
-                    result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 5).ToString()));
-                }
-            }
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
 
             result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
-            result.Add(LadderRow.AddAND(_label + (_deviceNum + 1).ToString()));
+            result.Add(LadderRow.AddAND(_label + (_deviceNum + 2).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
@@ -946,7 +926,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 var finishLabel = processDetailFinishDevices.First().Mnemonic.DeviceLabel ?? string.Empty;
                 var finishNum = processDetailFinishDevices.First().Mnemonic.StartNum;    
-                result.Add(LadderRow.AddLD(finishLabel + (finishNum + 5).ToString()));
+                result.Add(LadderRow.AddLD(finishLabel + (finishNum + 4).ToString()));
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddOR(_label + (_deviceNum + 4).ToString()));
                 result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));

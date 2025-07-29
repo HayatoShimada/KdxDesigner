@@ -81,7 +81,9 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString())); // ラベルのLD命令を追加
+
+            if (offOperation.Count != 0)
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 9).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -106,7 +108,9 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 1).ToString())); // ラベルのLD命令を追加
+
+            if (backOperation.Count != 0)
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 1).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -132,7 +136,8 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
 
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 2).ToString())); // ラベルのLD命令を追加
+            if (goOperation.Count != 0)
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 2).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -157,7 +162,8 @@ namespace KdxDesigner.Utils.Cylinder
                 }
                 result.Add(LadderRow.AddORB()); // 出力命令を追加
             }
-            result.Add(LadderRow.AddOUT(_label + (_startNum + 3).ToString())); // ラベルのLD命令を追加
+            if (backOperation.Count != 0)
+                result.Add(LadderRow.AddOUT(_label + (_startNum + 3).ToString())); // ラベルのLD命令を追加
 
             return result; // 生成されたLadderCsvRowのリストを返す
         }
@@ -408,6 +414,23 @@ namespace KdxDesigner.Utils.Cylinder
 
             if (_speedDevice != null)
             {
+
+                switch (_cylinder.Cylinder.FlowType)
+                {
+                    case "A5:B5":
+                        result.AddRange(LadderRow.AddMOVSet("K6", _speedDevice)); // スピードデバイスの設定
+                        break;
+                    case "A6:B4":
+                        result.AddRange(LadderRow.AddMOVSet("K7", _speedDevice)); // スピードデバイスの設定
+                        break;
+                    case "A10:B0":
+                        result.AddRange(LadderRow.AddMOVSet("K1", _speedDevice)); // スピードデバイスの設定
+                        break;
+                    default:
+                        result.AddRange(LadderRow.AddMOVSet("K5", _speedDevice)); // スピードデバイスの設定
+                        break;
+                }
+
                 result.AddRange(LadderRow.AddMOVSet("K5", _speedDevice)); // スピードデバイスの設定
             }
             else
@@ -453,7 +476,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddRST(_label + (_startNum + 8).ToString()));
 
             return result;
-
+            
         }
 
         public List<LadderCsvRow> ManualButton()
@@ -490,7 +513,7 @@ namespace KdxDesigner.Utils.Cylinder
             // 保持出力
             result.Add(LadderRow.AddLD(_label + (_startNum + 20).ToString()));
             // 自動出力
-            result.Add(LadderRow.AddOR(_label + (_startNum + 0).ToString()));
+            result.Add(LadderRow.AddOR(_label + (_startNum + 1).ToString()));
             result.Add(LadderRow.AddANI(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddANI(_label + (_startNum + 9).ToString()));
 
@@ -892,6 +915,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.AddRange(LadderRow.AddLDG(speedDevice, "K5"));
                 result.AddRange(LadderRow.AddANDN(speedDevice, "K0"));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOUT(in1IO));
             }
             else

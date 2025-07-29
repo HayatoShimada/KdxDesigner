@@ -199,7 +199,21 @@ namespace KdxDesigner.Services
                         {
                             if (timer == null) continue;
 
-                            var processTimerDevice = "ST" + (count + _mainViewModel.DeviceStartT);
+                            var timerStartWith = "";
+
+                            switch (timer.TimerCategoryId)
+                            {
+                                case 6: // 異常時BK (EBT)
+                                case 7: // 正常時BK (NBT)
+                                    timerStartWith = "T";
+                                    break;
+                                default:
+                                    timerStartWith = "ST";
+                                    break;
+
+                            }
+
+                            var processTimerDevice = timerStartWith + (count + _mainViewModel.DeviceStartT);
                             var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
 
                             // 複合キー (Detail.Id, Timer.ID) で既存レコードを検索

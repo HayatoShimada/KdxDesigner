@@ -81,7 +81,43 @@ namespace KdxDesigner.Utils.Operation
             if (operation.Operation.S1 != null)
             {
                 var speedDevice = speeds.FirstOrDefault(s => s.CylinderId == operation.Operation.CYId)?.Device ?? "";
-                result.AddRange(LadderRow.AddMOVPSet("K" + operation.Operation.S1.ToString().Replace("A", "").Replace("B", ""), speedDevice));
+                var operationSpeed = operation.Operation.S1;
+                if (operationSpeed.Contains("B"))
+                {
+                    string speedValueStr = operationSpeed.Replace("A", "").Replace("B", "");
+
+                    if (int.TryParse(speedValueStr, out int speedValue))
+                    {
+                        var flow = cylinders.SingleOrDefault(c => c.Cylinder.Id == operation.Operation.CYId)?.Cylinder?.FlowType;
+                        
+                        switch (flow)
+                        {
+                            case "A5:B5":
+                                speedValueStr = (speedValue + 5).ToString();
+                                break;
+                            case "A6:B4":
+                                speedValueStr = (speedValue + 6).ToString();
+                                break;
+                            case "A7:B3":
+                                speedValueStr = (speedValue + 7).ToString();
+                                break;
+                            case "A10:B0":
+                                speedValueStr = (speedValue + 10).ToString();
+                                break;
+                            default:
+                                speedValueStr = "";
+                                break;
+                        }
+                    }
+                    result.AddRange(LadderRow.AddMOVPSet("K" + speedValueStr.ToString().Replace("A", "").Replace("B", ""), speedDevice));
+
+                }
+                else
+                {
+                    result.AddRange(LadderRow.AddMOVPSet("K" + operation.Operation.S1.ToString().Replace("A", "").Replace("B", ""), speedDevice));
+
+                }
+
             }
 
             if (operation.Operation.Start != null)

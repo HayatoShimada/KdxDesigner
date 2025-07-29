@@ -251,7 +251,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddLD(label + (startNum + 8).ToString()));
             result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddORB());
-            result.Add(LadderRow.AddOUT(label + (startNum + 10).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 14).ToString()));
             result.Add(LadderRow.AddNOP());
 
             // 強制減速・手動操作
@@ -341,7 +341,23 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddNOP());
 
             // 出力OK
-            result.AddRange(functions.ILOK());
+            // 行きOK
+            result.Add(LadderRow.AddLD(label + (startNum + 10).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 17).ToString()));
+            result.Add(LadderRow.AddLD(label + (startNum + 12).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 15).ToString()));
+            result.Add(LadderRow.AddORB());
+
+            result.Add(LadderRow.AddANI(label + (startNum + 9).ToString()));
+            result.Add(LadderRow.AddOUT(label + (startNum + 35)));
+
+            // 帰りOK
+            result.Add(LadderRow.AddLD(label + (startNum + 11).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 18).ToString()));
+            result.Add(LadderRow.AddLD(label + (startNum + 13).ToString()));
+            result.Add(LadderRow.AddAND(label + (startNum + 16).ToString()));
+            result.Add(LadderRow.AddORB());
+            result.Add(LadderRow.AddOUT(label + (startNum + 36)));
             result.Add(LadderRow.AddNOP());
 
 
