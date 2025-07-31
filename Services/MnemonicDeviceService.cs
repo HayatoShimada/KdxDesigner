@@ -1,5 +1,7 @@
 ﻿using Dapper;
 
+using DocumentFormat.OpenXml.Bibliography;
+
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Access;
@@ -52,6 +54,29 @@ namespace KdxDesigner.Services
             var sql = "SELECT * FROM MnemonicDevice WHERE PlcId = @PlcId AND MnemonicId = @MnemonicId";
             return connection.Query<MnemonicDevice>(sql, new { PlcId = plcId, MnemonicId = mnemonicId }).ToList();
         }
+
+        /// <summary>
+        /// MnemonicDevice テーブルから、指定された PLC ID と Mnemonic ID に一致するレコードを削除する。
+        /// </summary>
+        /// <param name="plcId">削除対象のPLC ID</param>
+        /// <param name="mnemonicId">削除対象のMnemonic ID</param>
+        public void DeleteMnemonicDevice(int plcId, int mnemonicId)
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "DELETE FROM MnemonicDevice WHERE PlcId = @PlcId AND MnemonicId = @MnemonicId";
+            connection.Execute(sql, new { PlcId = plcId, MnemonicId = mnemonicId });
+        }
+
+        /// <summary>
+        /// MnemonicDevice テーブルの全レコードを削除する。
+        /// </summary>
+        public void DeleteAllMnemonicDevices()
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "DELETE FROM MnemonicDevice";
+            connection.Execute(sql);
+        }
+
 
         /// <summary>
         /// Processesのリストを受け取り、MnemonicDeviceテーブルに保存する。

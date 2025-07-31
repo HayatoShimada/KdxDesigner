@@ -45,6 +45,16 @@ namespace KdxDesigner.Services
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public void DeleteAllMnemonicTimerDevice()
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "DELETE FROM MnemonicTimerDevice";
+            connection.Execute(sql);
+        }
+
+        /// <summary>
         /// MnemonicTimerDeviceをPlcIdとMnemonicIdで取得するヘルパーメソッド
         /// </summary>
         /// <param name="plcId">PlcId</param>

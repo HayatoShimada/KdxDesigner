@@ -141,8 +141,7 @@ namespace KdxDesigner.Utils.Operation
             }
 
             // M17
-            var thisTimer = timers.Where(t => t.Timer.RecordId == operation.Operation.Id).ToList();
-            var operationTimerONWait = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
+            var operationTimerONWait = timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {

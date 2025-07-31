@@ -130,50 +130,67 @@ namespace KdxDesigner.Services
                     if (existing != null)
                     {
                         parameters.Add("ID", existing.ID, DbType.Int32);
-                        connection.Execute(@"
+                        var sqlUpdate = @"
                         UPDATE [Error] SET
-                            [PlcId] = @PlcId,
-                            [CycleId] = @CycleId,
-                            [Device] = @Device,
-                            [MnemonicId] = @MnemonicId,
-                            [RecordId] = @RecordId,
-                            [AlarmId] = @AlarmId,
-                            [ErrorNum] = @ErrorNum,
-                            [AlarmComment] = @AlarmComment,
-                            [MessageComment] = @MessageComment,
-                            [ErrorTime] = @ErrorTime,
-                            [ErrorTimeDevice] = @ErrorTimeDevice
-                        WHERE [ID] = @ID",
-                            parameters, transaction);
+                            [PlcId] = ?,
+                            [CycleId] = ?,
+                            [Device] = ?,
+                            [MnemonicId] = ?,
+                            [RecordId] = ?,
+                            [AlarmId] = ?,
+                            [ErrorNum] = ?,
+                            [AlarmComment] = ?,
+                            [MessageComment] = ?,
+                            [ErrorTime] = ?,
+                            [ErrorTimeDevice] = ?
+                        WHERE [ID] = ?";
+
+                        var updateParams = new DynamicParameters();
+
+                        updateParams.Add("p1", plcId, DbType.Int32);
+                        updateParams.Add("p2", cycleId, DbType.Int32);
+                        updateParams.Add("p3", device, DbType.String);
+                        updateParams.Add("p4", (int)MnemonicType.Operation, DbType.Int32);
+                        updateParams.Add("p5", operation.Id, DbType.Int32);
+                        updateParams.Add("p6", id, DbType.Int32);
+                        updateParams.Add("p7", alarmCount, DbType.Int32);
+                        updateParams.Add("p8", alarm, DbType.String);
+                        updateParams.Add("p9", comment, DbType.String);
+                        updateParams.Add("p10", errorTime, DbType.Int32);
+                        updateParams.Add("p11", "", DbType.String);
+                        updateParams.Add("p12", id, DbType.String);
+
+
+                        connection.Execute(sqlUpdate, updateParams, transaction);
                     }
                     else
                     {
                         connection.Execute(@"
-    INSERT INTO [Error] (
-        [PlcId], 
-        [CycleId], 
-        [Device], 
-        [MnemonicId], 
-        [RecordId], 
-        [AlarmId],
-        [ErrorNum], 
-        [AlarmComment], 
-        [MessageComment],
-        [ErrorTime],
-        [ErrorTimeDevice])
-    VALUES
-        (@PlcId, 
-        @CycleId, 
-        @Device, 
-        @MnemonicId, 
-        @RecordId, 
-        @AlarmId, 
-        @ErrorNum, 
-        @AlarmComment, 
-        @MessageComment,
-        @ErrorTime,
-        @ErrorTimeDevice)",
-    parameters, transaction);
+                        INSERT INTO [Error] (
+                            [PlcId], 
+                            [CycleId], 
+                            [Device], 
+                            [MnemonicId], 
+                            [RecordId], 
+                            [AlarmId],
+                            [ErrorNum], 
+                            [AlarmComment], 
+                            [MessageComment],
+                            [ErrorTime],
+                            [ErrorTimeDevice])
+                        VALUES
+                            (@PlcId, 
+                            @CycleId, 
+                            @Device, 
+                            @MnemonicId, 
+                            @RecordId, 
+                            @AlarmId, 
+                            @ErrorNum, 
+                            @AlarmComment, 
+                            @MessageComment,
+                            @ErrorTime,
+                            @ErrorTimeDevice)",
+                        parameters, transaction);
                     }
                     alarmCount++;
                 }

@@ -81,6 +81,8 @@ namespace KdxDesigner.Utils.Operation
         public List<LadderCsvRow> GenerateM5()
         {
             var result = new List<LadderCsvRow>();
+            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
+
 
             result.Add(LadderRow.AddLD(_label + (_outNum + 0).ToString()));
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -94,7 +96,6 @@ namespace KdxDesigner.Utils.Operation
             result.Add(LadderRow.AddANI(_label + (_outNum + 4).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_outNum + 5).ToString()));
 
-            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
 
             // 関連するタイマがある場合
             if (thisTimer != null && thisTimer.Count > 0)
@@ -402,7 +403,8 @@ namespace KdxDesigner.Utils.Operation
         public List<LadderCsvRow> GenerateM19()
         {
             var result = new List<LadderCsvRow>();
-            var operationTimerStable = _timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
+            var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
+            var operationTimerStable = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
 
             if (operationTimerStable != null)
             {
