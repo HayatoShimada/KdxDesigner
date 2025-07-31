@@ -110,10 +110,16 @@
                                     <CheckBox Content="メモリ保存" IsChecked="{Binding IsErrorMemory}" Margin="10,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="5">
+                                    <TextBlock Text="Tデバイス [エラー]" Width="150"/>
+                                    <TextBox Text="{Binding ErrorDeviceStartT}" Width="100" PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"/>
+                                    <CheckBox Content="メモリ保存" IsChecked="{Binding IsErrorMemory}" Margin="10,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="5">
                                     <TextBlock Text="Tデバイス [タイマ]" Width="150"/>
                                     <TextBox Text="{Binding DeviceStartT}" Width="100" PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"/>
                                     <CheckBox Content="メモリ保存" IsChecked="{Binding IsTimerMemory}" Margin="10,0"/>
                                 </StackPanel>
+                                
                                 <StackPanel Orientation="Horizontal" Margin="5">
                                     <TextBlock Text="ZR [タイマ]" Width="150"/>
                                     <TextBox Text="{Binding TimerStartZR}" Width="100" PreviewTextInput="NumberOnlyTextBox_PreviewTextInput"/>

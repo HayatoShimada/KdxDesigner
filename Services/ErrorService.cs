@@ -65,6 +65,7 @@ namespace KdxDesigner.Services
             List<Models.Operation> operations,
             List<Models.IO> iOs,
             int startNum,
+            int startNumTimer,
             int plcId,
             int cycleId
             )
@@ -117,10 +118,19 @@ namespace KdxDesigner.Services
                 foreach (int id in AlarmIds)
                 {
                     string device = "M" + (startNum + alarmCount).ToString(); // 例: 01A01, 01A02, ...
+                    string timerDevice = "T" + (startNumTimer + alarmCount).ToString(); // 例: T01A01, T01A02, ...
+
                     var parameters = new DynamicParameters();
-                    int errorTime = 1000; // エラー時間の初期値
+
                     string comment = messages.FirstOrDefault(m => m.AlarmId == id)?.BaseMessage ?? string.Empty;
                     string alarm = messages.FirstOrDefault(m => m.AlarmId == id)?.BaseAlarm ?? string.Empty;
+                    int count = messages.FirstOrDefault(m => m.AlarmId == id)?.DefaultCountTime ?? 1000;
+
+                    var comment2 = operation.Valve1 + operation.GoBack;
+                    var comment3 = messages.FirstOrDefault(m => m.AlarmId == id)?.Category2 ?? string.Empty;
+                    var comment4 = messages.FirstOrDefault(m => m.AlarmId == id)?.Category3 ?? string.Empty;
+
+
                     // 将来的にメッセージの代入処理を追加する。
 
                     parameters.Add("PlcId", plcId, DbType.Int32);
@@ -130,10 +140,14 @@ namespace KdxDesigner.Services
                     parameters.Add("RecordId", operation.Id, DbType.Int32);
                     parameters.Add("AlarmId", id, DbType.Int32);
                     parameters.Add("ErrorNum", alarmCount, DbType.Int32);
-                    parameters.Add("AlarmComment", alarm, DbType.String);
+                    parameters.Add("Comment1", "操作ｴﾗｰ", DbType.String);
+                    parameters.Add("Comment2", comment2, DbType.String);
+                    parameters.Add("Comment3", comment3, DbType.String);
+                    parameters.Add("Comment4", comment4, DbType.String);
+                    parameters.Add("AlarmComment", comment, DbType.String);
                     parameters.Add("MessageComment", comment, DbType.String);
-                    parameters.Add("ErrorTime", errorTime, DbType.Int32);
-                    parameters.Add("ErrorTimeDevice", "", DbType.String);
+                    parameters.Add("ErrorTime", count, DbType.Int32);
+                    parameters.Add("ErrorTimeDevice", timerDevice, DbType.String);
 
                     if (existing != null)
                     {
@@ -147,6 +161,10 @@ namespace KdxDesigner.Services
                             [RecordId] = ?,
                             [AlarmId] = ?,
                             [ErrorNum] = ?,
+                            [Comment1] = ?,
+                            [Comment2] = ?,
+                            [Comment3] = ?,
+                            [Comment4] = ?,
                             [AlarmComment] = ?,
                             [MessageComment] = ?,
                             [ErrorTime] = ?,
@@ -162,12 +180,14 @@ namespace KdxDesigner.Services
                         updateParams.Add("p5", operation.Id, DbType.Int32);
                         updateParams.Add("p6", id, DbType.Int32);
                         updateParams.Add("p7", alarmCount, DbType.Int32);
-                        updateParams.Add("p8", alarm, DbType.String);
-                        updateParams.Add("p9", comment, DbType.String);
-                        updateParams.Add("p10", errorTime, DbType.Int32);
-                        updateParams.Add("p11", "", DbType.String);
-                        updateParams.Add("p12", id, DbType.String);
-
+                        updateParams.Add("p8", "操作ｴﾗｰ", DbType.String);
+                        updateParams.Add("p9", comment2, DbType.String);
+                        updateParams.Add("p10", comment3, DbType.String);
+                        updateParams.Add("p11", comment4, DbType.String);
+                        updateParams.Add("p12", alarm, DbType.String);
+                        updateParams.Add("p13", comment, DbType.String);
+                        updateParams.Add("p14", count, DbType.Int32);
+                        updateParams.Add("p15", timerDevice, DbType.String);
 
                         connection.Execute(sqlUpdate, updateParams, transaction);
                     }
@@ -182,6 +202,10 @@ namespace KdxDesigner.Services
                             [RecordId], 
                             [AlarmId],
                             [ErrorNum], 
+                            [Comment1],
+                            [Comment2],
+                            [Comment3],
+                            [Comment4],
                             [AlarmComment], 
                             [MessageComment],
                             [ErrorTime],
@@ -194,6 +218,10 @@ namespace KdxDesigner.Services
                             @RecordId, 
                             @AlarmId, 
                             @ErrorNum, 
+                            @Comment1,
+                            @Comment2,
+                            @Comment3,
+                            @Comment4,
                             @AlarmComment, 
                             @MessageComment,
                             @ErrorTime,

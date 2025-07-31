@@ -12,13 +12,15 @@ namespace KdxDesigner.Models
     public class ErrorMessage
     {
         [Key]
-        public int? MnemonicId { get; set; }
+        public int MnemonicId { get; set; }
         [Key]
-        public int? AlarmId { get; set; }
+        public int AlarmId { get; set; }
         public string? BaseMessage { get; set; }
         public string? BaseAlarm { get; set; }
         public string? Category1 { get; set; }
         public string? Category2 { get; set; }
         public string? Category3 { get; set; }
+
+        public int DefaultCountTime { get; set; } = 0;
     }
 }

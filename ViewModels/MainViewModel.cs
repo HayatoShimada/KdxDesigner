@@ -52,6 +52,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int cylinderDeviceStartM = 30000;
         [ObservableProperty] private int cylinderDeviceStartD = 5000;
         [ObservableProperty] private int errorDeviceStartM = 120000;
+        [ObservableProperty] private int errorDeviceStartT = 2000;
         [ObservableProperty] private int deviceStartT = 0;
         [ObservableProperty] private int timerStartZR = 3000;
         [ObservableProperty] private int prosTimeStartZR = 12000;
@@ -65,6 +66,7 @@ namespace KdxDesigner.ViewModels
         //[ObservableProperty] private int cylinderDeviceStartM = 50000;
         //[ObservableProperty] private int cylinderDeviceStartD = 5200;
         //[ObservableProperty] private int errorDeviceStartM = 121500;
+        //[ObservableProperty] private int errorDeviceStartT = 3500;
         //[ObservableProperty] private int deviceStartT = 0;
         //[ObservableProperty] private int timerStartZR = 3000;
         //[ObservableProperty] private int prosTimeStartZR = 14000;
@@ -78,6 +80,7 @@ namespace KdxDesigner.ViewModels
         //[ObservableProperty] private int cylinderDeviceStartM = 52000;
         //[ObservableProperty] private int cylinderDeviceStartD = 5300;
         //[ObservableProperty] private int errorDeviceStartM = 121700;
+        //[ObservableProperty] private int errorDeviceStartT = 3700;
         //[ObservableProperty] private int deviceStartT = 0;
         //[ObservableProperty] private int timerStartZR = 3000;
         //[ObservableProperty] private int prosTimeStartZR = 15000;
@@ -685,7 +688,7 @@ namespace KdxDesigner.ViewModels
 
             // Errorテーブルの保存
             _errorService!.DeleteErrorTable();
-            _errorService!.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM, SelectedPlc!.Id, SelectedCycle!.Id);
+            _errorService!.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM, ErrorDeviceStartT, SelectedPlc!.Id, SelectedCycle!.Id);
 
             // ProsTimeテーブルの保存
             _prosTimeService!.DeleteProsTimeTable();

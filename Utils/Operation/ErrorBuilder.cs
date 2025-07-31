@@ -71,9 +71,13 @@ namespace KdxDesigner.Utils.Operation
                 }
 
                 // アウトコイルの出力
-                if (!string.IsNullOrEmpty(each.Device))
+                if (!string.IsNullOrEmpty(each.ErrorTimeDevice) && !string.IsNullOrEmpty(each.Device))
                 {
+                    result.AddRange(LadderRow.AddTimer(each.ErrorTimeDevice, "K" + each.ErrorTime.ToString()));
+                    result.Add(LadderRow.AddLD(each.ErrorTimeDevice));
                     result.Add(LadderRow.AddOUT(each.Device));
+                    // エラー番号のMOVセット
+                    result.AddRange(LadderRow.AddMOVSet("K" + each.ErrorNum.ToString(), SettingsManager.Settings.ErrorDevice));
                 }
                 else
                 {
@@ -81,11 +85,7 @@ namespace KdxDesigner.Utils.Operation
                     AddError($"エラーのデバイスが null または空です: '{operation.OperationName}'",
                         operation.OperationName ?? "", 3, 0);
                 }
-
-                // エラー番号のMOVセット
-                result.AddRange(LadderRow.AddMOVSet("K" + each.ErrorNum.ToString(), SettingsManager.Settings.ErrorDevice));
             }
-            
             return result;
         }
 
