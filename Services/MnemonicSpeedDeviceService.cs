@@ -17,6 +17,14 @@ namespace KdxDesigner.Services
             _connectionString = repository.ConnectionString;
         }
 
+        public void DeleteSpeedTable()
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "DELETE FROM MnemonicSpeedDevice";
+            connection.Execute(sql);
+
+        }
+
         // MnemonicDeviceテーブルからPlcIdとCycleIdに基づいてデータを取得する
         public List<MnemonicSpeedDevice> GetMnemonicSpeedDevice(int plcId)
         {

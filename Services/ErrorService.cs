@@ -18,6 +18,14 @@ namespace KdxDesigner.Services
             _connectionString = repository.ConnectionString;
         }
 
+        public void DeleteErrorTable()
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "DELETE FROM Error";
+            connection.Execute(sql);
+
+        }
+
         public List<ErrorMessage> GetErrorMessage(int mnemonicId)
         {
             List<ErrorMessage> messages = new();

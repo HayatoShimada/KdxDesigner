@@ -51,5 +51,8 @@ namespace KdxDesigner.Models.Define
 
         [Description("デバッグテスト")]
         public string DebugTest { get; set; } = "M501";
+
+        [Description("バルブ検索文字列")]
+        public string ValveSearchWord { get; set; } = "SV";
     }
 }

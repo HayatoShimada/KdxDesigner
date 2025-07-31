@@ -59,19 +59,30 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int cyTimeStartZR = 30000;
 
         // 造型機
-        ////[ObservableProperty] private int processDeviceStartL = 14300;
-        ////[ObservableProperty] private int detailDeviceStartL = 17000;
-        ////[ObservableProperty] private int operationDeviceStartM = 26000;
-        ////[ObservableProperty] private int cylinderDeviceStartM = 50000;
-        ////[ObservableProperty] private int cylinderDeviceStartD = 5200;
-        ////[ObservableProperty] private int errorDeviceStartM = 121000;
-        ////[ObservableProperty] private int deviceStartT = 0;
-        ////[ObservableProperty] private int timerStartZR = 3000;
-        ////[ObservableProperty] private int prosTimeStartZR = 14000;
-        ////[ObservableProperty] private int prosTimePreviousStartZR = 26000;
-        ////[ObservableProperty] private int cyTimeStartZR = 32000;
+        //[ObservableProperty] private int processDeviceStartL = 14300;
+        //[ObservableProperty] private int detailDeviceStartL = 17000;
+        //[ObservableProperty] private int operationDeviceStartM = 26000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 50000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5200;
+        //[ObservableProperty] private int errorDeviceStartM = 121500;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 14000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 26000;
+        //[ObservableProperty] private int cyTimeStartZR = 32000;
 
-        [ObservableProperty] private string valveSearchText = "SV";
+        // 下型造型機
+        //[ObservableProperty] private int processDeviceStartL = 14500;
+        //[ObservableProperty] private int detailDeviceStartL = 18000;
+        //[ObservableProperty] private int operationDeviceStartM = 28000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 52000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5300;
+        //[ObservableProperty] private int errorDeviceStartM = 121700;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 15000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 27000;
+        //[ObservableProperty] private int cyTimeStartZR = 33000;
 
         [ObservableProperty] private bool isProcessMemory = false;
         [ObservableProperty] private bool isDetailMemory = false;
@@ -665,12 +676,23 @@ namespace KdxDesigner.ViewModels
             var cylinders = _repository.GetCYs();
 
             int timerCount = 0;
+
+            // Timerテーブルの保存
             _timerService!.DeleteAllMnemonicTimerDevice();
             _timerService!.SaveWithDetail(timer, details, DeviceStartT, SelectedPlc!.Id, ref timerCount);
             _timerService!.SaveWithOperation(timer, operations, DeviceStartT, SelectedPlc!.Id, ref timerCount);
             _timerService!.SaveWithCY(timer, cylinders, DeviceStartT, SelectedPlc!.Id, ref timerCount);
+
+            // Errorテーブルの保存
+            _errorService!.DeleteErrorTable();
             _errorService!.SaveMnemonicDeviceOperation(prepData.operations, prepData.ioList, ErrorDeviceStartM, SelectedPlc!.Id, SelectedCycle!.Id);
+
+            // ProsTimeテーブルの保存
+            _prosTimeService!.DeleteProsTimeTable();
             _prosTimeService!.SaveProsTime(prepData.operations, ProsTimeStartZR, ProsTimePreviousStartZR, CyTimeStartZR, SelectedPlc!.Id);
+
+            // Speedテーブルの保存
+            _speedService!.DeleteSpeedTable();
             _speedService!.Save(prepData.cylinders, CylinderDeviceStartD, SelectedPlc!.Id);
         }
 

@@ -427,11 +427,9 @@ namespace KdxDesigner.Utils.Cylinder
                         result.AddRange(LadderRow.AddMOVSet("K1", _speedDevice)); // スピードデバイスの設定
                         break;
                     default:
-                        result.AddRange(LadderRow.AddMOVSet("K5", _speedDevice)); // スピードデバイスの設定
+                        result.AddRange(LadderRow.AddMOVSet("K6", _speedDevice)); // スピードデバイスの設定
                         break;
                 }
-
-                result.AddRange(LadderRow.AddMOVSet("K5", _speedDevice)); // スピードデバイスの設定
             }
             else
             {
@@ -590,7 +588,7 @@ namespace KdxDesigner.Utils.Cylinder
         public List<LadderCsvRow> SingleValve(List<IO> sensors, int? multiSensorCount)
         {
             var result = new List<LadderCsvRow>();
-            string valveSearchString = _mainViewModel.ValveSearchText;
+            string valveSearchString = SettingsManager.Settings.ValveSearchWord;
 
             // 行き方向のバルブアドレスをリストとして保持する
             var goValveAddresses = new List<string>();
@@ -700,7 +698,8 @@ namespace KdxDesigner.Utils.Cylinder
             var result = new List<LadderCsvRow>();
 
             // 1. GetAddressRange を使って、"SV" を含むすべてのバルブ候補を取得
-            string? valveSearchString = _mainViewModel.ValveSearchText;
+            string valveSearchString = SettingsManager.Settings.ValveSearchWord;
+
             var valveCandidates = _ioAddressService.GetAddressRange(sensors, valveSearchString ?? "SV", _cylinder.Cylinder.CYNum!, _cylinder.Cylinder.Id, errorIfNotFound: true);
 
             // 2. ダブルバルブには最低2つの候補が必要なため、候補数をチェック
@@ -915,7 +914,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 result.AddRange(LadderRow.AddLDG(speedDevice, "K5"));
                 result.AddRange(LadderRow.AddANDN(speedDevice, "K0"));
-                result.Add(LadderRow.AddLD(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
+                result.Add(LadderRow.AddAND(_label + (_startNum + 37).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddOUT(in1IO));
             }
             else

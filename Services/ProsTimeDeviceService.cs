@@ -36,7 +36,18 @@ namespace KdxDesigner.Services
 
         // MnemonicDeviceテーブルからPlcIdに基づいてデータを取得する
 
-        public List<ProsTime> GetProsTimeByPlcId(int plcId)
+        /// <summary>
+        ///     
+        /// </summary>
+        public void DeleteProsTimeTable()
+        {
+            using var connection = new OleDbConnection(_connectionString);
+            var sql = "DELETE FROM ProsTime";
+            connection.Execute(sql);
+
+        }
+
+        public List<ProsTime> GetProsTimeByPlcId(int plcId)
 
         {
 
