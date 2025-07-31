@@ -367,9 +367,15 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddLDI(label + (startNum + 35).ToString()));
                 result.Add(LadderRow.AddANI(label + (startNum + 36).ToString()));
                 result.Add(LadderRow.AddMEP());
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.AddRange(LadderRow.AddANDN(speedDevice, "K1"));
                 result.AddRange(LadderRow.AddANDN(speedDevice, "K5"));
                 result.Add(LadderRow.AddSET(label + (startNum + 33).ToString()));
+
+                result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
+                result.Add(LadderRow.AddOR(label + (startNum + 36).ToString()));
+                result.Add(LadderRow.AddMEP());
+                result.Add(LadderRow.AddRST(label + (startNum + 33).ToString()));
 
                 // 高速停止記憶解除
                 if (ebtTimer != null)
@@ -412,7 +418,8 @@ namespace KdxDesigner.Utils.Cylinder
             var breakeList = sensors.Where(i => i.IOName != null
                                            && i.IOName.Contains(cylinder.Cylinder.CYNum ?? string.Empty)
                                            && !i.IOName.Contains("STF")
-                                           && !i.IOName.Contains("STR")).ToList();
+                                           && !i.IOName.Contains("STR")
+                                           && !i.IOName.Contains("SB")).ToList();
 
             var breakeIO = _ioAddressService.
                 GetSingleAddress(

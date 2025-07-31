@@ -215,6 +215,7 @@ namespace KdxDesigner.Services
                             {
                                 case 6: // 異常時BK (EBT)
                                 case 7: // 正常時BK (NBT)
+
                                     timerStartWith = "T";
                                     break;
                                 default:
@@ -322,7 +323,22 @@ namespace KdxDesigner.Services
                             if (timer == null) continue;
 
                             // デバイス番号の計算
-                            var processTimerDevice = "ST" + (count + _mainViewModel.DeviceStartT);
+                            var timerStartWith = "";
+
+                            switch (timer.TimerCategoryId)
+                            {
+                                case 6: // 異常時BK (EBT)
+                                case 7: // 正常時BK (NBT)
+
+                                    timerStartWith = "T";
+                                    break;
+                                default:
+                                    timerStartWith = "ST";
+                                    break;
+
+                            }
+
+                            var processTimerDevice = timerStartWith + (count + _mainViewModel.DeviceStartT);
                             var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
 
                             // 複合キーで既存レコードを検索
@@ -416,7 +432,23 @@ namespace KdxDesigner.Services
                         {
                             if (timer == null) continue;
 
-                            var processTimerDevice = "ST" + (count + _mainViewModel.DeviceStartT);
+                            // デバイス番号の計算
+                            var timerStartWith = "";
+
+                            switch (timer.TimerCategoryId)
+                            {
+                                case 6: // 異常時BK (EBT)
+                                case 7: // 正常時BK (NBT)
+
+                                    timerStartWith = "T";
+                                    break;
+                                default:
+                                    timerStartWith = "ST";
+                                    break;
+
+                            }
+
+                            var processTimerDevice = timerStartWith + (count + _mainViewModel.DeviceStartT);
                             var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
 
                             // 複合キー (Cylinder.Id, Timer.ID) で既存レコードを検索
