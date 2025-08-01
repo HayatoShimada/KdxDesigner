@@ -11,6 +11,7 @@ namespace KdxDesigner.Models
         [ObservableProperty] private bool _isHighlighted;
         [ObservableProperty] private bool _isModified;
         [ObservableProperty] private bool _isSelected;
+        [ObservableProperty] private bool _isFinishConnection;
         
         public ProcessFlowConnection(ProcessFlowNode from, ProcessFlowNode to, bool isModified = false)
         {
@@ -32,6 +33,7 @@ namespace KdxDesigner.Models
                 OnPropertyChanged(nameof(ArrowAngle));
                 OnPropertyChanged(nameof(ArrowX));
                 OnPropertyChanged(nameof(ArrowY));
+                OnPropertyChanged(nameof(MidPoint));
             }
         }
         
@@ -39,15 +41,15 @@ namespace KdxDesigner.Models
         {
             get
             {
-                var fromCenter = new Point(FromNode.Position.X + 60, FromNode.Position.Y + 20);
-                var toCenter = new Point(ToNode.Position.X + 60, ToNode.Position.Y + 20);
+                var fromCenter = new Point(FromNode.Position.X + 70, FromNode.Position.Y + 30);
+                var toCenter = new Point(ToNode.Position.X + 70, ToNode.Position.Y + 30);
                 
                 // 接続線の角度を計算
                 var angle = Math.Atan2(toCenter.Y - fromCenter.Y, toCenter.X - fromCenter.X);
                 
                 // ノードの端の点を計算（右端）
-                var edgeX = FromNode.Position.X + 120; // ノードの右端
-                var edgeY = FromNode.Position.Y + 20;  // ノードの中央Y
+                var edgeX = FromNode.Position.X + 140; // ノードの右端
+                var edgeY = FromNode.Position.Y + 30;  // ノードの中央Y
                 
                 // 角度に基づいて適切な端点を選択
                 if (Math.Abs(angle) <= Math.PI / 4) // 右方向
@@ -56,7 +58,7 @@ namespace KdxDesigner.Models
                 }
                 else if (angle > Math.PI / 4 && angle <= 3 * Math.PI / 4) // 下方向
                 {
-                    return new Point(fromCenter.X, FromNode.Position.Y + 40);
+                    return new Point(fromCenter.X, FromNode.Position.Y + 60);
                 }
                 else if (angle < -Math.PI / 4 && angle >= -3 * Math.PI / 4) // 上方向
                 {
@@ -73,8 +75,8 @@ namespace KdxDesigner.Models
         {
             get
             {
-                var fromCenter = new Point(FromNode.Position.X + 60, FromNode.Position.Y + 20);
-                var toCenter = new Point(ToNode.Position.X + 60, ToNode.Position.Y + 20);
+                var fromCenter = new Point(FromNode.Position.X + 70, FromNode.Position.Y + 30);
+                var toCenter = new Point(ToNode.Position.X + 70, ToNode.Position.Y + 30);
                 
                 // 接続線の角度を計算（逆方向）
                 var angle = Math.Atan2(fromCenter.Y - toCenter.Y, fromCenter.X - toCenter.X);
@@ -82,11 +84,11 @@ namespace KdxDesigner.Models
                 // ノードの端の点を計算
                 if (Math.Abs(angle) <= Math.PI / 4) // 右方向から来る
                 {
-                    return new Point(ToNode.Position.X + 120, toCenter.Y);
+                    return new Point(ToNode.Position.X + 140, toCenter.Y);
                 }
                 else if (angle > Math.PI / 4 && angle <= 3 * Math.PI / 4) // 下方向から来る
                 {
-                    return new Point(toCenter.X, ToNode.Position.Y + 40);
+                    return new Point(toCenter.X, ToNode.Position.Y + 60);
                 }
                 else if (angle < -Math.PI / 4 && angle >= -3 * Math.PI / 4) // 上方向から来る
                 {
@@ -113,5 +115,14 @@ namespace KdxDesigner.Models
         // 矢印の位置（終点から少し手前）
         public double ArrowX => EndPoint.X - 8 * Math.Cos(ArrowAngle * Math.PI / 180) - 4;
         public double ArrowY => EndPoint.Y - 8 * Math.Sin(ArrowAngle * Math.PI / 180) - 4;
+        
+        // 線の中点
+        public Point MidPoint => new Point(
+            (StartPoint.X + EndPoint.X) / 2,
+            (StartPoint.Y + EndPoint.Y) / 2
+        );
+        
+        // ToNodeのStartSensorを表示
+        public string StartSensor => ToNode?.ProcessDetail?.StartSensor ?? "";
     }
 }

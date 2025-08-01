@@ -210,7 +210,6 @@ UPDATE ProcessDetail SET
     OperationId = ?OperationId?,
     StartSensor = ?StartSensor?,
     FinishSensor = ?FinishSensor?,
-    FinishIds = ?FinishIds?,
     CategoryId = ?CategoryId?,
     BlockNumber = ?BlockNumber?,
     SkipMode = ?SkipMode?,
@@ -225,7 +224,6 @@ WHERE Id = ?Id?";
                     OperationId = processDetail.OperationId,
                     StartSensor = processDetail.StartSensor ?? "",
                     FinishSensor = processDetail.FinishSensor ?? "",
-                    FinishIds = processDetail.FinishIds ?? "",
                     CategoryId = processDetail.CategoryId,
                     BlockNumber = processDetail.BlockNumber,
                     SkipMode = processDetail.SkipMode ?? "",
@@ -248,6 +246,87 @@ WHERE Id = ?Id?";
             }
         }
 
+
+        public int AddProcessDetail(ProcessDetail processDetail)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 新しい工程詳細を挿入
+                var sql = @"
+INSERT INTO ProcessDetail (
+    ProcessId, OperationId, DetailName, StartSensor, 
+    CategoryId, FinishSensor, BlockNumber, SkipMode, 
+    CycleId, SortNumber, Comment, ILStart
+) VALUES (
+    ?ProcessId?, ?OperationId?, ?DetailName?, ?StartSensor?, 
+    ?CategoryId?, ?FinishSensor?, ?BlockNumber?, ?SkipMode?, 
+    ?CycleId?, ?SortNumber?, ?Comment?, ?ILStart?
+)";
+                connection.Execute(sql, new
+                {
+                    processDetail.ProcessId,
+                    processDetail.OperationId,
+                    processDetail.DetailName,
+                    processDetail.StartSensor,
+                    processDetail.CategoryId,
+                    processDetail.FinishSensor,
+                    processDetail.BlockNumber,
+                    processDetail.SkipMode,
+                    processDetail.CycleId,
+                    processDetail.SortNumber,
+                    processDetail.Comment,
+                    processDetail.ILStart
+                }, transaction);
+
+                // 挿入されたレコードのIDを取得
+                var getIdSql = "SELECT @@IDENTITY";
+                var newId = connection.QuerySingle<int>(getIdSql, transaction: transaction);
+
+                transaction.Commit();
+                return newId;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessDetail(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 関連するレコードを先に削除
+                // ProcessDetailConnectionテーブルから削除
+                var deleteConnectionsSql = @"
+                    DELETE FROM ProcessDetailConnection 
+                    WHERE FromProcessDetailId = ?fromId? OR ToProcessDetailId = ?toId?";
+                connection.Execute(deleteConnectionsSql, new { fromId = id, toId = id }, transaction);
+
+                // ProcessDetailFinishテーブルから削除
+                var deleteFinishesSql = @"
+                    DELETE FROM ProcessDetailFinish 
+                    WHERE ProcessDetailId = ?processId? OR FinishProcessDetailId = ?finishId?";
+                connection.Execute(deleteFinishesSql, new { processId = id, finishId = id }, transaction);
+
+                // ProcessDetailテーブルから削除
+                var sql = "DELETE FROM ProcessDetail WHERE Id = ?id?";
+                connection.Execute(sql, new { id }, transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
 
         public List<IO> GetIoList()
         {

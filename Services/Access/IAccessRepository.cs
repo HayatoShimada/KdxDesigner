@@ -128,6 +128,19 @@ namespace KdxDesigner.Services.Access
         void UpdateProcessDetail(ProcessDetail processDetail);
 
         /// <summary>
+        /// 新しい工程詳細情報を追加します。
+        /// </summary>
+        /// <param name="processDetail">追加するProcessDetailオブジェクト。</param>
+        /// <returns>追加されたレコードのID。</returns>
+        int AddProcessDetail(ProcessDetail processDetail);
+
+        /// <summary>
+        /// 指定されたIDの工程詳細情報を削除します。
+        /// </summary>
+        /// <param name="id">削除対象の工程詳細ID。</param>
+        void DeleteProcessDetail(int id);
+
+        /// <summary>
         /// 全ての工程詳細カテゴリを取得します。
         /// </summary>
         List<ProcessDetailCategory> GetProcessDetailCategories();
