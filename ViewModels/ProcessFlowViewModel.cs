@@ -1316,10 +1316,25 @@ namespace KdxDesigner.ViewModels
             var snappedX = Math.Round(centerX / gridSize) * gridSize;
             var snappedY = Math.Round(centerY / gridSize) * gridSize;
             
+            // 有効なProcessIdを取得
+            var processes = _repository.GetProcesses()
+                .Where(p => p.CycleId == CycleId)
+                .ToList();
+            
+            if (processes.Count == 0)
+            {
+                // 適切なプロセスが存在しない場合はエラー
+                System.Windows.MessageBox.Show("このサイクルに対応する工程が見つかりません。", "エラー", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+            
+            // 最初の工程をデフォルトとして使用
+            var defaultProcessId = processes.First().Id;
+            
             // 新しいProcessDetailオブジェクトを作成
             var newProcessDetail = new ProcessDetail
             {
-                ProcessId = 1, // デフォルト値
+                ProcessId = defaultProcessId,
                 DetailName = "新規工程詳細",
                 StartSensor = "",
                 CategoryId = 1, // デフォルトカテゴリ

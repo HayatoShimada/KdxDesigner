@@ -90,7 +90,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L0 工程開始
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.StartSensor != null)
+            if (_detail.Detail.StartSensor != string.Empty && _detail.Detail.StartSensor != null)
             { 
                 var ioSensor = _ioAddressService.GetSingleAddress(
                     _ioList,
