@@ -122,6 +122,12 @@ namespace KdxDesigner.Services.Access
         List<ProcessDetail> GetProcessDetails();
 
         /// <summary>
+        /// 指定された工程詳細情報を更新します。
+        /// </summary>
+        /// <param name="processDetail">更新するProcessDetailオブジェクト。</param>
+        void UpdateProcessDetail(ProcessDetail processDetail);
+
+        /// <summary>
         /// 全ての工程詳細カテゴリを取得します。
         /// </summary>
         List<ProcessDetailCategory> GetProcessDetailCategories();

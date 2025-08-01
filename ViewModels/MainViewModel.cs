@@ -306,6 +306,28 @@ namespace KdxDesigner.ViewModels
         }
 
         [RelayCommand]
+        private void OpenProcessFlow()
+        {
+            if (SelectedCycle == null)
+            {
+                MessageBox.Show("サイクルを選択してください。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (_repository == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
+            var viewModel = new ProcessFlowViewModel(_repository);
+            viewModel.LoadProcessDetails(SelectedCycle.Id);
+            
+            var view = new ProcessFlowView(viewModel);
+            view.ShowDialog();
+        }
+
+        [RelayCommand]
         private void OpenMemoryEditor()
         {
             if (SelectedPlc == null)

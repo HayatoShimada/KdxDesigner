@@ -149,6 +149,7 @@
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
                             <Button Content="メモリ設定" Command="{Binding MemorySettingCommand}" Width="120" Height="30" Margin="5"/>
                             <Button Content="工程出力" Command="{Binding ProcessOutputCommand}" Width="120" Height="30" Margin="5"/>
+                            <Button Content="工程フロー" Command="{Binding OpenProcessFlowCommand}" Width="120" Height="30" Margin="5"/>
                             <CheckBox Content="デバッグモード" IsChecked="{Binding IsDebug, Mode=TwoWay}" Margin="5" HorizontalAlignment="Center"/>
                             <ProgressBar Height="20" Minimum="0" Maximum="{Binding MemoryProgressMax}" Value="{Binding MemoryProgressValue}" Margin="5" />
                             <TextBlock Text="{Binding MemoryStatusMessage}" HorizontalAlignment="Center" Foreground="DarkBlue" FontWeight="Bold"/>

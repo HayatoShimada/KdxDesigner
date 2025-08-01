@@ -195,6 +195,41 @@ WHERE Id = @Id";
                 "SELECT * FROM ProcessDetailCategory WHERE ID = @ID", new { ID = id });
         }
 
+        public void UpdateProcessDetail(ProcessDetail processDetail)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // ProcessFlowViewで編集される主要なフィールドのみを更新
+                // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
+                var sql = @"
+UPDATE ProcessDetail SET
+    StartIds = ?StartIds?, 
+    StartSensor = ?StartSensor?
+WHERE Id = ?Id?";
+
+                connection.Execute(sql, new
+                {
+                    StartIds = processDetail.StartIds ?? "",
+                    StartSensor = processDetail.StartSensor ?? "",
+                    Id = processDetail.Id
+                }, transaction);
+                
+                transaction.Commit();
+                
+                System.Diagnostics.Debug.WriteLine($"ProcessDetail updated successfully - Id: {processDetail.Id}, StartIds: {processDetail.StartIds}");
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                System.Diagnostics.Debug.WriteLine($"UpdateProcessDetail error for Id {processDetail.Id}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"SQL: UPDATE ProcessDetail SET StartIds = '{processDetail.StartIds}', StartSensor = '{processDetail.StartSensor}' WHERE Id = {processDetail.Id}");
+                throw;
+            }
+        }
+
 
         public List<IO> GetIoList()
         {
@@ -242,10 +277,11 @@ WHERE Id = @Id";
             try
             {
                 // Idをキーに、LinkDeviceを更新する
-                const string sql = "UPDATE [IO] SET [LinkDevice] = @LinkDevice WHERE [Id] = @Id";
+                // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
+                const string sql = "UPDATE [IO] SET [LinkDevice] = ?LinkDevice? WHERE [Id] = ?Id?";
 
                 // DapperのExecuteはリストを渡すと自動的にループ処理してくれる
-                connection.Execute(sql, ioRecordsToUpdate.Select(io => new { io.LinkDevice, io.Id }), transaction);
+                connection.Execute(sql, ioRecordsToUpdate.Select(io => new { LinkDevice = io.LinkDevice, Id = io.Id }), transaction);
 
                 transaction.Commit();
             }
@@ -270,63 +306,59 @@ WHERE Id = @Id";
                 // 1. IOテーブルの更新
                 if (iosToUpdate.Any())
                 {
-                    // ★★★ 修正箇所 1: SQL文を位置プレースホルダ (?) に変更 ★★★
+                    // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
                     var sqlUpdate = @"UPDATE IO SET 
-                                        IOText = ?, XComment = ?, YComment = ?, 
-                                        FComment = ?, Address = ?, IOName = ?, 
-                                        IOExplanation = ?, IOSpot = ?, UnitName = ?, 
-                                        System = ?, StationNumber = ?, IONameNaked = ?, 
-                                        PlcId = ?, LinkDevice = ?
-                                    WHERE Id = ?";
+                                        IOText = ?IOText?, XComment = ?XComment?, YComment = ?YComment?, 
+                                        FComment = ?FComment?, Address = ?Address?, IOName = ?IOName?, 
+                                        IOExplanation = ?IOExplanation?, IOSpot = ?IOSpot?, UnitName = ?UnitName?, 
+                                        System = ?System?, StationNumber = ?StationNumber?, IONameNaked = ?IONameNaked?, 
+                                        PlcId = ?PlcId?, LinkDevice = ?LinkDevice?
+                                    WHERE Id = ?Id?";
 
                     foreach (var io in iosToUpdate)
                     {
-                        var parameters = new DynamicParameters();
-
-                        // ★★★ 修正箇所 2: パラメータを追加する順番をSQL文と完全に一致させる ★★★
-                        // --- SET句のパラメータ ---
-                        parameters.Add("p1", io.IOText ?? "", DbType.String);
-                        parameters.Add("p2", io.XComment ?? "", DbType.String);
-                        parameters.Add("p3", io.YComment ?? "", DbType.String);
-                        parameters.Add("p4", io.FComment ?? "", DbType.String);
-                        parameters.Add("p5", io.Address ?? "", DbType.String);
-                        parameters.Add("p6", io.IOName ?? "", DbType.String);
-                        parameters.Add("p7", io.IOExplanation ?? "", DbType.String);
-                        parameters.Add("p8", io.IOSpot ?? "", DbType.String);
-                        parameters.Add("p9", io.UnitName ?? "", DbType.String);
-                        parameters.Add("p10", io.System ?? "", DbType.String);
-                        parameters.Add("p11", io.StationNumber ?? "", DbType.String);
-                        parameters.Add("p12", io.IONameNaked ?? "", DbType.String);
-                        parameters.Add("p13", io.PlcId ?? 0, DbType.Int32);
-                        parameters.Add("p14", io.LinkDevice ?? "", DbType.String);
-                        // --- WHERE句のパラメータ ---
-                        parameters.Add("p15", io.Id, DbType.Int32);
-
-                        connection.Execute(sqlUpdate, parameters, transaction);
+                        connection.Execute(sqlUpdate, new
+                        {
+                            IOText = io.IOText ?? "",
+                            XComment = io.XComment ?? "",
+                            YComment = io.YComment ?? "",
+                            FComment = io.FComment ?? "",
+                            Address = io.Address ?? "",
+                            IOName = io.IOName ?? "",
+                            IOExplanation = io.IOExplanation ?? "",
+                            IOSpot = io.IOSpot ?? "",
+                            UnitName = io.UnitName ?? "",
+                            System = io.System ?? "",
+                            StationNumber = io.StationNumber ?? "",
+                            IONameNaked = io.IONameNaked ?? "",
+                            PlcId = io.PlcId ?? 0,
+                            LinkDevice = io.LinkDevice ?? "",
+                            Id = io.Id
+                        }, transaction);
                     }
                 }
 
                 // 2. IOHistoryテーブルへの挿入
                 if (histories.Any())
                 {
+                    // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
                     var sqlInsertHistory = @"INSERT INTO IOHistory 
                                                (IoId, PropertyName, OldValue, NewValue, ChangedAt, ChangedBy) 
                                            VALUES 
-                                               (@IoId, @PropertyName, @OldValue, @NewValue, @ChangedAt, @ChangedBy)";
+                                               (?IoId?, ?PropertyName?, ?OldValue?, ?NewValue?, ?ChangedAt?, ?ChangedBy?)";
 
-                    // 各履歴をループし、DynamicParametersを使って型を明示的に指定する
+                    // 各履歴をループし、匿名オブジェクトで実行
                     foreach (var history in histories)
                     {
-                        var historyParams = new DynamicParameters();
-                        historyParams.Add("@IoId", history.IoId, DbType.Int32);
-                        historyParams.Add("@PropertyName", history.PropertyName, DbType.String);
-                        historyParams.Add("@OldValue", history.OldValue, DbType.String);
-                        historyParams.Add("@NewValue", history.NewValue, DbType.String);
-                        // DateTimeオブジェクトをDbType.DateTimeとして渡す
-                        historyParams.Add("@ChangedAt", history.ChangedAt, DbType.String);
-                        historyParams.Add("@ChangedBy", history.ChangedBy, DbType.String);
-
-                        connection.Execute(sqlInsertHistory, historyParams, transaction);
+                        connection.Execute(sqlInsertHistory, new
+                        {
+                            IoId = history.IoId,
+                            PropertyName = history.PropertyName,
+                            OldValue = history.OldValue,
+                            NewValue = history.NewValue,
+                            ChangedAt = history.ChangedAt,
+                            ChangedBy = history.ChangedBy
+                        }, transaction);
                     }
                 }
 
