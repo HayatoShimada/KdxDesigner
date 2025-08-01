@@ -940,6 +940,27 @@ namespace KdxDesigner.Utils.ProcessDetail
             return result;
         }
 
+        /// <summary>
+        /// 複数工程のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
+        public List<LadderCsvRow> BuildReset()
+        {
+            var result = new List<LadderCsvRow>();
+
+            // 行間ステートメントを追加
+            result.Add(CreateStatement());
+            // L0 工程開始
+            var detailFunctions = CreateDetailFunctions();
+            result.AddRange(detailFunctions.L0());
+
+            // L4 操作実行
+            result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
+
+            return result;
+        }
+
 
         #region Private Helper Methods
 

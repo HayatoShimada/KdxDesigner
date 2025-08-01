@@ -59,7 +59,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int prosTimePreviousStartZR = 24000;
         [ObservableProperty] private int cyTimeStartZR = 30000;
 
-        // 造型機
+        // 上型造型機
         //[ObservableProperty] private int processDeviceStartL = 14300;
         //[ObservableProperty] private int detailDeviceStartL = 17000;
         //[ObservableProperty] private int operationDeviceStartM = 26000;
@@ -74,6 +74,34 @@ namespace KdxDesigner.ViewModels
         //[ObservableProperty] private int cyTimeStartZR = 32000;
 
         // 下型造型機
+        //[ObservableProperty] private int processDeviceStartL = 14500;
+        //[ObservableProperty] private int detailDeviceStartL = 18000;
+        //[ObservableProperty] private int operationDeviceStartM = 28000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 52000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5300;
+        //[ObservableProperty] private int errorDeviceStartM = 121700;
+        //[ObservableProperty] private int errorDeviceStartT = 3700;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 15000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 27000;
+        //[ObservableProperty] private int cyTimeStartZR = 33000;
+
+        // 上型型交換
+        //[ObservableProperty] private int processDeviceStartL = 14700;
+        //[ObservableProperty] private int detailDeviceStartL = 19000;
+        //[ObservableProperty] private int operationDeviceStartM = 28000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 52000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5300;
+        //[ObservableProperty] private int errorDeviceStartM = 121700;
+        //[ObservableProperty] private int errorDeviceStartT = 3700;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 15000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 27000;
+        //[ObservableProperty] private int cyTimeStartZR = 33000;
+
+        // 下型型交換
         //[ObservableProperty] private int processDeviceStartL = 14500;
         //[ObservableProperty] private int detailDeviceStartL = 18000;
         //[ObservableProperty] private int operationDeviceStartM = 28000;

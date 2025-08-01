@@ -29,7 +29,9 @@ namespace KdxDesigner.Utils.MnemonicCommon
         public static LadderCsvRow AddMRD() => CreateRow(Command.MRD);
         public static LadderCsvRow AddMPP() => CreateRow(Command.MPP);
         public static LadderCsvRow AddMEP() => CreateRow(Command.MEP);
-
+        public static LadderCsvRow AddFEND() => CreateRow(Command.FEND);
+        public static LadderCsvRow AddRET() => CreateRow(Command.RET);
+        public static LadderCsvRow AddPoint(string address) => CreateRow($"\"{address}\"");
         public static LadderCsvRow MPCreate(string mp)
         {
             switch (mp)

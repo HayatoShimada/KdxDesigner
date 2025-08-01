@@ -50,6 +50,8 @@
         public const string NOP = "\"NOPLF\"";
         public const string OUTH = "\"OUTH\"";
         public const string CJ = "\"CJ\"";
+        public const string FEND = "\"FEND\"";
+        public const string RET = "\"RET\"";
 
         public const string MPS = "\"MPS\"";
         public const string MRD = "\"MRD\"";
