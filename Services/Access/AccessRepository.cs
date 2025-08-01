@@ -202,30 +202,48 @@ WHERE Id = @Id";
             using var transaction = connection.BeginTransaction();
             try
             {
-                // ProcessFlowViewで編集される主要なフィールドのみを更新
+                // すべてのフィールドを更新
                 // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
                 var sql = @"
 UPDATE ProcessDetail SET
-    StartIds = ?StartIds?, 
-    StartSensor = ?StartSensor?
+    DetailName = ?DetailName?,
+    OperationId = ?OperationId?,
+    StartSensor = ?StartSensor?,
+    FinishSensor = ?FinishSensor?,
+    FinishIds = ?FinishIds?,
+    CategoryId = ?CategoryId?,
+    BlockNumber = ?BlockNumber?,
+    SkipMode = ?SkipMode?,
+    SortNumber = ?SortNumber?,
+    Comment = ?Comment?,
+    ILStart = ?ILStart?
 WHERE Id = ?Id?";
 
                 connection.Execute(sql, new
                 {
-                    StartIds = processDetail.StartIds ?? "",
+                    DetailName = processDetail.DetailName ?? "",
+                    OperationId = processDetail.OperationId,
                     StartSensor = processDetail.StartSensor ?? "",
+                    FinishSensor = processDetail.FinishSensor ?? "",
+                    FinishIds = processDetail.FinishIds ?? "",
+                    CategoryId = processDetail.CategoryId,
+                    BlockNumber = processDetail.BlockNumber,
+                    SkipMode = processDetail.SkipMode ?? "",
+                    SortNumber = processDetail.SortNumber,
+                    Comment = processDetail.Comment ?? "",
+                    ILStart = processDetail.ILStart ?? "",
                     Id = processDetail.Id
                 }, transaction);
                 
                 transaction.Commit();
                 
-                System.Diagnostics.Debug.WriteLine($"ProcessDetail updated successfully - Id: {processDetail.Id}, StartIds: {processDetail.StartIds}");
+                System.Diagnostics.Debug.WriteLine($"ProcessDetail updated successfully - Id: {processDetail.Id}, StartSensor: {processDetail.StartSensor}");
             }
             catch (Exception ex)
             {
                 transaction.Rollback();
                 System.Diagnostics.Debug.WriteLine($"UpdateProcessDetail error for Id {processDetail.Id}: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"SQL: UPDATE ProcessDetail SET StartIds = '{processDetail.StartIds}', StartSensor = '{processDetail.StartSensor}' WHERE Id = {processDetail.Id}");
+                System.Diagnostics.Debug.WriteLine($"SQL: UPDATE ProcessDetail SET StartSensor = '{processDetail.StartSensor}' WHERE Id = {processDetail.Id}");
                 throw;
             }
         }
@@ -369,6 +387,134 @@ WHERE Id = ?Id?";
                 transaction.Rollback();
                 throw; // エラーを上位に通知
             }
+        }
+
+        // ProcessDetailConnection
+        public List<ProcessDetailConnection> GetProcessDetailConnections(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+                SELECT pdc.* 
+                FROM ProcessDetailConnection pdc
+                INNER JOIN ProcessDetail pd ON pdc.ToProcessDetailId = pd.Id
+                WHERE pd.CycleId = ?CycleId?";
+            return connection.Query<ProcessDetailConnection>(sql, new { CycleId = cycleId }).ToList();
+        }
+
+        public List<ProcessDetailConnection> GetConnectionsByToId(int toProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailConnection WHERE ToProcessDetailId = ?ToProcessDetailId?";
+            return connection.Query<ProcessDetailConnection>(sql, new { ToProcessDetailId = toProcessDetailId }).ToList();
+        }
+
+        public List<ProcessDetailConnection> GetConnectionsByFromId(int fromProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailConnection WHERE FromProcessDetailId = ?FromProcessDetailId?";
+            return connection.Query<ProcessDetailConnection>(sql, new { FromProcessDetailId = fromProcessDetailId }).ToList();
+        }
+
+        public void AddProcessDetailConnection(ProcessDetailConnection connection)
+        {
+            using var conn = new OleDbConnection(ConnectionString);
+            conn.Open();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    INSERT INTO ProcessDetailConnection 
+                    (FromProcessDetailId, ToProcessDetailId) 
+                    VALUES (?FromProcessDetailId?, ?ToProcessDetailId?)";
+                
+                conn.Execute(sql, new 
+                { 
+                    FromProcessDetailId = connection.FromProcessDetailId,
+                    ToProcessDetailId = connection.ToProcessDetailId
+                }, transaction);
+                
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessDetailConnection(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailConnection WHERE Id = ?Id?";
+            connection.Execute(sql, new { Id = id });
+        }
+
+        public void DeleteConnectionsByFromAndTo(int fromId, int toId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailConnection WHERE FromProcessDetailId = ?FromId? AND ToProcessDetailId = ?ToId?";
+            connection.Execute(sql, new { FromId = fromId, ToId = toId });
+        }
+
+        // ProcessDetailFinish
+        public List<ProcessDetailFinish> GetProcessDetailFinishes(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+                SELECT pdf.* 
+                FROM ProcessDetailFinish pdf
+                INNER JOIN ProcessDetail pd ON pdf.ProcessDetailId = pd.Id
+                WHERE pd.CycleId = ?CycleId?";
+            return connection.Query<ProcessDetailFinish>(sql, new { CycleId = cycleId }).ToList();
+        }
+
+        public List<ProcessDetailFinish> GetFinishesByProcessDetailId(int processDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailFinish WHERE ProcessDetailId = ?ProcessDetailId?";
+            return connection.Query<ProcessDetailFinish>(sql, new { ProcessDetailId = processDetailId }).ToList();
+        }
+
+        public List<ProcessDetailFinish> GetFinishesByFinishId(int finishProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailFinish WHERE FinishProcessDetailId = ?FinishProcessDetailId?";
+            return connection.Query<ProcessDetailFinish>(sql, new { FinishProcessDetailId = finishProcessDetailId }).ToList();
+        }
+
+        public void AddProcessDetailFinish(ProcessDetailFinish finish)
+        {
+            using var conn = new OleDbConnection(ConnectionString);
+            conn.Open();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    INSERT INTO ProcessDetailFinish 
+                    (ProcessDetailId, FinishProcessDetailId) 
+                    VALUES (?ProcessDetailId?, ?FinishProcessDetailId?)";
+                conn.Execute(sql, new { ProcessDetailId = finish.ProcessDetailId, FinishProcessDetailId = finish.FinishProcessDetailId }, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessDetailFinish(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailFinish WHERE Id = ?Id?";
+            connection.Execute(sql, new { Id = id });
+        }
+
+        public void DeleteFinishesByProcessAndFinish(int processDetailId, int finishProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailFinish WHERE ProcessDetailId = ?ProcessDetailId? AND FinishProcessDetailId = ?FinishProcessDetailId?";
+            connection.Execute(sql, new { ProcessDetailId = processDetailId, FinishProcessDetailId = finishProcessDetailId });
         }
     }
 }

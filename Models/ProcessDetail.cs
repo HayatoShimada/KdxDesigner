@@ -16,8 +16,6 @@ namespace KdxDesigner.Models
         public int ProcessId { get; set; }
         public int? OperationId { get; set; }
         public string? DetailName { get; set; }
-        public string? StartIds { get; set; }   // 複数値→セミコロン区切り
-        public string? FinishIds { get; set; }  // 複数値→セミコロン区切り
         public string? StartSensor { get; set; }
         public int? CategoryId { get; set; }
         public string? FinishSensor { get; set; }

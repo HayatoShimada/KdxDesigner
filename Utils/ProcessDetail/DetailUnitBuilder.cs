@@ -442,13 +442,13 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
             var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
 
-            // ProcessDetailの開始条件
-            // この辺の処理がややこしいので共通コンポーネント化すること
-            var processDetailStartIds = _detail.Detail.StartIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailの開始条件を取得（中間テーブルから）
+            var processDetailStartIds = new List<int>();
+            
+            // 中間テーブルから取得
+            var connections = _repository.GetConnectionsByToId(_detail.Detail.Id);
+            processDetailStartIds.AddRange(connections.Select(c => c.FromProcessDetailId));
+            
             var processDetailStartDevices = _details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
                 .ToList();
@@ -571,21 +571,19 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.AddRange(detailFunctions.L0());
 
             // L1 操作開始
-            var detailOffIds = _detail.Detail.FinishIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailFinishテーブルから終了工程IDを取得
+            var finishes = _repository.GetFinishesByProcessDetailId(_detail.Detail.Id);
+            var detailOffIds = finishes.Select(f => f.FinishProcessDetailId).ToList();
 
             if (detailOffIds.Count != 1)
             {
-                detailFunctions.DetailError("工程OFF確認にFinishIdsが複数設定されています。");
+                detailFunctions.DetailError("工程OFF確認に終了工程が複数設定されています。");
                 return result; // エラーがある場合は、空のリストを返す
             }
 
-            if (detailOffIds == null)
+            if (detailOffIds.Count == 0)
             {
-                detailFunctions.DetailError("工程OFF確認にFinishIdsが設定されていません。");
+                detailFunctions.DetailError("工程OFF確認に終了工程が設定されていません。");
                 return result; // エラーがある場合は、空のリストを返す
             }
 
@@ -596,7 +594,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             if (detailOffDeviceMnemonic == null)
             {
-                detailFunctions.DetailError($"工程OFF確認のFinishIdsに設定されているデバイスが見つかりません。ID: {detailOffDevice}");
+                detailFunctions.DetailError($"工程OFF確認の終了工程に設定されているデバイスが見つかりません。ID: {detailOffDevice}");
                 return result; // エラーがある場合は、空のリストを返す
             }
             else
@@ -701,7 +699,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (_detail.Detail.FinishSensor != null)
             {
                 // FinishSensorが設定されている場合
-                // FinishIdsのStartNum+1を出力
+                // 終了工程のStartNum+1を出力
                 foreach (var d in processDetailFinishDevices)
                 {
                     result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
@@ -710,7 +708,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             else
             {
                 // FinishSensorが設定されていない場合
-                // FinishIdsのStartNum+5を出力
+                // 終了工程のStartNum+5を出力
                 foreach (var d in processDetailFinishDevices)
                 {
                     result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
@@ -914,12 +912,12 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailFinishDevices = detailFunctions.FinishDevices();
             if (processDetailFinishDevices.Count == 0)
             {
-                detailFunctions.DetailError("複数工程ではFinishIds が必須です");
+                detailFunctions.DetailError("複数工程では終了工程が必須です");
                 return result; // エラーがある場合は、空のリストを返す
             }
             else if (processDetailFinishDevices.Count != 1)
             {
-                detailFunctions.DetailError("複数工程ではFinishIds を1つにしてください");
+                detailFunctions.DetailError("複数工程では終了工程を1つにしてください");
                 return result; // エラーがある場合は、空のリストを返す
             }
             else

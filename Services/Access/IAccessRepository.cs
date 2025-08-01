@@ -168,5 +168,79 @@ namespace KdxDesigner.Services.Access
         /// <param name="histories">保存する変更履歴のリスト。</param>
         void UpdateAndLogIoChanges(List<IO> iosToUpdate, List<IOHistory> histories);
 
+        /// <summary>
+        /// 指定されたサイクルIDに紐づく工程詳細接続情報を取得します。
+        /// </summary>
+        /// <param name="cycleId">取得対象のサイクルID。</param>
+        List<ProcessDetailConnection> GetProcessDetailConnections(int cycleId);
+
+        /// <summary>
+        /// 指定されたToProcessDetailIdに紐づく接続情報を取得します。
+        /// </summary>
+        /// <param name="toProcessDetailId">終点の工程詳細ID。</param>
+        List<ProcessDetailConnection> GetConnectionsByToId(int toProcessDetailId);
+
+        /// <summary>
+        /// 指定されたFromProcessDetailIdに紐づく接続情報を取得します。
+        /// </summary>
+        /// <param name="fromProcessDetailId">始点の工程詳細ID。</param>
+        List<ProcessDetailConnection> GetConnectionsByFromId(int fromProcessDetailId);
+
+        /// <summary>
+        /// 新しい工程詳細接続情報を追加します。
+        /// </summary>
+        /// <param name="connection">追加するProcessDetailConnectionオブジェクト。</param>
+        void AddProcessDetailConnection(ProcessDetailConnection connection);
+
+        /// <summary>
+        /// 指定されたIDの工程詳細接続情報を削除します。
+        /// </summary>
+        /// <param name="id">削除対象の接続ID。</param>
+        void DeleteProcessDetailConnection(int id);
+
+        /// <summary>
+        /// 指定されたFromIdとToIdの組み合わせの接続情報を削除します。
+        /// </summary>
+        /// <param name="fromId">始点の工程詳細ID。</param>
+        /// <param name="toId">終点の工程詳細ID。</param>
+        void DeleteConnectionsByFromAndTo(int fromId, int toId);
+
+        /// <summary>
+        /// 指定されたサイクルIDに紐づく工程詳細終了情報を取得します。
+        /// </summary>
+        /// <param name="cycleId">取得対象のサイクルID。</param>
+        List<ProcessDetailFinish> GetProcessDetailFinishes(int cycleId);
+
+        /// <summary>
+        /// 指定されたProcessDetailIdに紐づく終了情報を取得します。
+        /// </summary>
+        /// <param name="processDetailId">工程詳細ID。</param>
+        List<ProcessDetailFinish> GetFinishesByProcessDetailId(int processDetailId);
+
+        /// <summary>
+        /// 指定されたFinishProcessDetailIdに紐づく終了情報を取得します。
+        /// </summary>
+        /// <param name="finishProcessDetailId">終了先の工程詳細ID。</param>
+        List<ProcessDetailFinish> GetFinishesByFinishId(int finishProcessDetailId);
+
+        /// <summary>
+        /// 新しい工程詳細終了情報を追加します。
+        /// </summary>
+        /// <param name="finish">追加するProcessDetailFinishオブジェクト。</param>
+        void AddProcessDetailFinish(ProcessDetailFinish finish);
+
+        /// <summary>
+        /// 指定されたIDの工程詳細終了情報を削除します。
+        /// </summary>
+        /// <param name="id">削除対象の終了情報ID。</param>
+        void DeleteProcessDetailFinish(int id);
+
+        /// <summary>
+        /// 指定されたProcessDetailIdとFinishProcessDetailIdの組み合わせの終了情報を削除します。
+        /// </summary>
+        /// <param name="processDetailId">工程詳細ID。</param>
+        /// <param name="finishProcessDetailId">終了先の工程詳細ID。</param>
+        void DeleteFinishesByProcessAndFinish(int processDetailId, int finishProcessDetailId);
+
     }
 }

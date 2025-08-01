@@ -24,9 +24,21 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private ObservableCollection<ProcessFlowNode> _allNodes = new();
         [ObservableProperty] private ObservableCollection<ProcessFlowConnection> _allConnections = new();
         [ObservableProperty] private ProcessFlowNode? _selectedNode;
+        [ObservableProperty] private ProcessFlowConnection? _selectedConnection;
         [ObservableProperty] private int _cycleId;
-        [ObservableProperty] private string _selectedNodeStartIds = "";
+        
+        // 選択されたノードのプロパティ
+        [ObservableProperty] private string _selectedNodeDetailName = "";
+        [ObservableProperty] private int? _selectedNodeOperationId;
         [ObservableProperty] private string _selectedNodeStartSensor = "";
+        [ObservableProperty] private string _selectedNodeFinishSensor = "";
+        [ObservableProperty] private int? _selectedNodeCategoryId;
+        [ObservableProperty] private int? _selectedNodeBlockNumber;
+        [ObservableProperty] private string _selectedNodeSkipMode = "";
+        [ObservableProperty] private int? _selectedNodeSortNumber;
+        [ObservableProperty] private string _selectedNodeComment = "";
+        [ObservableProperty] private string _selectedNodeILStart = "";
+        
         [ObservableProperty] private Point _mousePosition;
         [ObservableProperty] private bool _isConnecting;
         [ObservableProperty] private Point _connectionStartPoint;
@@ -34,6 +46,8 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private ProcessFlowNode? _filterNode;
         [ObservableProperty] private double _canvasWidth = 2000;
         [ObservableProperty] private double _canvasHeight = 2000;
+        
+        private List<ProcessDetailConnection> _dbConnections = new();
         
         public ProcessFlowViewModel(IAccessRepository repository)
         {
@@ -47,6 +61,9 @@ namespace KdxDesigner.ViewModels
                 .Where(d => d.CycleId == cycleId)
                 .OrderBy(d => d.SortNumber)
                 .ToList();
+            
+            // 中間テーブルから接続情報を取得
+            _dbConnections = _repository.GetProcessDetailConnections(cycleId);
             
             System.Diagnostics.Debug.WriteLine($"Loading {details.Count} ProcessDetails for CycleId: {cycleId}");
             
@@ -101,28 +118,17 @@ namespace KdxDesigner.ViewModels
             CanvasWidth = Math.Max(2000, maxX + 100);
             CanvasHeight = Math.Max(2000, maxY + 100);
             
-            // コネクションを作成
-            foreach (var detail in details)
+            // コネクションを作成（中間テーブルから）
+            foreach (var conn in _dbConnections)
             {
-                if (!string.IsNullOrEmpty(detail.StartIds))
+                if (nodeDict.ContainsKey(conn.FromProcessDetailId) && nodeDict.ContainsKey(conn.ToProcessDetailId))
                 {
-                    var startIds = detail.StartIds.Split(';')
-                        .Select(s => int.TryParse(s, out var id) ? id : (int?)null)
-                        .Where(id => id.HasValue)
-                        .Select(id => id.Value);
-                    
-                    foreach (var startId in startIds)
-                    {
-                        if (nodeDict.ContainsKey(startId) && nodeDict.ContainsKey(detail.Id))
-                        {
-                            var connection = new ProcessFlowConnection(
-                                nodeDict[startId],
-                                nodeDict[detail.Id]
-                            );
-                            AllConnections.Add(connection);
-                            Connections.Add(connection);
-                        }
-                    }
+                    var connection = new ProcessFlowConnection(
+                        nodeDict[conn.FromProcessDetailId],
+                        nodeDict[conn.ToProcessDetailId]
+                    );
+                    AllConnections.Add(connection);
+                    Connections.Add(connection);
                 }
             }
         }
@@ -132,8 +138,21 @@ namespace KdxDesigner.ViewModels
             var levels = new Dictionary<int, int>();
             var processed = new HashSet<int>();
             
-            // StartIdsが空のノードはレベル0
-            foreach (var detail in details.Where(d => string.IsNullOrEmpty(d.StartIds)))
+            // 前のノードを持たないノード（開始ノード）はレベル0
+            var detailIds = details.Select(d => d.Id).ToHashSet();
+            var hasIncomingConnection = new HashSet<int>();
+            
+            // 中間テーブルから接続先を持つノードを特定
+            foreach (var conn in _dbConnections)
+            {
+                if (detailIds.Contains(conn.ToProcessDetailId))
+                {
+                    hasIncomingConnection.Add(conn.ToProcessDetailId);
+                }
+            }
+            
+            // 接続を持たないノードはレベル0
+            foreach (var detail in details.Where(d => !hasIncomingConnection.Contains(d.Id)))
             {
                 levels[detail.Id] = 0;
                 processed.Add(detail.Id);
@@ -146,20 +165,17 @@ namespace KdxDesigner.ViewModels
                 changed = false;
                 foreach (var detail in details.Where(d => !processed.Contains(d.Id)))
                 {
-                    if (!string.IsNullOrEmpty(detail.StartIds))
+                    // 中間テーブルから前のノードを取得
+                    var fromIds = _dbConnections
+                        .Where(c => c.ToProcessDetailId == detail.Id)
+                        .Select(c => c.FromProcessDetailId)
+                        .ToList();
+                    
+                    if (fromIds.Any() && fromIds.All(id => levels.ContainsKey(id)))
                     {
-                        var startIds = detail.StartIds.Split(';')
-                            .Select(s => int.TryParse(s, out var id) ? id : (int?)null)
-                            .Where(id => id.HasValue)
-                            .Select(id => id.Value)
-                            .ToList();
-                        
-                        if (startIds.All(id => levels.ContainsKey(id)))
-                        {
-                            levels[detail.Id] = startIds.Max(id => levels[id]) + 1;
-                            processed.Add(detail.Id);
-                            changed = true;
-                        }
+                        levels[detail.Id] = fromIds.Max(id => levels[id]) + 1;
+                        processed.Add(detail.Id);
+                        changed = true;
                     }
                 }
             }
@@ -171,8 +187,58 @@ namespace KdxDesigner.ViewModels
         {
             if (value != null)
             {
-                SelectedNodeStartIds = value.StartIds;
-                SelectedNodeStartSensor = value.StartSensor;
+                // すべてのプロパティを更新
+                SelectedNodeDetailName = value.ProcessDetail.DetailName ?? "";
+                SelectedNodeOperationId = value.ProcessDetail.OperationId;
+                SelectedNodeStartSensor = value.ProcessDetail.StartSensor ?? "";
+                SelectedNodeFinishSensor = value.ProcessDetail.FinishSensor ?? "";
+                SelectedNodeCategoryId = value.ProcessDetail.CategoryId;
+                SelectedNodeBlockNumber = value.ProcessDetail.BlockNumber;
+                SelectedNodeSkipMode = value.ProcessDetail.SkipMode ?? "";
+                SelectedNodeSortNumber = value.ProcessDetail.SortNumber;
+                SelectedNodeComment = value.ProcessDetail.Comment ?? "";
+                SelectedNodeILStart = value.ProcessDetail.ILStart ?? "";
+                
+                // 接続の選択を解除
+                if (SelectedConnection != null)
+                {
+                    SelectedConnection.IsSelected = false;
+                    SelectedConnection = null;
+                }
+            }
+            else
+            {
+                // ノードが選択解除されたらプロパティをクリア
+                SelectedNodeDetailName = "";
+                SelectedNodeOperationId = null;
+                SelectedNodeStartSensor = "";
+                SelectedNodeFinishSensor = "";
+                SelectedNodeCategoryId = null;
+                SelectedNodeBlockNumber = null;
+                SelectedNodeSkipMode = "";
+                SelectedNodeSortNumber = null;
+                SelectedNodeComment = "";
+                SelectedNodeILStart = "";
+            }
+        }
+        
+        partial void OnSelectedConnectionChanged(ProcessFlowConnection? value)
+        {
+            // 既存の選択を解除
+            foreach (var connection in Connections)
+            {
+                if (connection != value)
+                {
+                    connection.IsSelected = false;
+                }
+            }
+            
+            // 新しい接続を選択
+            if (value != null)
+            {
+                value.IsSelected = true;
+                // ノードの選択を解除
+                SelectedNode = null;
             }
         }
         
@@ -279,21 +345,13 @@ namespace KdxDesigner.ViewModels
                     Connections.Add(connection);
                 }
                 
-                // StartIdsを更新
-                var currentIds = to.ProcessDetail.StartIds?.Split(';')
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
-                    .ToList() ?? new List<string>();
-                
-                if (!currentIds.Contains(from.Id.ToString()))
+                // 中間テーブルに追加
+                var dbConnection = new ProcessDetailConnection
                 {
-                    currentIds.Add(from.Id.ToString());
-                    to.ProcessDetail.StartIds = string.Join(";", currentIds);
-                    
-                    if (SelectedNode == to)
-                    {
-                        SelectedNodeStartIds = to.ProcessDetail.StartIds;
-                    }
-                }
+                    FromProcessDetailId = from.Id,
+                    ToProcessDetailId = to.Id
+                };
+                _repository.AddProcessDetailConnection(dbConnection);
             }
         }
         
@@ -303,50 +361,60 @@ namespace KdxDesigner.ViewModels
             AllConnections.Remove(connection);
             Connections.Remove(connection);
             
-            // StartIdsを更新
-            var toNode = connection.ToNode;
-            var fromId = connection.FromNode.Id.ToString();
-            
-            var currentIds = toNode.ProcessDetail.StartIds?.Split(';')
-                .Where(s => !string.IsNullOrWhiteSpace(s) && s != fromId)
-                .ToList() ?? new List<string>();
-            
-            toNode.ProcessDetail.StartIds = currentIds.Any() ? string.Join(";", currentIds) : "";
+            // 中間テーブルから削除
+            _repository.DeleteConnectionsByFromAndTo(connection.FromNode.Id, connection.ToNode.Id);
             
             // 削除によってtoNodeに接続されている他の接続も変更済みとしてマーク
+            var toNode = connection.ToNode;
             foreach (var conn in AllConnections.Where(c => c.ToNode == toNode))
             {
                 conn.IsModified = true;
             }
             
-            if (SelectedNode == toNode)
+            // 選択をクリア
+            if (SelectedConnection == connection)
             {
-                SelectedNodeStartIds = toNode.ProcessDetail.StartIds;
+                SelectedConnection = null;
             }
         }
         
         [RelayCommand]
-        private void UpdateSelectedNodeStartIds()
+        private void SelectConnection(ProcessFlowConnection connection)
         {
-            if (SelectedNode != null)
+            SelectedConnection = connection;
+        }
+        
+        [RelayCommand]
+        private void DeleteSelectedConnection()
+        {
+            if (SelectedConnection != null)
             {
-                SelectedNode.ProcessDetail.StartIds = SelectedNodeStartIds;
-                RefreshConnections();
-                
-                // このノードに関連するすべての接続を変更済みとしてマーク
-                foreach (var conn in AllConnections.Where(c => c.ToNode == SelectedNode))
-                {
-                    conn.IsModified = true;
-                }
+                DeleteConnection(SelectedConnection);
             }
         }
         
         [RelayCommand]
-        private void UpdateSelectedNodeStartSensor()
+        private void UpdateSelectedNodeProperties()
         {
             if (SelectedNode != null)
             {
+                // ProcessDetailのプロパティを更新
+                SelectedNode.ProcessDetail.DetailName = SelectedNodeDetailName;
+                SelectedNode.ProcessDetail.OperationId = SelectedNodeOperationId;
                 SelectedNode.ProcessDetail.StartSensor = SelectedNodeStartSensor;
+                SelectedNode.ProcessDetail.FinishSensor = SelectedNodeFinishSensor;
+                SelectedNode.ProcessDetail.CategoryId = SelectedNodeCategoryId;
+                SelectedNode.ProcessDetail.BlockNumber = SelectedNodeBlockNumber;
+                SelectedNode.ProcessDetail.SkipMode = SelectedNodeSkipMode;
+                SelectedNode.ProcessDetail.SortNumber = SelectedNodeSortNumber;
+                SelectedNode.ProcessDetail.Comment = SelectedNodeComment;
+                SelectedNode.ProcessDetail.ILStart = SelectedNodeILStart;
+                
+                // データベースに保存
+                _repository.UpdateProcessDetail(SelectedNode.ProcessDetail);
+                
+                // 表示名が変更された場合はUIを更新
+                OnPropertyChanged(nameof(SelectedNode));
             }
         }
         
@@ -362,22 +430,20 @@ namespace KdxDesigner.ViewModels
                 Connections.Remove(connection);
             }
             
-            // StartIdsに基づいて新しい接続を作成
-            if (!string.IsNullOrEmpty(SelectedNode.StartIds))
+            // 中間テーブルから接続を取得
+            var fromIds = _dbConnections
+                .Where(c => c.ToProcessDetailId == SelectedNode.Id)
+                .Select(c => c.FromProcessDetailId)
+                .ToList();
+            
+            // 接続を作成
+            foreach (var fromId in fromIds)
             {
-                var startIds = SelectedNode.StartIds.Split(';')
-                    .Select(s => int.TryParse(s, out var id) ? id : (int?)null)
-                    .Where(id => id.HasValue)
-                    .Select(id => id.Value);
-                
-                foreach (var startId in startIds)
+                var fromNode = Nodes.FirstOrDefault(n => n.Id == fromId);
+                if (fromNode != null)
                 {
-                    var fromNode = Nodes.FirstOrDefault(n => n.Id == startId);
-                    if (fromNode != null)
-                    {
-                        var connection = new ProcessFlowConnection(fromNode, SelectedNode);
-                        Connections.Add(connection);
-                    }
+                    var connection = new ProcessFlowConnection(fromNode, SelectedNode);
+                    Connections.Add(connection);
                 }
             }
         }
@@ -461,39 +527,33 @@ namespace KdxDesigner.ViewModels
         
         private void GetPredecessors(ProcessFlowNode node, HashSet<ProcessFlowNode> visited)
         {
-            // StartIdsから前のノードを取得
-            if (!string.IsNullOrEmpty(node.StartIds))
+            // 中間テーブルから前のノードを取得
+            var fromIds = _dbConnections
+                .Where(c => c.ToProcessDetailId == node.Id)
+                .Select(c => c.FromProcessDetailId)
+                .ToList();
+            
+            // 前のノードを再帰的に追跡
+            foreach (var fromId in fromIds)
             {
-                var startIds = node.StartIds.Split(';')
-                    .Select(s => int.TryParse(s, out var id) ? id : (int?)null)
-                    .Where(id => id.HasValue)
-                    .Select(id => id.Value);
-                
-                foreach (var startId in startIds)
+                var predecessorNode = AllNodes.FirstOrDefault(n => n.Id == fromId);
+                if (predecessorNode != null && visited.Add(predecessorNode))
                 {
-                    var predecessorNode = AllNodes.FirstOrDefault(n => n.Id == startId);
-                    if (predecessorNode != null && visited.Add(predecessorNode))
-                    {
-                        GetPredecessors(predecessorNode, visited);
-                    }
+                    GetPredecessors(predecessorNode, visited);
                 }
             }
         }
         
         private void GetSuccessors(ProcessFlowNode node, HashSet<ProcessFlowNode> visited)
         {
-            // このノードに依存している後続ノードを取得
-            var successors = AllNodes.Where(n => 
-            {
-                if (string.IsNullOrEmpty(n.StartIds)) return false;
-                
-                var startIds = n.StartIds.Split(';')
-                    .Select(s => int.TryParse(s, out var id) ? id : (int?)null)
-                    .Where(id => id.HasValue)
-                    .Select(id => id.Value);
-                
-                return startIds.Contains(node.Id);
-            });
+            // 中間テーブルから後続ノードを取得
+            var toIds = _dbConnections
+                .Where(c => c.FromProcessDetailId == node.Id)
+                .Select(c => c.ToProcessDetailId)
+                .ToList();
+            
+            // 中間テーブルから後続ノードを取得
+            var successors = AllNodes.Where(n => toIds.Contains(n.Id));
             
             foreach (var successor in successors)
             {
@@ -531,5 +591,6 @@ namespace KdxDesigner.ViewModels
                 throw; // エラーを上位に伝播
             }
         }
+        
     }
 }

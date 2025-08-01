@@ -74,11 +74,13 @@ namespace KdxDesigner.Utils.ProcessDetail
         {
             List<LadderCsvRow> result = new();
 
-            var processDetailStartIds = _detail.Detail.StartIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailの開始条件を取得（中間テーブルから）
+            var processDetailStartIds = new List<int>();
+            
+            // 中間テーブルから取得
+            var connections = _repository.GetConnectionsByToId(_detail.Detail.Id);
+            processDetailStartIds.AddRange(connections.Select(c => c.FromProcessDetailId));
+            
             var processDetailStartDevices = _details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
                 .ToList();
@@ -178,11 +180,13 @@ namespace KdxDesigner.Utils.ProcessDetail
         /// <returns></returns>
         public List<MnemonicDeviceWithProcessDetail> StartDevices()
         {
-            var processDetailStartIds = _detail.Detail.StartIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailの開始条件を取得（中間テーブルから）
+            var processDetailStartIds = new List<int>();
+            
+            // 中間テーブルから取得
+            var connections = _repository.GetConnectionsByToId(_detail.Detail.Id);
+            processDetailStartIds.AddRange(connections.Select(c => c.FromProcessDetailId));
+            
             var processDetailStartDevices = _details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
                 .ToList();
@@ -191,11 +195,10 @@ namespace KdxDesigner.Utils.ProcessDetail
 
         public List<MnemonicDeviceWithProcessDetail> FinishDevices()
         {
-            var processDetailFinishIds = _detail.Detail.FinishIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailFinishテーブルから終了工程IDを取得
+            var finishes = _repository.GetFinishesByProcessDetailId(_detail.Detail.Id);
+            var processDetailFinishIds = finishes.Select(f => f.FinishProcessDetailId).ToList();
+            
             var processDetailFinishDevices = _details
                 .Where(d => processDetailFinishIds.Contains(d.Mnemonic.RecordId))
                 .ToList();

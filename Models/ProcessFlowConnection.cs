@@ -10,6 +10,7 @@ namespace KdxDesigner.Models
         [ObservableProperty] private ProcessFlowNode _toNode;
         [ObservableProperty] private bool _isHighlighted;
         [ObservableProperty] private bool _isModified;
+        [ObservableProperty] private bool _isSelected;
         
         public ProcessFlowConnection(ProcessFlowNode from, ProcessFlowNode to, bool isModified = false)
         {

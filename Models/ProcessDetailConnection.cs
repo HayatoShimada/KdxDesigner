@@ -14,8 +14,6 @@ namespace KdxDesigner.Models
         
         public int ToProcessDetailId { get; set; }
         
-        public DateTime CreatedAt { get; set; }
-        
         // ナビゲーションプロパティ（必要に応じて）
         [ForeignKey("FromProcessDetailId")]
         public virtual ProcessDetail? FromProcessDetail { get; set; }

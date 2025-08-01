@@ -19,6 +19,5 @@ namespace KdxDesigner.Models
         public int Id => ProcessDetail.Id;
         public string DisplayName => ProcessDetail.DetailName ?? $"工程 {ProcessDetail.Id}";
         public string StartSensor => ProcessDetail.StartSensor ?? "";
-        public string StartIds => ProcessDetail.StartIds ?? "";
     }
 }

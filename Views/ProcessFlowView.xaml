@@ -10,12 +10,13 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <local:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+        <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="200"/>
+            <RowDefinition Height="250"/>
         </Grid.RowDefinitions>
         
         <!-- ツールバー -->
@@ -103,14 +104,26 @@
                             <DataTemplate>
                                 <Canvas>
                                     <!-- 接続線 -->
-                                    <Path StrokeThickness="2" Fill="Transparent">
+                                    <Path StrokeThickness="3" Fill="Transparent" Cursor="Hand">
                                         <Path.Style>
                                             <Style TargetType="Path">
                                                 <Setter Property="Stroke" Value="DarkBlue"/>
                                                 <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Stroke" Value="Red"/>
+                                                        <Setter Property="StrokeThickness" Value="4"/>
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsModified}" Value="True">
                                                         <Setter Property="Stroke" Value="Orange"/>
                                                     </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsSelected}" Value="True"/>
+                                                            <Condition Binding="{Binding IsModified}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Stroke" Value="OrangeRed"/>
+                                                        <Setter Property="StrokeThickness" Value="4"/>
+                                                    </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Path.Style>
@@ -122,6 +135,9 @@
                                             </PathGeometry>
                                         </Path.Data>
                                         <Path.InputBindings>
+                                            <MouseBinding MouseAction="LeftClick" 
+                                                          Command="{Binding DataContext.SelectConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}"/>
                                             <MouseBinding MouseAction="RightClick" 
                                                           Command="{Binding DataContext.DeleteConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                           CommandParameter="{Binding}"/>
@@ -134,9 +150,19 @@
                                             <Style TargetType="Polygon">
                                                 <Setter Property="Fill" Value="DarkBlue"/>
                                                 <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Fill" Value="Red"/>
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsModified}" Value="True">
                                                         <Setter Property="Fill" Value="Orange"/>
                                                     </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsSelected}" Value="True"/>
+                                                            <Condition Binding="{Binding IsModified}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Fill" Value="OrangeRed"/>
+                                                    </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Polygon.Style>
@@ -235,47 +261,188 @@
         <!-- プロパティパネル -->
         <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="0,1,0,0">
             <Grid Margin="10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <!-- ノード情報表示 -->
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedNode}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Text="選択された工程詳細のプロパティ" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"/>
+                    
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- ID (読み取り専用) -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="ID:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" 
+                                     Text="{Binding SelectedNode.Id, Mode=OneWay}" 
+                                     IsReadOnly="True"
+                                     Background="LightGray"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- 詳細名 -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="詳細名:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeDetailName, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- 操作ID -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="操作ID:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeOperationId, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- 開始センサー -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="開始センサー:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeStartSensor, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- 終了センサー -->
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="終了センサー:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeFinishSensor, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- 終了ID -->
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="終了ID (;区切り):" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="5" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeFinishIds, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- カテゴリID -->
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="カテゴリID:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="6" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeCategoryId, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- ブロック番号 -->
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="ブロック番号:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="7" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeBlockNumber, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- スキップモード -->
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="スキップモード:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="8" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeSkipMode, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- ソート番号 -->
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="ソート番号:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="9" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeSortNumber, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- コメント -->
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="コメント:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="10" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeComment, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     MinHeight="40"
+                                     Margin="0,0,0,5"/>
+                            
+                            <!-- IL開始 -->
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="IL開始:" Margin="0,0,10,5"/>
+                            <TextBox Grid.Row="11" Grid.Column="1" 
+                                     Text="{Binding SelectedNodeILStart, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,5"/>
+                        </Grid>
+                    </ScrollViewer>
+                    
+                    <Button Grid.Row="2" 
+                            Content="すべての変更を保存" 
+                            Command="{Binding UpdateSelectedNodePropertiesCommand}"
+                            Background="LightGreen"
+                            HorizontalAlignment="Stretch"
+                            Padding="10,5"
+                            Margin="0,10,0,0"/>
+                </Grid>
                 
-                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" 
-                           Text="選択された工程のプロパティ" 
-                           FontWeight="Bold" 
-                           Margin="0,0,0,10"/>
-                
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="工程名:" Margin="0,0,10,5"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                         Text="{Binding SelectedNode.DisplayName, Mode=OneWay, FallbackValue=''}" 
-                         IsReadOnly="True"
-                         Background="LightGray"
-                         Margin="0,0,0,5"/>
-                
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="開始条件ID (;区切り):" Margin="0,0,10,5"/>
-                <TextBox Grid.Row="2" Grid.Column="1" 
-                         Text="{Binding SelectedNodeStartIds, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}"
-                         Margin="0,0,5,5"/>
-                <Button Grid.Row="2" Grid.Column="2" 
-                        Content="更新" 
-                        Command="{Binding UpdateSelectedNodeStartIdsCommand}"
-                        Padding="10,2"/>
-                
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="開始センサー:" Margin="0,0,10,0"/>
-                <TextBox Grid.Row="3" Grid.Column="1" 
-                         Text="{Binding SelectedNodeStartSensor, UpdateSourceTrigger=PropertyChanged, FallbackValue=''}"
-                         Margin="0,0,5,0"/>
-                <Button Grid.Row="3" Grid.Column="2" 
-                        Content="更新" 
-                        Command="{Binding UpdateSelectedNodeStartSensorCommand}"
-                        Padding="10,2"/>
+                <!-- 接続情報表示 -->
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedConnection}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" 
+                               Text="選択された接続のプロパティ" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="接続元:" Margin="0,0,10,5"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                             Text="{Binding SelectedConnection.FromNode.DisplayName, Mode=OneWay, FallbackValue=''}" 
+                             IsReadOnly="True"
+                             Background="LightGray"
+                             Margin="0,0,0,5"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="接続先:" Margin="0,0,10,5"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                             Text="{Binding SelectedConnection.ToNode.DisplayName, Mode=OneWay, FallbackValue=''}" 
+                             IsReadOnly="True"
+                             Background="LightGray"
+                             Margin="0,0,0,5"/>
+                    
+                    <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" 
+                            Content="選択した接続を削除" 
+                            Command="{Binding DeleteSelectedConnectionCommand}"
+                            Background="LightCoral"
+                            HorizontalAlignment="Stretch"
+                            Padding="10,5"
+                            Margin="0,10,0,0"/>
+                </Grid>
             </Grid>
         </Border>
     </Grid>
