@@ -56,10 +56,11 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private double _canvasWidth = 2000;
         [ObservableProperty] private double _canvasHeight = 2000;
         [ObservableProperty] private bool _isRectangleSelecting = false;
-        [ObservableProperty] private Rect _selectionRectangle = new Rect();
+        [ObservableProperty] private Rect _selectionRectangle = new Rect(-1, -1, 0, 0);
         [ObservableProperty] private ObservableCollection<ProcessDetailCategory> _categories = new();
         [ObservableProperty] private ObservableCollection<CompositeProcessGroup> _compositeGroups = new();
         [ObservableProperty] private ObservableCollection<Operation> _operations = new();
+        [ObservableProperty] private ObservableCollection<Operation> _filteredOperations = new();
         
         private List<ProcessDetailConnection> _dbConnections = new();
         private List<ProcessDetailFinish> _dbFinishes = new();
@@ -295,6 +296,9 @@ namespace KdxDesigner.ViewModels
                 SelectedNodeId = value.ProcessDetail.Id;
                 SelectedNodeDisplayName = value.DisplayName;
                 IsNodeSelected = true;
+                
+                // FilteredOperationsを更新
+                UpdateFilteredOperations();
                 
                 // 接続の選択を解除
                 if (SelectedConnection != null)
@@ -561,8 +565,9 @@ namespace KdxDesigner.ViewModels
                 var position = e.GetPosition(canvas);
                 _isSelecting = true;
                 _selectionStartPoint = position;
+                // 選択矩形を開始点に初期化（サイズ0で見えないようにする）
+                SelectionRectangle = new Rect(position.X, position.Y, 0, 0);
                 IsRectangleSelecting = true;
-                SelectionRectangle = new Rect(_selectionStartPoint, _selectionStartPoint);
                 
                 // Ctrl キーが押されていない場合は、既存の選択をクリア
                 if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl))
@@ -579,7 +584,8 @@ namespace KdxDesigner.ViewModels
             {
                 _isSelecting = false;
                 IsRectangleSelecting = false;
-                SelectionRectangle = new Rect();
+                // 矩形を画面外に移動してから、サイズを0にする
+                SelectionRectangle = new Rect(-1, -1, 0, 0);
             }
             
             if (_selectedNodes.Count > 0)
@@ -1488,6 +1494,19 @@ namespace KdxDesigner.ViewModels
             foreach (var operation in operations)
             {
                 Operations.Add(operation);
+            }
+            
+            // フィルタされたOperationsを更新
+            UpdateFilteredOperations();
+        }
+        
+        private void UpdateFilteredOperations()
+        {
+            FilteredOperations.Clear();
+            var filteredOps = Operations.Where(o => o.CycleId == CycleId).OrderBy(o => o.OperationName);
+            foreach (var operation in filteredOps)
+            {
+                FilteredOperations.Add(operation);
             }
         }
         

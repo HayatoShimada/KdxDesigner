@@ -55,8 +55,19 @@
                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedNodeDetailName, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- 操作ID -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="操作ID:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedNodeOperationId, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="操作:" VerticalAlignment="Center" Margin="0,5"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" 
+                          ItemsSource="{Binding FilteredOperations}"
+                          SelectedValue="{Binding SelectedNodeOperationId, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedValuePath="Id"
+                          DisplayMemberPath="OperationName"
+                          Margin="0,5">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
                 
                 <!-- 開始センサー -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="開始センサー:" VerticalAlignment="Center" Margin="0,5"/>
