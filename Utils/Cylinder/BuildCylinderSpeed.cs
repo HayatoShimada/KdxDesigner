@@ -413,32 +413,40 @@ namespace KdxDesigner.Utils.Cylinder
                 });
             }
 
-            // ﾌﾞﾚｰｷ接点の検索
             // ブレーキ接点の検索
-            var breakeList = sensors.Where(i => i.IOName != null
-                                           && i.IOName.Contains(cylinder.Cylinder.CYNum ?? string.Empty)
+            var cylinderNum = cylinder.Cylinder.CYNum ?? string.Empty;
+            var baseSensors = sensors.Where(i => i.IOName != null
+                                           && i.IOName.Contains(cylinderNum)
                                            && !i.IOName.Contains("STF")
-                                           && !i.IOName.Contains("STR")
-                                           && !i.IOName.Contains("SB")).ToList();
+                                           && !i.IOName.Contains("STR")).ToList();
 
-            var breakeIO = _ioAddressService.
-                GetSingleAddress(
-                breakeList,
-                cylinder.Cylinder.CYNum + "S",
-                true,
-                cylinder.Cylinder.CYNum!,
-                recordId: cylinder.Cylinder.Id,
-                null);
+            // S接点の検索（SBを除外）
+            var breakeIO_S = baseSensors
+                .Where(i => i.IOName != null && i.IOName.EndsWith(cylinderNum + "S"))
+                .FirstOrDefault();
+
+            // SB接点の検索
+            var breakeIO_SB = baseSensors
+                .Where(i => i.IOName != null && i.IOName.EndsWith(cylinderNum + "SB"))
+                .FirstOrDefault();
 
             if (nbtTimer != null)
             {
-                if (breakeIO != null)
+                if (breakeIO_S != null)
                 {
-                    // 正常時BKタイマ
+                    // S接点の出力
                     result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
                     result.Add(LadderRow.AddOR(label + (startNum + 36).ToString()));
                     result.Add(LadderRow.AddOR(label + (startNum + 34).ToString()));
-                    result.Add(LadderRow.AddOUT(breakeIO));
+                    result.Add(LadderRow.AddOUT(breakeIO_S.Address));
+                    
+                    // SB接点がある場合は追加出力
+                    if (breakeIO_SB != null)
+                    {
+                        result.Add(LadderRow.AddOUT(breakeIO_SB.Address));
+                    }
+                    
+                    // 正常時BKタイマ
                     result.AddRange(LadderRow.AddTimer(nbtTimer.Timer.ProcessTimerDevice, nbtTimer.Timer.TimerDevice));
 
                     // 指令OK
@@ -455,7 +463,7 @@ namespace KdxDesigner.Utils.Cylinder
                         MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                         RecordId = cylinder.Cylinder.Id,
                         RecordName = cylinder.Cylinder.CYNum,
-                        Message = $"CY{cylinder.Cylinder.CYNum}のブレーキIOが見つかりません。",
+                        Message = $"CY{cylinder.Cylinder.CYNum}のブレーキIO(S)が見つかりません。",
                     });
                 }
             }

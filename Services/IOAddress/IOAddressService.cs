@@ -185,7 +185,7 @@ namespace KdxDesigner.Services.IOAddress
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    Message = "IOテキストが指定されていません。",
+                    Message = "範囲指定でIOテキストが指定されていません。",
                     RecordName = processName,
                     RecordId = recordId,
                 });

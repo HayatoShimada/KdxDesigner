@@ -533,7 +533,7 @@ namespace KdxDesigner.Utils.Process
                 // OUT L4 完了
                 result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
                 result.Add(LadderRow.AddOUT(outcoilLabel + (outcoilNum + 4).ToString()));
-                if (process.Process.ILStart != null)
+                if (!string.IsNullOrEmpty(process.Process.ILStart))
                 {
                     result.Add(LadderRow.AddOUT(process.Process.ILStart));
                 }

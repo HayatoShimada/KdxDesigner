@@ -101,7 +101,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             result.Add(LadderRow.AddLD(opFinishLabel + (opFinishNum + 19).ToString()));
 
-            if (_detail.Detail.SkipMode != null && _detail.Detail.SkipMode != string.Empty)
+            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
@@ -174,7 +174,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 3行目　センサー名称からIOリスト参照
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
@@ -205,7 +205,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
                 // skipModeが設定されている場合は、スキップ処理を追加
-                if (_detail.Detail.SkipMode != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
                 {
                     if (_detail.Detail.SkipMode.Contains("_"))
                     {
@@ -261,7 +261,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             //3行目　センサー名称からIOリスト参照
 
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
@@ -293,7 +293,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
                 // skipModeが設定されている場合は、スキップ処理を追加
-                if (_detail.Detail.SkipMode != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
                 {
                     if (_detail.Detail.SkipMode.Contains("_"))
                     {
@@ -357,7 +357,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L1 操作開始
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 var ioSensor = _ioAddressService.GetSingleAddress(
                     _ioList,
@@ -509,7 +509,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             
 
             // L1 操作開始
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // StartSensorが設定されている場合
                 result.Add(LadderRow.AddLD(_detail.Detail.FinishSensor));
@@ -523,7 +523,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
             // skipModeが設定されている場合は、スキップ処理を追加
-            if (_detail.Detail.SkipMode != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
@@ -541,7 +541,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
 
-            if (_detail.Detail.ILStart != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.ILStart))
             {
                 result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
                 result.Add(LadderRow.AddANI(_label + (_deviceNum + 1).ToString()));
@@ -607,7 +607,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                     + detailOffDeviceMnemonic.Mnemonic.StartNum.ToString()));
 
                 // skipModeが設定されている場合は、スキップ処理を追加
-                if (_detail.Detail.SkipMode != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
                 {
                     if (_detail.Detail.SkipMode.Contains("_"))
                     {
@@ -664,7 +664,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L2 操作停止
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // ioの取得を共通コンポーネント化すること
                 var ioSensor = _ioAddressService.GetSingleAddress(
@@ -700,7 +700,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
 
             var processDetailFinishDevices = detailFunctions.FinishDevices();
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // FinishSensorが設定されている場合
                 // 終了工程のStartNum+1を出力
@@ -720,7 +720,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
 
             // skipModeが設定されている場合は、スキップ処理を追加
-            if (_detail.Detail.SkipMode != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
