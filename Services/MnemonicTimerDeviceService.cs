@@ -88,11 +88,11 @@ namespace KdxDesigner.Services
         /// <param name="plcId">PlcId</param>
         /// <param name="timerId">TimerId</param>
         /// <returns>単一のMnemonicTimerDevice</returns>
-        public MnemonicTimerDevice? GetMnemonicTimerDeviceByTimerId(int plcId, int timerId)
+        public List<MnemonicTimerDevice> GetMnemonicTimerDeviceByTimerId(int plcId, int timerId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM MnemonicTimerDevice WHERE PlcId = @PlcId AND TimerId = @TimerId";
-            return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, TimerId = timerId }).FirstOrDefault();
+            return connection.Query<MnemonicTimerDevice>(sql, new { PlcId = plcId, TimerId = timerId }).ToList();
         }
 
         /// <summary>
@@ -123,19 +123,17 @@ namespace KdxDesigner.Services
 
             if (existingRecord != null)
             {
-                parameters.Add("ID", existingRecord.ID, DbType.Int32); // WHERE句のIDを指定
                 connection.Execute(@"
                     UPDATE [MnemonicTimerDevice] SET
-                        [MnemonicId] = @MnemonicId,
-                        [RecordId] = @RecordId,
-                        [TimerId] = @TimerId,
                         [TimerCategoryId] = @TimerCategoryId,
                         [ProcessTimerDevice] = @ProcessTimerDevice,
                         [TimerDevice] = @TimerDevice,
                         [PlcId] = @PlcId,
                         [CycleId] = @CycleId,
                         [Comment1] = @Comment1
-                    WHERE [ID] = @ID",
+                    WHERE [MnemonicId] = @MnemonicId 
+                      AND [RecordId] = @RecordId 
+                      AND [TimerId] = @TimerId",
                     parameters, transaction);
             }
             else
@@ -170,9 +168,9 @@ namespace KdxDesigner.Services
 
             try
             {
-                // 1. 既存データを取得し、(RecordId, TimerId)の複合キーを持つ辞書に変換
+                // 1. 既存データを取得し、(MnemonicId, RecordId, TimerId)の複合キーを持つ辞書に変換
                 var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
-                var existingLookup = allExisting.ToDictionary(m => (m.RecordId, m.TimerId), m => m);
+                var existingLookup = allExisting.ToDictionary(m => (m.MnemonicId, m.RecordId, m.TimerId), m => m);
 
                 // 2. ProcessDetailに関連するタイマーをRecordIdごとに整理した辞書を作成
                 var timersByRecordId = new Dictionary<int, List<Models.Timer>>();
@@ -227,8 +225,9 @@ namespace KdxDesigner.Services
                             var processTimerDevice = timerStartWith + (count + _mainViewModel.DeviceStartT);
                             var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
 
-                            // 複合キー (Detail.Id, Timer.ID) で既存レコードを検索
-                            existingLookup.TryGetValue((detail.Id, timer.ID), out var existingRecord);
+                            // 複合キー (MnemonicId, Detail.Id, Timer.ID) で既存レコードを検索
+                            var mnemonicId = (int)MnemonicType.ProcessDetail;
+                            existingLookup.TryGetValue((mnemonicId, detail.Id, timer.ID), out var existingRecord);
 
                             var deviceToSave = new MnemonicTimerDevice
                             {
@@ -281,9 +280,9 @@ namespace KdxDesigner.Services
 
             try
             {
-                // 1. 既存データを取得し、(RecordId, TimerId)の複合キーを持つ辞書に変換
+                // 1. 既存データを取得し、(MnemonicId, RecordId, TimerId)の複合キーを持つ辞書に変換
                 var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, (int)MnemonicType.Operation);
-                var existingLookup = allExisting.ToDictionary(m => (m.RecordId, m.TimerId), m => m);
+                var existingLookup = allExisting.ToDictionary(m => (m.MnemonicId, m.RecordId, m.TimerId), m => m);
 
                 // 2. タイマーをRecordIdごとに整理した辞書を作成
                 var timersByRecordId = new Dictionary<int, List<Models.Timer>>();
@@ -341,8 +340,9 @@ namespace KdxDesigner.Services
                             var processTimerDevice = timerStartWith + (count + _mainViewModel.DeviceStartT);
                             var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
 
-                            // 複合キーで既存レコードを検索
-                            existingLookup.TryGetValue((operation.Id, timer.ID), out var existingRecord);
+                            // 複合キー (MnemonicId, Operation.Id, Timer.ID) で既存レコードを検索
+                            var mnemonicId = (int)MnemonicType.Operation;
+                            existingLookup.TryGetValue((mnemonicId, operation.Id, timer.ID), out var existingRecord);
 
                             var deviceToSave = new MnemonicTimerDevice
                             {
@@ -394,9 +394,9 @@ namespace KdxDesigner.Services
 
             try
             {
-                // 1. 既存データを取得し、(RecordId, TimerId)の複合キーを持つ辞書に変換
+                // 1. 既存データを取得し、(MnemonicId, RecordId, TimerId)の複合キーを持つ辞書に変換
                 var allExisting = GetMnemonicTimerDeviceByMnemonic(plcId, (int)MnemonicType.CY);
-                var existingLookup = allExisting.ToDictionary(m => (m.RecordId, m.TimerId), m => m);
+                var existingLookup = allExisting.ToDictionary(m => (m.MnemonicId, m.RecordId, m.TimerId), m => m);
 
                 // 2. CYに関連するタイマーをRecordIdごとに整理した辞書を作成
                 var timersByRecordId = new Dictionary<int, List<Models.Timer>>();
@@ -451,8 +451,9 @@ namespace KdxDesigner.Services
                             var processTimerDevice = timerStartWith + (count + _mainViewModel.DeviceStartT);
                             var timerDevice = "ZR" + (timer.TimerNum + _mainViewModel.TimerStartZR);
 
-                            // 複合キー (Cylinder.Id, Timer.ID) で既存レコードを検索
-                            existingLookup.TryGetValue((cylinder.Id, timer.ID), out var existingRecord);
+                            // 複合キー (MnemonicId, Cylinder.Id, Timer.ID) で既存レコードを検索
+                            var mnemonicId = (int)MnemonicType.CY;
+                            existingLookup.TryGetValue((mnemonicId, cylinder.Id, timer.ID), out var existingRecord);
 
                             var deviceToSave = new MnemonicTimerDevice
                             {

@@ -25,6 +25,7 @@ namespace KdxDesigner.Models
         public int? SortNumber { get; set; }
         public string? Comment { get; set; }
         public string? ILStart { get; set; }
+        public int? StartTimer { get; set; } // TimerテーブルのIDとの関連
     }
 }
 
