@@ -69,6 +69,15 @@
                 </StackPanel>
             </Button>
             <Separator/>
+            <Button Command="{Binding EditOperationCommand}" 
+                    IsEnabled="{Binding SelectedNode, Converter={StaticResource NullToBooleanConverter}}"
+                    Padding="10,5">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="✏️" Margin="0,0,5,0"/>
+                    <TextBlock Text="Operation編集"/>
+                </StackPanel>
+            </Button>
+            <Separator/>
             <TextBlock Text="Ctrlキーを押しながらノードをクリックして接続を作成" VerticalAlignment="Center" Margin="10,0"/>
             <TextBlock VerticalAlignment="Center" Margin="10,0">
                 <TextBlock.Style>
@@ -276,7 +285,7 @@
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="140" Height="60" 
+                                <Border Width="140" Height="40" 
                                         CornerRadius="5"
                                         Opacity="{Binding Opacity}">
                                     <i:Interaction.Triggers>

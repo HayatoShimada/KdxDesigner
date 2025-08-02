@@ -16,7 +16,18 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty]
         private bool _isDirty; // 変更があったかどうかのフラグ
 
-        public int Id => _io.Id;
+        // 複合キーのプロパティ
+        public string Address
+        {
+            get => _io.Address;
+            set { if (SetProperty(_io.Address, value, _io, (m, v) => m.Address = v)) IsDirty = true; }
+        }
+        
+        public int PlcId
+        {
+            get => _io.PlcId;
+            set { if (SetProperty(_io.PlcId, value, _io, (m, v) => m.PlcId = v)) IsDirty = true; }
+        }
 
         public string? IOText
         {
@@ -37,11 +48,6 @@ namespace KdxDesigner.ViewModels
         {
             get => _io.FComment;
             set { if (SetProperty(_io.FComment, value, _io, (m, v) => m.FComment = v)) IsDirty = true; }
-        }
-        public string? Address
-        {
-            get => _io.Address;
-            set { if (SetProperty(_io.Address, value, _io, (m, v) => m.Address = v)) IsDirty = true; }
         }
         public string? IOName
         {
@@ -77,11 +83,6 @@ namespace KdxDesigner.ViewModels
         {
             get => _io.IONameNaked;
             set { if (SetProperty(_io.IONameNaked, value, _io, (m, v) => m.IONameNaked = v)) IsDirty = true; }
-        }
-        public int? PlcId
-        {
-            get => _io.PlcId;
-            set { if (SetProperty(_io.PlcId, value, _io, (m, v) => m.PlcId = v)) IsDirty = true; }
         }
 
         public string? LinkDevice

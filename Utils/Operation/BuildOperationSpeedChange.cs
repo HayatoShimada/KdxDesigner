@@ -126,6 +126,21 @@ namespace KdxDesigner.Utils.Operation
                 result.AddRange(operationFunction.GenerateM7());
             }
 
+            if (operation.Operation.Con != null && operation.Operation.Con != string.Empty)
+            {
+                var conTimer = operationTimers.SingleOrDefault(t => t.Timer.TimerCategoryId == 15);
+
+                if (conTimer == null)
+                {
+                    helper.CreateOperationError(operation!, $"Conタイマが設定されていません。");
+                }
+                else
+                {
+                    result.AddRange(operationFunction.GenerateM9(conTimer));
+                }
+
+            }
+
             // M10 : 速度変化の処理
             result.AddRange(operationFunction.SpeedCheck(speeds, speedChangeCount, operationTimers));
 

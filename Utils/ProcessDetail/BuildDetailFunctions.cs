@@ -213,7 +213,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             {
                 Message = message,
                 RecordName = _detail.Detail.DetailName,
-                MnemonicId = (int)MnemonicType.ProcessDetail,
+                MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail,
                 RecordId = _detail.Detail.Id,
                 IsCritical = true
             });

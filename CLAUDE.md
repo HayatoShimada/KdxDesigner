@@ -1,165 +1,142 @@
-# Claude作業指示書
+# CLAUDE.md
 
-## 概要
-このドキュメントは、Claudeと協働して開発作業を行う際の標準手順と記録方法を定義します。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 作業記録の作成タイミング
+## Project Overview
 
-以下のような主要な変更を行った場合は、必ず作業記録を作成してください：
+KdxDesigner is a Windows application for automatic ladder program generation at KANAMORI SYSTEM Inc. It converts Access database data into CSV format mnemonic programs for PLC operations.
 
-1. **データベーススキーマの変更**
-   - テーブルの追加・削除・変更
-   - カラムの追加・削除・変更
-   - インデックスや制約の変更
-
-2. **大規模なリファクタリング**
-   - 複数ファイルにまたがる変更
-   - アーキテクチャの変更
-   - 命名規則の統一
-
-3. **新機能の実装**
-   - 新しいモデル、ビュー、ViewModelの追加
-   - 新しいサービスやユーティリティの追加
-   - UIの大幅な変更
-
-4. **バグ修正**
-   - 複雑なバグの調査と修正
-   - 複数のファイルに影響する修正
-
-5. **データ移行**
-   - 既存データの構造変更
-   - データの正規化
-   - レガシーデータの移行
-
-## 作業記録の作成手順
-
-### 1. チャット履歴ファイルの作成
-
-```
-ファイル名: docs/chat-history-[作業内容]-[日付].md
-例: docs/chat-history-finishids-migration-20250801.md
-```
-
-**含めるべき内容：**
-- 作業日付
-- 作業概要
-- 作業内容の詳細
-  - 初期の問題・要求
-  - 実施した変更
-  - 発生したエラーと解決方法
-  - 技術的な注意点
-- 最終状態
-
-### 2. Wiki用要約ファイルの作成
-
-```
-ファイル名: docs/wiki-[作業内容].md
-例: docs/wiki-finishids-migration.md
-```
-
-**含めるべき内容：**
-- 概要（1-2段落）
-- 変更内容
-  - 新規作成ファイル
-  - 更新ファイル
-  - 削除ファイル
-- 主な変更点（箇条書き）
-- テーブル構造（データベース変更の場合）
-- メリット・改善点
-
-### 3. Gitコミット
+## Build and Development Commands
 
 ```bash
-# ドキュメントを含めてコミット
-git add [変更ファイル] docs/chat-history-*.md docs/wiki-*.md
-git commit -m "[作業内容の要約]
+# Build the project
+dotnet build
 
-- [主要な変更点1]
-- [主要な変更点2]
-- [主要な変更点3]"
+# Run the application
+dotnet run
 
-# GitHubにプッシュ
-git push origin [ブランチ名]
+# Clean build artifacts
+dotnet clean
+
+# Restore NuGet packages
+dotnet restore
 ```
 
-## テンプレート
+## Architecture Overview
 
-### チャット履歴テンプレート
+### Technology Stack
+- **Framework**: .NET 8.0, WPF
+- **Pattern**: MVVM with CommunityToolkit.Mvvm
+- **Database**: Microsoft Access via OleDb
+- **Key Libraries**:
+  - Dapper (2.1.66) - Database access
+  - CommunityToolkit.Mvvm (8.4.0) - MVVM implementation
+  - System.Data.OleDb (9.0.4) - Access database connectivity
 
-```markdown
-# [作業内容] チャット履歴
+### Core Architecture
 
-## 日付: YYYY-MM-DD
+1. **Data Layer** (`Services/Access/`)
+   - `IAccessRepository` interface defines all database operations
+   - `AccessRepository` implements queries for Access database
+   - All database operations go through this repository pattern
 
-## 概要
-[1-2文で作業の概要を記載]
+2. **Model Layer** (`Models/`)
+   - Database table structures mapped to C# classes
+   - Composite keys implemented using `[Key]` and `[Column(Order = n)]` attributes
+   - Key entities: Process, ProcessDetail, Operation, CY (Cylinder)
+   - MnemonicId values: 1=Process, 2=ProcessDetail, 3=Operation, 4=CY
 
-## 作業内容
+3. **Service Layer** (`Services/`)
+   - Business logic separated from ViewModels
+   - Key services:
+     - `MnemonicDeviceService` - Device management for each mnemonic type
+     - `MnemonicTimerDeviceService` - Timer device management
+     - `IOAddressService` - IO address resolution
+     - `ErrorService` - Error handling and aggregation
 
-### 1. [作業項目1]
-- **問題/要求**: 
-- **解決/実装**: 
+4. **ViewModel Layer** (`ViewModels/`)
+   - Uses `ObservableObject` and `[ObservableProperty]` attributes
+   - Commands use `[RelayCommand]` attribute
+   - Main entry point: `MainViewModel`
 
-### 2. [作業項目2]
-- **問題/要求**: 
-- **解決/実装**: 
+5. **View Layer** (`Views/`)
+   - WPF XAML views
+   - Entry point: `MainView.xaml`
+   - Modal dialogs for editors (IO, Timer, Memory, etc.)
 
-## 技術的な注意点
-- [注意点1]
-- [注意点2]
+### Key Design Patterns
 
-## 最終状態
-- [最終状態の説明]
+1. **Composite Primary Keys**
+   - Many tables use composite keys instead of single ID columns
+   - Example: IO table uses (Address, PlcId), MnemonicTimerDevice uses (MnemonicId, RecordId, TimerId)
+
+2. **Intermediate Tables for Many-to-Many Relationships**
+   - CylinderIO - links CY and IO tables
+   - OperationIO - links Operation and IO tables
+
+3. **Error Handling**
+   - Graceful degradation when tables don't exist
+   - Try-catch blocks return empty collections for missing tables
+
+## Database Schema Considerations
+
+- Tables may not exist until features are used
+- Always check table existence before operations
+- Migration scripts in `docs/` folder for schema changes
+
+## UI Development Guidelines
+
+- Node height in process flow: 40px (not 60px)
+- Use ICollectionView for filtering large data sets
+- Modal dialogs receive repository and parent ViewModel in constructor
+
+## Testing and Validation
+
+```bash
+# Run lint and type checking (if configured)
+npm run lint
+npm run typecheck
+
+# For C# projects, these are typically configured in the project
+dotnet build # Will show compilation errors and warnings
 ```
 
-### Wiki要約テンプレート
+## Common Development Tasks
 
-```markdown
-# [作業内容]
+### Adding a New Feature Screen
+1. Create View (.xaml) and code-behind (.xaml.cs) in Views/
+2. Create ViewModel in ViewModels/ using ObservableObject
+3. Add navigation command in MainViewModel
+4. Add menu item in MainView.xaml
 
-## 概要
-[変更の概要を1-2段落で記載]
+### Working with Composite Keys
+- Use Dapper parameters in correct order matching composite key definition
+- Include all key parts in WHERE clauses for updates/deletes
 
-## 変更内容
+### Database Operations
+- All database access through IAccessRepository
+- Use Dapper for parameterized queries
+- Handle OleDb connection properly with using statements
 
-### 新規作成ファイル
-- `path/to/file1` - [説明]
-- `path/to/file2` - [説明]
+## Work Documentation Process
 
-### 更新ファイル
-- `path/to/file3` - [変更内容]
-- `path/to/file4` - [変更内容]
+When completing major changes:
 
-### 削除ファイル
-- `path/to/file5` - [削除理由]
+1. **Database schema changes**
+2. **Large refactoring across multiple files**
+3. **New feature implementations**
+4. **Complex bug fixes**
+5. **Data migrations**
 
-## 主な変更点
-1. **[カテゴリ1]**
-   - [詳細]
-   
-2. **[カテゴリ2]**
-   - [詳細]
+Create documentation:
+- Chat history: `docs/chat-history-[feature]-[date].md`
+- Wiki summary: `docs/wiki-[feature].md`
+- Include in git commit with descriptive message
 
-## メリット
-- [メリット1]
-- [メリット2]
-```
+## Important Notes from Copilot Instructions
 
-## Claudeへの指示
-
-作業完了時に以下を実行してください：
-
-1. **ユーザーに確認**: 「この作業の記録を作成しますか？」
-2. **ユーザーが承認した場合**:
-   - チャット履歴ファイルを作成
-   - Wiki用要約ファイルを作成
-   - Gitにコミット
-   - GitHubにプッシュ
-3. **ユーザーに通知**: 作成したファイルのパスとGitHub Wikiへの掲載方法
-
-## 注意事項
-
-- センシティブな情報（パスワード、APIキー等）は記録に含めない
-- エラーメッセージは必要な部分のみ抜粋する
-- コード例は最小限の再現可能なものにする
-- 日本語で記述する（技術用語は英語可）
+- このプロジェクトでは、Accessファイルから内容、アクチュエータの動作を取得し、それをPLCで動作するCSVファイル形式のニモニックプログラムに変換することを目的としています
+- プロンプトに対して不明点があれば、聞きやすいようにしてください
+- 最新リポジトリを参照するようにしてください: https://github.com/HayatoShimada/KdxDesigner
+- コードにはなるべくコメントを入れるようにしてください
+- 適切な変数名や関数名を使用してください

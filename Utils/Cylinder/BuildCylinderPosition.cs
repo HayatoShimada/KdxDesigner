@@ -37,7 +37,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = cylinder.Cylinder.Id,
                     RecordName = cylinder.Cylinder.CYNum,
                     Message = $"CY{cylinder.Cylinder.CYNum}のサーボが見つかりません。",
@@ -51,7 +51,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = cylinder.Cylinder.Id,
                     RecordName = cylinder.Cylinder.CYNum,
                     Message = $"CY{cylinder.Cylinder.CYNum}のスピードデバイスが見つかりません。",

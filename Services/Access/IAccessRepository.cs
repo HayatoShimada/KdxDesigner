@@ -73,6 +73,12 @@ namespace KdxDesigner.Services.Access
         /// 全てのシリンダー(CY)情報を取得します。
         /// </summary>
         List<CY> GetCYs();
+        
+        /// <summary>
+        /// 指定されたPLC IDに紐づくシリンダー(CY)情報を取得します。
+        /// </summary>
+        /// <param name="plcId">取得対象のPLC ID。</param>
+        List<CY> GetCyList(int plcId);
 
         /// <summary>
         /// idで指定されたシリンダー(CY)情報を取得します。
@@ -93,6 +99,50 @@ namespace KdxDesigner.Services.Access
         List<Models.Timer> GetTimersByCycleId(int cycleId);
 
         /// <summary>
+        /// 新しいタイマーを追加します。
+        /// </summary>
+        /// <param name="timer">追加するタイマー情報。</param>
+        void AddTimer(Models.Timer timer);
+
+        /// <summary>
+        /// タイマー情報を更新します。
+        /// </summary>
+        /// <param name="timer">更新するタイマー情報。</param>
+        void UpdateTimer(Models.Timer timer);
+
+        /// <summary>
+        /// 指定されたIDのタイマーを削除します。
+        /// </summary>
+        /// <param name="id">削除するタイマーのID。</param>
+        void DeleteTimer(int id);
+
+        /// <summary>
+        /// 指定されたタイマーIDに関連するレコードIDを取得します。
+        /// </summary>
+        /// <param name="timerId">タイマーID。</param>
+        List<int> GetTimerRecordIds(int timerId);
+
+        /// <summary>
+        /// タイマーとレコードの関連を追加します。
+        /// </summary>
+        /// <param name="timerId">タイマーID。</param>
+        /// <param name="recordId">レコードID。</param>
+        void AddTimerRecordId(int timerId, int recordId);
+
+        /// <summary>
+        /// タイマーとレコードの関連を削除します。
+        /// </summary>
+        /// <param name="timerId">タイマーID。</param>
+        /// <param name="recordId">レコードID。</param>
+        void DeleteTimerRecordId(int timerId, int recordId);
+
+        /// <summary>
+        /// 指定されたタイマーIDの全レコード関連を削除します。
+        /// </summary>
+        /// <param name="timerId">タイマーID。</param>
+        void DeleteAllTimerRecordIds(int timerId);
+
+        /// <summary>
         /// 全ての操作情報を取得します。
         /// </summary>
         List<Operation> GetOperations();
@@ -109,6 +159,13 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         /// <param name="plcId">取得対象のPLC ID。</param>
         List<Length>? GetLengthByPlcId(int plcId);
+
+        /// <summary>
+        /// 新しい操作情報を追加します。
+        /// </summary>
+        /// <param name="operation">追加するOperationオブジェクト。</param>
+        /// <returns>追加されたレコードのID。</returns>
+        int AddOperation(Operation operation);
 
         /// <summary>
         /// 指定された操作情報を更新します。
@@ -151,6 +208,26 @@ namespace KdxDesigner.Services.Access
         /// <param name="id"></param>
         /// <returns></returns>
         ProcessDetailCategory? GetProcessDetailCategoryById(int id);
+
+        /// <summary>
+        /// 全てのMnemonicTimerDevice情報を取得します。
+        /// </summary>
+        List<MnemonicTimerDevice> GetMnemonicTimerDevices();
+
+        /// <summary>
+        /// 指定されたMnemonicTimerDeviceを更新します。
+        /// </summary>
+        void UpdateMnemonicTimerDevice(MnemonicTimerDevice device);
+
+        /// <summary>
+        /// 指定されたMnemonicTimerDeviceを削除します。
+        /// </summary>
+        void DeleteMnemonicTimerDevice(int mnemonicId, int recordId, int timerId);
+
+        /// <summary>
+        /// 新しいMnemonicTimerDeviceを追加します。
+        /// </summary>
+        void AddMnemonicTimerDevice(MnemonicTimerDevice device);
 
         /// <summary>
         /// 全てのIOリスト情報を取得します。

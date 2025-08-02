@@ -22,6 +22,7 @@
             <MenuItem Header="_ツール">
                 <MenuItem Header="IOテーブル管理" Command="{Binding OpenIoEditorCommand}" />
                 <MenuItem Header="リンクデバイス管理" Command="{Binding OpenLinkDeviceManagerCommand}" />
+                <MenuItem Header="タイマー設定" Command="{Binding OpenTimerEditorCommand}" />
             </MenuItem>
             <MenuItem Header="_編集">
                 <MenuItem Header="操作を保存" Command="{Binding SaveOperationCommand}" />

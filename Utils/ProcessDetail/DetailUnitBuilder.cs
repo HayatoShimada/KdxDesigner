@@ -101,7 +101,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             result.Add(LadderRow.AddLD(opFinishLabel + (opFinishNum + 19).ToString()));
 
-            if (_detail.Detail.SkipMode != null)
+            if (_detail.Detail.SkipMode != null && _detail.Detail.SkipMode != string.Empty)
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
@@ -393,7 +393,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     Message = "FinishSensor が設定されていません。",
                     RecordName = _detail.Detail.DetailName,
-                    MnemonicId = (int)MnemonicType.ProcessDetail,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail,
                     RecordId = _detail.Detail.Id,
                     IsCritical = false
                 });

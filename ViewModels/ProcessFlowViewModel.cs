@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using KdxDesigner.Models;
 using KdxDesigner.Services.Access;
+using KdxDesigner.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -58,6 +59,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private Rect _selectionRectangle = new Rect();
         [ObservableProperty] private ObservableCollection<ProcessDetailCategory> _categories = new();
         [ObservableProperty] private ObservableCollection<CompositeProcessGroup> _compositeGroups = new();
+        [ObservableProperty] private ObservableCollection<Operation> _operations = new();
         
         private List<ProcessDetailConnection> _dbConnections = new();
         private List<ProcessDetailFinish> _dbFinishes = new();
@@ -97,6 +99,7 @@ namespace KdxDesigner.ViewModels
         public void LoadProcessDetails(int cycleId)
         {
             CycleId = cycleId;
+            LoadOperations();
             var details = _repository.GetProcessDetails()
                 .Where(d => d.CycleId == cycleId)
                 .OrderBy(d => d.SortNumber)
@@ -782,7 +785,7 @@ namespace KdxDesigner.ViewModels
                 minX = Math.Min(minX, node.Position.X);
                 minY = Math.Min(minY, node.Position.Y);
                 maxX = Math.Max(maxX, node.Position.X + 140);
-                maxY = Math.Max(maxY, node.Position.Y + 60);
+                maxY = Math.Max(maxY, node.Position.Y + 40);
             }
             
             // 負の座標を避けるため調整
@@ -843,7 +846,7 @@ namespace KdxDesigner.ViewModels
                 minX = Math.Min(minX, node.Position.X);
                 minY = Math.Min(minY, node.Position.Y);
                 maxX = Math.Max(maxX, node.Position.X + 140);
-                maxY = Math.Max(maxY, node.Position.Y + 60);
+                maxY = Math.Max(maxY, node.Position.Y + 40);
             }
             
             // 負の座標を避けるため、必要に応じてすべてのノードを移動
@@ -903,7 +906,7 @@ namespace KdxDesigner.ViewModels
             {
                 Nodes.Add(node);
                 maxX = Math.Max(maxX, node.Position.X + 140);
-                maxY = Math.Max(maxY, node.Position.Y + 60);
+                maxY = Math.Max(maxY, node.Position.Y + 40);
             }
             
             // Canvasサイズを再計算
@@ -1411,6 +1414,81 @@ namespace KdxDesigner.ViewModels
             
             // データベースからProcessDetailを削除
             _repository.DeleteProcessDetail(nodeId);
+        }
+        
+        [RelayCommand]
+        private void EditOperation()
+        {
+            if (SelectedNode == null) return;
+            
+            // 選択されたノードのOperationIdからOperationを取得
+            Operation? operation = null;
+            if (SelectedNodeOperationId.HasValue)
+            {
+                operation = _repository.GetOperations()
+                    .FirstOrDefault(o => o.Id == SelectedNodeOperationId.Value);
+            }
+            
+            // Operationが存在しない場合は新規作成
+            if (operation == null)
+            {
+                operation = new Operation
+                {
+                    Id = 0,
+                    CycleId = CycleId
+                };
+            }
+            
+            // Operation編集ダイアログを表示
+            var viewModel = new OperationViewModel(operation);
+            var dialog = new OperationEditorDialog
+            {
+                DataContext = viewModel,
+                Owner = Application.Current.MainWindow
+            };
+            
+            bool? dialogResult = false;
+            viewModel.SetCloseAction((result) =>
+            {
+                dialogResult = result;
+                dialog.DialogResult = result;
+            });
+            
+            if (dialog.ShowDialog() == true)
+            {
+                var updatedOperation = viewModel.GetOperation();
+                
+                // Operationを保存
+                if (updatedOperation.Id == 0)
+                {
+                    // 新規作成
+                    var newId = _repository.AddOperation(updatedOperation);
+                    updatedOperation.Id = newId;
+                    
+                    // ProcessDetailのOperationIdを更新
+                    SelectedNode.ProcessDetail.OperationId = newId;
+                    SelectedNodeOperationId = newId;
+                    _repository.UpdateProcessDetail(SelectedNode.ProcessDetail);
+                }
+                else
+                {
+                    // 既存のOperationを更新
+                    _repository.UpdateOperation(updatedOperation);
+                }
+                
+                // Operationsコレクションを更新
+                LoadOperations();
+            }
+        }
+        
+        private void LoadOperations()
+        {
+            Operations.Clear();
+            var operations = _repository.GetOperations();
+            foreach (var operation in operations)
+            {
+                Operations.Add(operation);
+            }
         }
         
     }

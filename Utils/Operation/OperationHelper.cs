@@ -82,7 +82,7 @@ namespace KdxDesigner.Utils.Operation
             {
                 Message = message,
                 RecordName = operation.Operation?.OperationName ?? "N/A",
-                MnemonicId = (int)MnemonicType.Operation,
+                MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.Operation,
                 RecordId = operation.Operation?.Id ?? 0
             };
             _errorAggregator.AddError(error);

@@ -18,7 +18,6 @@ namespace KdxDesigner.Models
         public int? TimerNum { get; set; }
         public string? TimerName { get; set; }
         public int? MnemonicId { get; set; }
-        public string? RecordIds { get; set; }  // RecordIdから変更 数字のカンマ区切りリスト
         public int? Example { get; set; }
     }
 }

@@ -7,10 +7,10 @@ namespace KdxDesigner.Views
 {
     public partial class IoEditorView : Window
     {
-        public IoEditorView(IAccessRepository repository)
+        public IoEditorView(IAccessRepository repository, MainViewModel mainViewModel)
         {
             InitializeComponent();
-            DataContext = new IoEditorViewModel(repository);
+            DataContext = new IoEditorViewModel(repository, mainViewModel);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

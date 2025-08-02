@@ -9,7 +9,8 @@ namespace KdxDesigner.Models
     {
         [Key]
         public int Id { get; set; }
-        public int? IoId { get; set; } // 変更されたIOのID
+        public string? IoAddress { get; set; } // 変更されたIOのアドレス
+        public int? IoPlcId { get; set; } // 変更されたIOのPLC ID
         public string? PropertyName { get; set; } // 変更されたプロパティ名
         public string? OldValue { get; set; } // 変更前の値
         public string? NewValue { get; set; } // 変更後の値

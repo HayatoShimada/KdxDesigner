@@ -390,7 +390,7 @@ namespace KdxDesigner.Utils.Cylinder
                 {
                     RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"速度設定用のデバイスが見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     IsCritical = false
                 });
@@ -437,7 +437,7 @@ namespace KdxDesigner.Utils.Cylinder
                 {
                     RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"速度設定用のデバイスが見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     IsCritical = false
                 });
@@ -538,7 +538,7 @@ namespace KdxDesigner.Utils.Cylinder
                 {
                     RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"速度設定用のデバイスが見つかりませんでした。",
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     IsCritical = false
                 });
@@ -685,7 +685,7 @@ namespace KdxDesigner.Utils.Cylinder
                 {
                     RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"行き方向のバルブが見つかりませんでした。検索文字列: '{_cylinder.Cylinder.Go}' など",
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id
                 });
             }
@@ -708,7 +708,7 @@ namespace KdxDesigner.Utils.Cylinder
                 _errorAggregator.AddError(new OutputError
                 {
                     Message = $"ダブルバルブを特定できません。バルブ検索文字列 '{valveSearchString}' に一致するIOが2件未満です。",
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum ?? ""
                 });
@@ -884,7 +884,7 @@ namespace KdxDesigner.Utils.Cylinder
                 {
                     RecordName = _cylinder.Cylinder.CYNum ?? "",
                     Message = $"行き方向のバルブが見つかりませんでした。検索文字列: '{_cylinder.Cylinder.Go}' など",
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id
                 });
             }
@@ -921,7 +921,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum,
                     Message = $"CY{_cylinder.Cylinder.CYNum}のIN1 IOが見つかりません。",
@@ -940,7 +940,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum,
                     Message = $"CY{_cylinder.Cylinder.CYNum}のIN2 IOが見つかりません。",
@@ -959,7 +959,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum,
                     Message = $"CY{_cylinder.Cylinder.CYNum}のIN3 IOが見つかりません。",
@@ -978,7 +978,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum,
                     Message = $"CY{_cylinder.Cylinder.CYNum}のIN4 IOが見つかりません。",
@@ -997,7 +997,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum,
                     Message = $"CY{_cylinder.Cylinder.CYNum}のIN5 IOが見つかりません。",
@@ -1016,7 +1016,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     RecordName = _cylinder.Cylinder.CYNum,
                     Message = $"CY{_cylinder.Cylinder.CYNum}のIN6 IOが見つかりません。",
@@ -1048,7 +1048,7 @@ namespace KdxDesigner.Utils.Cylinder
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    MnemonicId = (int)MnemonicType.CY,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                     RecordId = _cylinder.Cylinder.Id,
                     Message = $"シリンダ「{_cylinder.Cylinder.CYNum}」の{valveTypeForErrorMessage}バルブ出力先が設定されていません。",
                     RecordName = _cylinder.Cylinder.CYNum ?? ""
@@ -1076,7 +1076,7 @@ namespace KdxDesigner.Utils.Cylinder
                         // 見つからなかった場合はエラーを記録
                         _errorAggregator.AddError(new OutputError
                         {
-                            MnemonicId = (int)MnemonicType.CY,
+                            MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                             RecordId = _cylinder.Cylinder.Id,
                             Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{searchSuffix}' が見つかりませんでした。",
                             RecordName = _cylinder.Cylinder.CYNum ?? ""
@@ -1099,7 +1099,7 @@ namespace KdxDesigner.Utils.Cylinder
                 {
                     _errorAggregator.AddError(new OutputError
                     {
-                        MnemonicId = (int)MnemonicType.CY,
+                        MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
                         RecordId = _cylinder.Cylinder.Id,
                         Message = $"IOリスト内に、設定された{valveTypeForErrorMessage}バルブ '{configuredBaseSuffix}' が見つかりませんでした。",
                         RecordName = _cylinder.Cylinder.CYNum ?? ""

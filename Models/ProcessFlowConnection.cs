@@ -41,15 +41,15 @@ namespace KdxDesigner.Models
         {
             get
             {
-                var fromCenter = new Point(FromNode.Position.X + 70, FromNode.Position.Y + 30);
-                var toCenter = new Point(ToNode.Position.X + 70, ToNode.Position.Y + 30);
+                var fromCenter = new Point(FromNode.Position.X + 70, FromNode.Position.Y + 20);
+                var toCenter = new Point(ToNode.Position.X + 70, ToNode.Position.Y + 20);
                 
                 // 接続線の角度を計算
                 var angle = Math.Atan2(toCenter.Y - fromCenter.Y, toCenter.X - fromCenter.X);
                 
                 // ノードの端の点を計算（右端）
                 var edgeX = FromNode.Position.X + 140; // ノードの右端
-                var edgeY = FromNode.Position.Y + 30;  // ノードの中央Y
+                var edgeY = FromNode.Position.Y + 20;  // ノードの中央Y
                 
                 // 角度に基づいて適切な端点を選択
                 if (Math.Abs(angle) <= Math.PI / 4) // 右方向
@@ -58,7 +58,7 @@ namespace KdxDesigner.Models
                 }
                 else if (angle > Math.PI / 4 && angle <= 3 * Math.PI / 4) // 下方向
                 {
-                    return new Point(fromCenter.X, FromNode.Position.Y + 60);
+                    return new Point(fromCenter.X, FromNode.Position.Y + 40);
                 }
                 else if (angle < -Math.PI / 4 && angle >= -3 * Math.PI / 4) // 上方向
                 {
@@ -75,8 +75,8 @@ namespace KdxDesigner.Models
         {
             get
             {
-                var fromCenter = new Point(FromNode.Position.X + 70, FromNode.Position.Y + 30);
-                var toCenter = new Point(ToNode.Position.X + 70, ToNode.Position.Y + 30);
+                var fromCenter = new Point(FromNode.Position.X + 70, FromNode.Position.Y + 20);
+                var toCenter = new Point(ToNode.Position.X + 70, ToNode.Position.Y + 20);
                 
                 // 接続線の角度を計算（逆方向）
                 var angle = Math.Atan2(fromCenter.Y - toCenter.Y, fromCenter.X - toCenter.X);
@@ -88,7 +88,7 @@ namespace KdxDesigner.Models
                 }
                 else if (angle > Math.PI / 4 && angle <= 3 * Math.PI / 4) // 下方向から来る
                 {
-                    return new Point(toCenter.X, ToNode.Position.Y + 60);
+                    return new Point(toCenter.X, ToNode.Position.Y + 40);
                 }
                 else if (angle < -Math.PI / 4 && angle >= -3 * Math.PI / 4) // 上方向から来る
                 {
