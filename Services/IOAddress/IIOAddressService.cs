@@ -21,7 +21,7 @@ namespace KdxDesigner.Services.IOAddress
             List<IO> ioList,
             string ioText,
             bool isOutput,
-            string recordName,
+            string? recordName,
             int? recordId,
             string? isnotInclude);
 

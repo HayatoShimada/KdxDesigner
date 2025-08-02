@@ -438,12 +438,15 @@ namespace KdxDesigner.Utils.Cylinder
                     result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
                     result.Add(LadderRow.AddOR(label + (startNum + 36).ToString()));
                     result.Add(LadderRow.AddOR(label + (startNum + 34).ToString()));
-                    result.Add(LadderRow.AddOUT(breakeIO_S.Address));
+                    result.Add(LadderRow.AddOUT(breakeIO_S.Address ?? string.Empty));
                     
                     // SB接点がある場合は追加出力
                     if (breakeIO_SB != null)
                     {
-                        result.Add(LadderRow.AddOUT(breakeIO_SB.Address));
+                        result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
+                        result.Add(LadderRow.AddOR(label + (startNum + 36).ToString()));
+                        result.Add(LadderRow.AddOR(label + (startNum + 34).ToString()));
+                        result.Add(LadderRow.AddOUT(breakeIO_SB.Address ?? string.Empty));
                     }
                     
                     // 正常時BKタイマ
