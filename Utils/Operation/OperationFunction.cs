@@ -206,6 +206,60 @@ namespace KdxDesigner.Utils.Operation
             return result;
         }
 
+        /// <summary>
+        /// 制御ｾﾝｻタイマを設定します。
+        /// </summary>
+        /// <returns></returns>
+        public List<LadderCsvRow> GenerateM9(MnemonicTimerDeviceWithOperation operationTimer)
+        {
+            var result = new List<LadderCsvRow>();
+            var conSensor = _operation.Operation.Con;
+            if (string.IsNullOrEmpty(conSensor))
+            {
+                return result;
+            }
+            else
+            {
+                var conAddress = _ioAddressService.GetSingleAddress(
+                    _ioList,
+                    conSensor,
+                    false,
+                    conSensor,
+                    _operation.Operation.Id,
+                    null);
+
+                if (conAddress == null)
+                {
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        Message = $"操作「{_operation.Operation.OperationName}」(ID: {_operation.Operation.Id}) の制御センサ「{conSensor}」が設定されていません。",
+                        MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.Operation,
+                        RecordId = _operation.Operation.Id,
+                        RecordName = _operation.Operation.OperationName,
+                        IsCritical = true
+                    });
+                    return result;
+                }
+
+                result.Add(LadderRow.AddLD(conAddress));
+                result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                result.Add(LadderRow.AddANI(_label + (_outNum + 9).ToString()));
+                result.AddRange(LadderRow.AddTimer(
+                    operationTimer.Timer.ProcessTimerDevice ?? "",
+                    operationTimer.Timer.TimerDevice ?? ""));
+
+                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 2).ToString()));
+                result.Add(LadderRow.AddAND(operationTimer.Timer.ProcessTimerDevice!));
+                result.Add(LadderRow.AddOR(_label + (_outNum + 9).ToString()));
+                result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                result.Add(LadderRow.AddOUT(_label + (_outNum + 9).ToString()));
+            }
+
+
+            return result;
+        }
+
         public List<LadderCsvRow> GenerateSpeed(
             MnemonicTimerDeviceWithOperation operationTimer,
             string speedSensor,
@@ -326,7 +380,7 @@ namespace KdxDesigner.Utils.Operation
                 _errorAggregator.AddError(new OutputError
                 {
                     Message = $"操作「{_operation.Operation.OperationName}」(ID: {_operation.Operation.Id}) の速度デバイスが設定されていません。",
-                    MnemonicId = (int)MnemonicType.Operation,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.Operation,
                     RecordId = _operation.Operation.Id,
                     RecordName = _operation.Operation.OperationName,
                     IsCritical = true

@@ -60,7 +60,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int prosTimePreviousStartZR = 24000;
         [ObservableProperty] private int cyTimeStartZR = 30000;
 
-        // 造型機
+        // 上型造型機
         //[ObservableProperty] private int processDeviceStartL = 14300;
         //[ObservableProperty] private int detailDeviceStartL = 17000;
         //[ObservableProperty] private int operationDeviceStartM = 26000;
@@ -75,6 +75,34 @@ namespace KdxDesigner.ViewModels
         //[ObservableProperty] private int cyTimeStartZR = 32000;
 
         // 下型造型機
+        //[ObservableProperty] private int processDeviceStartL = 14500;
+        //[ObservableProperty] private int detailDeviceStartL = 18000;
+        //[ObservableProperty] private int operationDeviceStartM = 28000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 52000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5300;
+        //[ObservableProperty] private int errorDeviceStartM = 121700;
+        //[ObservableProperty] private int errorDeviceStartT = 3700;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 15000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 27000;
+        //[ObservableProperty] private int cyTimeStartZR = 33000;
+
+        // 上型型交換
+        //[ObservableProperty] private int processDeviceStartL = 14700;
+        //[ObservableProperty] private int detailDeviceStartL = 19000;
+        //[ObservableProperty] private int operationDeviceStartM = 28000;
+        //[ObservableProperty] private int cylinderDeviceStartM = 52000;
+        //[ObservableProperty] private int cylinderDeviceStartD = 5300;
+        //[ObservableProperty] private int errorDeviceStartM = 121700;
+        //[ObservableProperty] private int errorDeviceStartT = 3700;
+        //[ObservableProperty] private int deviceStartT = 0;
+        //[ObservableProperty] private int timerStartZR = 3000;
+        //[ObservableProperty] private int prosTimeStartZR = 15000;
+        //[ObservableProperty] private int prosTimePreviousStartZR = 27000;
+        //[ObservableProperty] private int cyTimeStartZR = 33000;
+
+        // 下型型交換
         //[ObservableProperty] private int processDeviceStartL = 14500;
         //[ObservableProperty] private int detailDeviceStartL = 18000;
         //[ObservableProperty] private int operationDeviceStartM = 28000;
@@ -300,7 +328,7 @@ namespace KdxDesigner.ViewModels
             }
 
             // Viewにリポジトリのインスタンスを渡して生成
-            var view = new IoEditorView(_repository);
+            var view = new IoEditorView(_repository, this);
             view.Show(); // モードレスダイアログとして表示
         }
 
@@ -320,6 +348,28 @@ namespace KdxDesigner.ViewModels
         private void OpenSettings()
         {
             var view = new SettingsView();
+            view.ShowDialog();
+        }
+
+        [RelayCommand]
+        private void OpenProcessFlow()
+        {
+            if (SelectedCycle == null)
+            {
+                MessageBox.Show("サイクルを選択してください。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (_repository == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
+            var viewModel = new ProcessFlowViewModel(_repository);
+            viewModel.LoadProcessDetails(SelectedCycle.Id);
+            
+            var view = new ProcessFlowView(viewModel);
             view.ShowDialog();
         }
 
@@ -348,6 +398,19 @@ namespace KdxDesigner.ViewModels
             // Viewにリポジトリのインスタンスを渡す
             var view = new LinkDeviceView(_repository);
             view.ShowDialog(); // モーダルダイアログとして表示
+        }
+
+        [RelayCommand]
+        private void OpenTimerEditor()
+        {
+            if (_repository == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+
+            var view = new TimerEditorView(_repository, this);
+            view.ShowDialog();
         }
 
         #endregion
@@ -392,7 +455,7 @@ namespace KdxDesigner.ViewModels
                 allGeneratedErrors.AddRange(processErrors);
 
                 // ProcessDetailBuilder
-                var pdErrorAggregator = new ErrorAggregator((int)MnemonicType.ProcessDetail);
+                var pdErrorAggregator = new ErrorAggregator((int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail);
 
                 var pdIoAddressService = new IOAddressService(pdErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var detailBuilder = new ProcessDetailBuilder(this, pdErrorAggregator, pdIoAddressService, _repository);
@@ -407,7 +470,7 @@ namespace KdxDesigner.ViewModels
                 allGeneratedErrors.AddRange(pdErrorAggregator.GetAllErrors());
 
                 // OperationBuilder
-                var opErrorAggregator = new ErrorAggregator((int)MnemonicType.Operation);
+                var opErrorAggregator = new ErrorAggregator((int)KdxDesigner.Models.Define.MnemonicType.Operation);
                 var opIoAddressService = new IOAddressService(opErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var operationBuilder = new OperationBuilder(this, opErrorAggregator, opIoAddressService);
                 var operationRows = operationBuilder.GenerateLadder(
@@ -422,7 +485,7 @@ namespace KdxDesigner.ViewModels
                 allGeneratedErrors.AddRange(opErrorAggregator.GetAllErrors());
 
                 // CylinderBuilder
-                var cyErrorAggregator = new ErrorAggregator((int)MnemonicType.CY);
+                var cyErrorAggregator = new ErrorAggregator((int)KdxDesigner.Models.Define.MnemonicType.CY);
                 var cyIoAddressService = new IOAddressService(cyErrorAggregator, _repository, SelectedPlc.Id, _ioSelectorService);
                 var cylinderBuilder = new CylinderBuilder(this, cyErrorAggregator, cyIoAddressService);
                 var cylinderRows = cylinderBuilder.GenerateLadder(
@@ -463,8 +526,12 @@ namespace KdxDesigner.ViewModels
             catch (Exception ex)
             {
                 var errorMessage = $"出力処理中に致命的なエラーが発生しました: {ex.Message}";
+                var stackMessage = $"出力処理中に致命的なエラーが発生しました: {ex.StackTrace}";
+
                 MemoryStatusMessage = errorMessage;
                 MessageBox.Show(errorMessage, "エラー");
+                MessageBox.Show(stackMessage, "エラー");
+
                 Debug.WriteLine(ex);
             }
         }
@@ -552,16 +619,16 @@ namespace KdxDesigner.ViewModels
             var ioList = _repository.GetIoList();
             selectedServo = _repository.GetServos(null, null);
 
-            var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList().OrderBy(p => p.StartNum);
-            var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList().OrderBy(d => d.StartNum);
-            var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList().OrderBy(o => o.StartNum);
-            var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList().OrderBy(c => c.StartNum);
+            var devicesP = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.Process).ToList().OrderBy(p => p.StartNum);
+            var devicesD = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail).ToList().OrderBy(d => d.StartNum);
+            var devicesO = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.Operation).ToList().OrderBy(o => o.StartNum);
+            var devicesC = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.CY).ToList().OrderBy(c => c.StartNum);
 
             var timerDevices = _timerService!.GetMnemonicTimerDevice(plcId, cycleId);
-            var prosTime = _prosTimeService!.GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
+            var prosTime = _prosTimeService!.GetProsTimeByMnemonicId(plcId, (int)KdxDesigner.Models.Define.MnemonicType.Operation);
 
             var speedDevice = _speedService!.GetMnemonicSpeedDevice(plcId);
-            var mnemonicErrors = _errorService!.GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
+            var mnemonicErrors = _errorService!.GetErrors(plcId, cycleId, (int)KdxDesigner.Models.Define.MnemonicType.Operation);
 
             // JOIN処理
             var joinedProcessList = devicesP
@@ -571,7 +638,7 @@ namespace KdxDesigner.ViewModels
                 .Join(details, m => m.RecordId, d => d.Id, (m, d) 
                 => new MnemonicDeviceWithProcessDetail { Mnemonic = m, Detail = d }).ToList();
 
-            var timerDevicesDetail = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
+            var timerDevicesDetail = timerDevices.Where(t => t.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail).ToList();
 
             var joinedProcessDetailWithTimerList = timerDevicesDetail.Join(
                 details, m => m.RecordId, o => o.Id, (m, o) =>
@@ -586,13 +653,13 @@ namespace KdxDesigner.ViewModels
                 => new MnemonicDeviceWithCylinder { Mnemonic = m, Cylinder = c })
                 .OrderBy(x => x.Mnemonic.StartNum).ToList();
 
-            var timerDevicesOperation = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.Operation).ToList();
+            var timerDevicesOperation = timerDevices.Where(t => t.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.Operation).ToList();
             var joinedOperationWithTimerList = timerDevicesOperation
                 .Join(operations, m => m.RecordId, o => o.Id, (m, o) 
                 => new MnemonicTimerDeviceWithOperation { Timer = m, Operation = o })
                 .OrderBy(x => x.Operation.SortNumber).ToList();
 
-            var timerDevicesCY = timerDevices.Where(t => t.MnemonicId == (int)MnemonicType.CY).ToList();
+            var timerDevicesCY = timerDevices.Where(t => t.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.CY).ToList();
             var joinedCylinderWithTimerList = timerDevicesCY
                 .Join(cylinders, m => m.RecordId, o => o.Id, (m, o) 
                 => new MnemonicTimerDeviceWithCylinder { Timer = m, Cylinder = o })
@@ -760,10 +827,10 @@ namespace KdxDesigner.ViewModels
             var devices = _mnemonicService!.GetMnemonicDevice(SelectedPlc!.Id);
             var timerDevices = _timerService!.GetMnemonicTimerDevice(SelectedPlc!.Id, SelectedCycle!.Id);
 
-            var devicesP = devices.Where(m => m.MnemonicId == (int)MnemonicType.Process).ToList();
-            var devicesD = devices.Where(m => m.MnemonicId == (int)MnemonicType.ProcessDetail).ToList();
-            var devicesO = devices.Where(m => m.MnemonicId == (int)MnemonicType.Operation).ToList();
-            var devicesC = devices.Where(m => m.MnemonicId == (int)MnemonicType.CY).ToList();
+            var devicesP = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.Process).ToList();
+            var devicesD = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail).ToList();
+            var devicesO = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.Operation).ToList();
+            var devicesC = devices.Where(m => m.MnemonicId == (int)KdxDesigner.Models.Define.MnemonicType.CY).ToList();
 
             MemoryProgressMax = (IsProcessMemory ? devicesP.Count : 0) +
                                 (IsDetailMemory ? devicesD.Count : 0) +

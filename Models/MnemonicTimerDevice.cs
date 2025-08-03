@@ -1,14 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace KdxDesigner.Models
 {
     public class MnemonicTimerDevice
     {
         [Key]
-        public long? ID { get; set; }
+        [Column(Order = 0)]
         public int MnemonicId { get; set; }             // Process: 1, ProcessDetail:2, Operation:3, CY:4
+        
+        [Key]
+        [Column(Order = 1)]
         public int RecordId { get; set; }               // MnemonicIdに対応するテーブルのレコードID
-        public int? TimerId { get; set; }              // TimerテーブルのID
+        
+        [Key]
+        [Column(Order = 2)]
+        public int TimerId { get; set; }                // TimerテーブルのID（NULLを許可しない）
         public int? TimerCategoryId { get; set; }       // RecordIdに対応する処理番号
         public string ProcessTimerDevice { get; set; } = "T0";  // RecordIdに対応する処理番号のデバイス
         public string TimerDevice { get; set; } = "ZR0";        // 外部タイマのデバイス

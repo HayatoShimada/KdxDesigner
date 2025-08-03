@@ -399,7 +399,7 @@ namespace KdxDesigner.Services
             catch (Exception ex)
             {
                 transaction.Rollback();
-                Debug.WriteLine($"[ERROR] MnemonicTimerDevice ID={device.ID} のMemory(ZR)保存失敗 → {ex.Message}");
+                Debug.WriteLine($"[ERROR] MnemonicTimerDevice MnemonicID={device.MnemonicId} RecordID={device.RecordId} のMemory(ZR)保存失敗 → {ex.Message}");
                 return false;
             }
         }
@@ -461,7 +461,7 @@ namespace KdxDesigner.Services
             catch (Exception ex)
             {
                 transaction.Rollback();
-                Debug.WriteLine($"[ERROR] MnemonicTimerDevice ID={device.ID} のMemory(T)保存失敗 → {ex.Message}");
+                Debug.WriteLine($"[ERROR] MnemonicTimerDevice MnemonicId={device.MnemonicId} RecordId={device.RecordId} のMemory(T)保存失敗 → {ex.Message}");
                 return false;
             }
         }

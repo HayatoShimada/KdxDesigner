@@ -75,8 +75,8 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
 
             // MnemonicDeviceテーブルの既存データを取得
-            var allExisting = GetErrors(plcId, cycleId, (int)MnemonicType.Operation);
-            var messages = GetErrorMessage((int)MnemonicType.Operation);
+            var allExisting = GetErrors(plcId, cycleId, (int)KdxDesigner.Models.Define.MnemonicType.Operation);
+            var messages = GetErrorMessage((int)KdxDesigner.Models.Define.MnemonicType.Operation);
 
             int alarmCount = 0;
             foreach (Operation operation in operations)
@@ -136,7 +136,7 @@ namespace KdxDesigner.Services
                     parameters.Add("PlcId", plcId, DbType.Int32);
                     parameters.Add("CycleId", cycleId, DbType.Int32);
                     parameters.Add("Device", device, DbType.String);
-                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)KdxDesigner.Models.Define.MnemonicType.Operation, DbType.Int32);
                     parameters.Add("RecordId", operation.Id, DbType.Int32);
                     parameters.Add("AlarmId", id, DbType.Int32);
                     parameters.Add("ErrorNum", alarmCount, DbType.Int32);
@@ -176,7 +176,7 @@ namespace KdxDesigner.Services
                         updateParams.Add("p1", plcId, DbType.Int32);
                         updateParams.Add("p2", cycleId, DbType.Int32);
                         updateParams.Add("p3", device, DbType.String);
-                        updateParams.Add("p4", (int)MnemonicType.Operation, DbType.Int32);
+                        updateParams.Add("p4", (int)KdxDesigner.Models.Define.MnemonicType.Operation, DbType.Int32);
                         updateParams.Add("p5", operation.Id, DbType.Int32);
                         updateParams.Add("p6", id, DbType.Int32);
                         updateParams.Add("p7", alarmCount, DbType.Int32);

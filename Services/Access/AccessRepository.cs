@@ -105,6 +105,13 @@ namespace KdxDesigner.Services.Access
             return connection.QueryFirstOrDefault<CY>(
                 "SELECT * FROM CY WHERE Id = @Id", new { Id = id });
         }
+        
+        public List<CY> GetCyList(int plcId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM CY WHERE PlcId = @PlcId ORDER BY CYNum";
+            return connection.Query<CY>(sql, new { PlcId = plcId }).ToList();
+        }
 
         public List<Models.Timer> GetTimers()
         {
@@ -118,6 +125,97 @@ namespace KdxDesigner.Services.Access
             using var connection = new OleDbConnection(ConnectionString);
             var sql = "SELECT * FROM Timer WHERE CycleId = @CycleId";
             return connection.Query<Models.Timer>(sql, new { CycleId = cycleId }).ToList();
+        }
+
+        public void AddTimer(Models.Timer timer)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+INSERT INTO Timer (ID, CycleId, TimerCategoryId, TimerNum, TimerName, MnemonicId, Example)
+VALUES (?, ?, ?, ?, ?, ?, ?)";
+            
+            var parameters = new
+            {
+                timer.ID,
+                timer.CycleId,
+                timer.TimerCategoryId,
+                timer.TimerNum,
+                timer.TimerName,
+                timer.MnemonicId,
+                timer.Example
+            };
+            
+            connection.Execute(sql, parameters);
+        }
+
+        public void UpdateTimer(Models.Timer timer)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+UPDATE Timer SET
+    CycleId = ?,
+    TimerCategoryId = ?,
+    TimerNum = ?,
+    TimerName = ?,
+    MnemonicId = ?,
+    Example = ?
+WHERE ID = ?";
+            
+            var parameters = new
+            {
+                timer.CycleId,
+                timer.TimerCategoryId,
+                timer.TimerNum,
+                timer.TimerName,
+                timer.MnemonicId,
+                timer.Example,
+                timer.ID
+            };
+            
+            connection.Execute(sql, parameters);
+        }
+
+        public void DeleteTimer(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM Timer WHERE ID = @ID";
+            connection.Execute(sql, new { ID = id });
+        }
+
+        public List<int> GetTimerRecordIds(int timerId)
+        {
+            try
+            {
+                using var connection = new OleDbConnection(ConnectionString);
+                var sql = "SELECT RecordId FROM TimerRecordIds WHERE TimerId = @TimerId";
+                return connection.Query<int>(sql, new { TimerId = timerId }).ToList();
+            }
+            catch (OleDbException)
+            {
+                // テーブルが存在しない場合は空のリストを返す
+                return new List<int>();
+            }
+        }
+
+        public void AddTimerRecordId(int timerId, int recordId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "INSERT INTO TimerRecordIds (TimerId, RecordId) VALUES (@TimerId, @RecordId)";
+            connection.Execute(sql, new { TimerId = timerId, RecordId = recordId });
+        }
+
+        public void DeleteTimerRecordId(int timerId, int recordId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM TimerRecordIds WHERE TimerId = @TimerId AND RecordId = @RecordId";
+            connection.Execute(sql, new { TimerId = timerId, RecordId = recordId });
+        }
+
+        public void DeleteAllTimerRecordIds(int timerId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM TimerRecordIds WHERE TimerId = @TimerId";
+            connection.Execute(sql, new { TimerId = timerId });
         }
 
         // Operation
@@ -195,6 +293,138 @@ WHERE Id = @Id";
                 "SELECT * FROM ProcessDetailCategory WHERE ID = @ID", new { ID = id });
         }
 
+        public void UpdateProcessDetail(ProcessDetail processDetail)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // すべてのフィールドを更新
+                // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
+                var sql = @"
+UPDATE ProcessDetail SET
+    DetailName = ?DetailName?,
+    OperationId = ?OperationId?,
+    StartSensor = ?StartSensor?,
+    FinishSensor = ?FinishSensor?,
+    CategoryId = ?CategoryId?,
+    BlockNumber = ?BlockNumber?,
+    SkipMode = ?SkipMode?,
+    SortNumber = ?SortNumber?,
+    Comment = ?Comment?,
+    ILStart = ?ILStart?
+WHERE Id = ?Id?";
+
+                connection.Execute(sql, new
+                {
+                    DetailName = processDetail.DetailName ?? "",
+                    OperationId = processDetail.OperationId,
+                    StartSensor = processDetail.StartSensor ?? "",
+                    FinishSensor = processDetail.FinishSensor ?? "",
+                    CategoryId = processDetail.CategoryId,
+                    BlockNumber = processDetail.BlockNumber,
+                    SkipMode = processDetail.SkipMode ?? "",
+                    SortNumber = processDetail.SortNumber,
+                    Comment = processDetail.Comment ?? "",
+                    ILStart = processDetail.ILStart ?? "",
+                    Id = processDetail.Id
+                }, transaction);
+                
+                transaction.Commit();
+                
+                System.Diagnostics.Debug.WriteLine($"ProcessDetail updated successfully - Id: {processDetail.Id}, StartSensor: {processDetail.StartSensor}");
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                System.Diagnostics.Debug.WriteLine($"UpdateProcessDetail error for Id {processDetail.Id}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"SQL: UPDATE ProcessDetail SET StartSensor = '{processDetail.StartSensor}' WHERE Id = {processDetail.Id}");
+                throw;
+            }
+        }
+
+
+        public int AddProcessDetail(ProcessDetail processDetail)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 新しい工程詳細を挿入
+                var sql = @"
+INSERT INTO ProcessDetail (
+    ProcessId, OperationId, DetailName, StartSensor, 
+    CategoryId, FinishSensor, BlockNumber, SkipMode, 
+    CycleId, SortNumber, Comment, ILStart
+) VALUES (
+    ?ProcessId?, ?OperationId?, ?DetailName?, ?StartSensor?, 
+    ?CategoryId?, ?FinishSensor?, ?BlockNumber?, ?SkipMode?, 
+    ?CycleId?, ?SortNumber?, ?Comment?, ?ILStart?
+)";
+                connection.Execute(sql, new
+                {
+                    processDetail.ProcessId,
+                    processDetail.OperationId,
+                    processDetail.DetailName,
+                    processDetail.StartSensor,
+                    processDetail.CategoryId,
+                    processDetail.FinishSensor,
+                    processDetail.BlockNumber,
+                    processDetail.SkipMode,
+                    processDetail.CycleId,
+                    processDetail.SortNumber,
+                    processDetail.Comment,
+                    processDetail.ILStart
+                }, transaction);
+
+                // 挿入されたレコードのIDを取得
+                var getIdSql = "SELECT @@IDENTITY";
+                var newId = connection.QuerySingle<int>(getIdSql, transaction: transaction);
+
+                transaction.Commit();
+                return newId;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessDetail(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 関連するレコードを先に削除
+                // ProcessDetailConnectionテーブルから削除
+                var deleteConnectionsSql = @"
+                    DELETE FROM ProcessDetailConnection 
+                    WHERE FromProcessDetailId = ?fromId? OR ToProcessDetailId = ?toId?";
+                connection.Execute(deleteConnectionsSql, new { fromId = id, toId = id }, transaction);
+
+                // ProcessDetailFinishテーブルから削除
+                var deleteFinishesSql = @"
+                    DELETE FROM ProcessDetailFinish 
+                    WHERE ProcessDetailId = ?processId? OR FinishProcessDetailId = ?finishId?";
+                connection.Execute(deleteFinishesSql, new { processId = id, finishId = id }, transaction);
+
+                // ProcessDetailテーブルから削除
+                var sql = "DELETE FROM ProcessDetail WHERE Id = ?id?";
+                connection.Execute(sql, new { id }, transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
 
         public List<IO> GetIoList()
         {
@@ -241,11 +471,12 @@ WHERE Id = @Id";
             using var transaction = connection.BeginTransaction();
             try
             {
-                // Idをキーに、LinkDeviceを更新する
-                const string sql = "UPDATE [IO] SET [LinkDevice] = @LinkDevice WHERE [Id] = @Id";
+                // AddressとPlcIdをキーに、LinkDeviceを更新する
+                // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
+                const string sql = "UPDATE [IO] SET [LinkDevice] = ?LinkDevice? WHERE [Address] = ?Address? AND [PlcId] = ?PlcId?";
 
                 // DapperのExecuteはリストを渡すと自動的にループ処理してくれる
-                connection.Execute(sql, ioRecordsToUpdate.Select(io => new { io.LinkDevice, io.Id }), transaction);
+                connection.Execute(sql, ioRecordsToUpdate.Select(io => new { LinkDevice = io.LinkDevice, Address = io.Address, PlcId = io.PlcId }), transaction);
 
                 transaction.Commit();
             }
@@ -270,63 +501,59 @@ WHERE Id = @Id";
                 // 1. IOテーブルの更新
                 if (iosToUpdate.Any())
                 {
-                    // ★★★ 修正箇所 1: SQL文を位置プレースホルダ (?) に変更 ★★★
+                    // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
                     var sqlUpdate = @"UPDATE IO SET 
-                                        IOText = ?, XComment = ?, YComment = ?, 
-                                        FComment = ?, Address = ?, IOName = ?, 
-                                        IOExplanation = ?, IOSpot = ?, UnitName = ?, 
-                                        System = ?, StationNumber = ?, IONameNaked = ?, 
-                                        PlcId = ?, LinkDevice = ?
-                                    WHERE Id = ?";
+                                        IOText = ?IOText?, XComment = ?XComment?, YComment = ?YComment?, 
+                                        FComment = ?FComment?, IOName = ?IOName?, 
+                                        IOExplanation = ?IOExplanation?, IOSpot = ?IOSpot?, UnitName = ?UnitName?, 
+                                        System = ?System?, StationNumber = ?StationNumber?, IONameNaked = ?IONameNaked?, 
+                                        LinkDevice = ?LinkDevice?
+                                    WHERE Address = ?Address? AND PlcId = ?PlcId?";
 
                     foreach (var io in iosToUpdate)
                     {
-                        var parameters = new DynamicParameters();
-
-                        // ★★★ 修正箇所 2: パラメータを追加する順番をSQL文と完全に一致させる ★★★
-                        // --- SET句のパラメータ ---
-                        parameters.Add("p1", io.IOText ?? "", DbType.String);
-                        parameters.Add("p2", io.XComment ?? "", DbType.String);
-                        parameters.Add("p3", io.YComment ?? "", DbType.String);
-                        parameters.Add("p4", io.FComment ?? "", DbType.String);
-                        parameters.Add("p5", io.Address ?? "", DbType.String);
-                        parameters.Add("p6", io.IOName ?? "", DbType.String);
-                        parameters.Add("p7", io.IOExplanation ?? "", DbType.String);
-                        parameters.Add("p8", io.IOSpot ?? "", DbType.String);
-                        parameters.Add("p9", io.UnitName ?? "", DbType.String);
-                        parameters.Add("p10", io.System ?? "", DbType.String);
-                        parameters.Add("p11", io.StationNumber ?? "", DbType.String);
-                        parameters.Add("p12", io.IONameNaked ?? "", DbType.String);
-                        parameters.Add("p13", io.PlcId ?? 0, DbType.Int32);
-                        parameters.Add("p14", io.LinkDevice ?? "", DbType.String);
-                        // --- WHERE句のパラメータ ---
-                        parameters.Add("p15", io.Id, DbType.Int32);
-
-                        connection.Execute(sqlUpdate, parameters, transaction);
+                        connection.Execute(sqlUpdate, new
+                        {
+                            IOText = io.IOText ?? "",
+                            XComment = io.XComment ?? "",
+                            YComment = io.YComment ?? "",
+                            FComment = io.FComment ?? "",
+                            IOName = io.IOName ?? "",
+                            IOExplanation = io.IOExplanation ?? "",
+                            IOSpot = io.IOSpot ?? "",
+                            UnitName = io.UnitName ?? "",
+                            System = io.System ?? "",
+                            StationNumber = io.StationNumber ?? "",
+                            IONameNaked = io.IONameNaked ?? "",
+                            LinkDevice = io.LinkDevice ?? "",
+                            Address = io.Address,
+                            PlcId = io.PlcId
+                        }, transaction);
                     }
                 }
 
                 // 2. IOHistoryテーブルへの挿入
                 if (histories.Any())
                 {
+                    // Dapperの疑似位置パラメータ構文を使用（OleDb対応）
                     var sqlInsertHistory = @"INSERT INTO IOHistory 
-                                               (IoId, PropertyName, OldValue, NewValue, ChangedAt, ChangedBy) 
+                                               (IoAddress, IoPlcId, PropertyName, OldValue, NewValue, ChangedAt, ChangedBy) 
                                            VALUES 
-                                               (@IoId, @PropertyName, @OldValue, @NewValue, @ChangedAt, @ChangedBy)";
+                                               (?IoAddress?, ?IoPlcId?, ?PropertyName?, ?OldValue?, ?NewValue?, ?ChangedAt?, ?ChangedBy?)";
 
-                    // 各履歴をループし、DynamicParametersを使って型を明示的に指定する
+                    // 各履歴をループし、匿名オブジェクトで実行
                     foreach (var history in histories)
                     {
-                        var historyParams = new DynamicParameters();
-                        historyParams.Add("@IoId", history.IoId, DbType.Int32);
-                        historyParams.Add("@PropertyName", history.PropertyName, DbType.String);
-                        historyParams.Add("@OldValue", history.OldValue, DbType.String);
-                        historyParams.Add("@NewValue", history.NewValue, DbType.String);
-                        // DateTimeオブジェクトをDbType.DateTimeとして渡す
-                        historyParams.Add("@ChangedAt", history.ChangedAt, DbType.String);
-                        historyParams.Add("@ChangedBy", history.ChangedBy, DbType.String);
-
-                        connection.Execute(sqlInsertHistory, historyParams, transaction);
+                        connection.Execute(sqlInsertHistory, new
+                        {
+                            IoAddress = history.IoAddress,
+                            IoPlcId = history.IoPlcId,
+                            PropertyName = history.PropertyName,
+                            OldValue = history.OldValue,
+                            NewValue = history.NewValue,
+                            ChangedAt = history.ChangedAt,
+                            ChangedBy = history.ChangedBy
+                        }, transaction);
                     }
                 }
 
@@ -336,6 +563,297 @@ WHERE Id = @Id";
             {
                 transaction.Rollback();
                 throw; // エラーを上位に通知
+            }
+        }
+
+        // ProcessDetailConnection
+        public List<ProcessDetailConnection> GetProcessDetailConnections(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+                SELECT pdc.* 
+                FROM ProcessDetailConnection pdc
+                INNER JOIN ProcessDetail pd ON pdc.ToProcessDetailId = pd.Id
+                WHERE pd.CycleId = ?CycleId?";
+            return connection.Query<ProcessDetailConnection>(sql, new { CycleId = cycleId }).ToList();
+        }
+
+        public List<ProcessDetailConnection> GetConnectionsByToId(int toProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailConnection WHERE ToProcessDetailId = ?ToProcessDetailId?";
+            return connection.Query<ProcessDetailConnection>(sql, new { ToProcessDetailId = toProcessDetailId }).ToList();
+        }
+
+        public List<ProcessDetailConnection> GetConnectionsByFromId(int fromProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailConnection WHERE FromProcessDetailId = ?FromProcessDetailId?";
+            return connection.Query<ProcessDetailConnection>(sql, new { FromProcessDetailId = fromProcessDetailId }).ToList();
+        }
+
+        public void AddProcessDetailConnection(ProcessDetailConnection connection)
+        {
+            using var conn = new OleDbConnection(ConnectionString);
+            conn.Open();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    INSERT INTO ProcessDetailConnection 
+                    (FromProcessDetailId, ToProcessDetailId) 
+                    VALUES (?FromProcessDetailId?, ?ToProcessDetailId?)";
+                
+                conn.Execute(sql, new 
+                { 
+                    FromProcessDetailId = connection.FromProcessDetailId,
+                    ToProcessDetailId = connection.ToProcessDetailId
+                }, transaction);
+                
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessDetailConnection(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailConnection WHERE Id = ?Id?";
+            connection.Execute(sql, new { Id = id });
+        }
+
+        public void DeleteConnectionsByFromAndTo(int fromId, int toId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailConnection WHERE FromProcessDetailId = ?FromId? AND ToProcessDetailId = ?ToId?";
+            connection.Execute(sql, new { FromId = fromId, ToId = toId });
+        }
+
+        // ProcessDetailFinish
+        public List<ProcessDetailFinish> GetProcessDetailFinishes(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+                SELECT pdf.* 
+                FROM ProcessDetailFinish pdf
+                INNER JOIN ProcessDetail pd ON pdf.ProcessDetailId = pd.Id
+                WHERE pd.CycleId = ?CycleId?";
+            return connection.Query<ProcessDetailFinish>(sql, new { CycleId = cycleId }).ToList();
+        }
+
+        public List<ProcessDetailFinish> GetFinishesByProcessDetailId(int processDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailFinish WHERE ProcessDetailId = ?ProcessDetailId?";
+            return connection.Query<ProcessDetailFinish>(sql, new { ProcessDetailId = processDetailId }).ToList();
+        }
+
+        public List<ProcessDetailFinish> GetFinishesByFinishId(int finishProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailFinish WHERE FinishProcessDetailId = ?FinishProcessDetailId?";
+            return connection.Query<ProcessDetailFinish>(sql, new { FinishProcessDetailId = finishProcessDetailId }).ToList();
+        }
+
+        public int AddOperation(Operation operation)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    INSERT INTO Operation (
+                        OperationName, CYId, CategoryId, Stay, GoBack, 
+                        Start, Finish, Valve1, S1, S2, S3, S4, S5, 
+                        SS1, SS2, SS3, SS4, PIL, SC, FC, CycleId, 
+                        SortNumber, Con
+                    ) VALUES (
+                        ?OperationName?, ?CYId?, ?CategoryId?, ?Stay?, ?GoBack?, 
+                        ?Start?, ?Finish?, ?Valve1?, ?S1?, ?S2?, ?S3?, ?S4?, ?S5?, 
+                        ?SS1?, ?SS2?, ?SS3?, ?SS4?, ?PIL?, ?SC?, ?FC?, ?CycleId?, 
+                        ?SortNumber?, ?Con?
+                    )";
+                
+                connection.Execute(sql, new
+                {
+                    operation.OperationName,
+                    operation.CYId,
+                    operation.CategoryId,
+                    operation.Stay,
+                    operation.GoBack,
+                    operation.Start,
+                    operation.Finish,
+                    operation.Valve1,
+                    operation.S1,
+                    operation.S2,
+                    operation.S3,
+                    operation.S4,
+                    operation.S5,
+                    operation.SS1,
+                    operation.SS2,
+                    operation.SS3,
+                    operation.SS4,
+                    operation.PIL,
+                    operation.SC,
+                    operation.FC,
+                    operation.CycleId,
+                    operation.SortNumber,
+                    operation.Con
+                }, transaction);
+
+                var getIdSql = "SELECT @@IDENTITY";
+                var newId = connection.QuerySingle<int>(getIdSql, transaction: transaction);
+
+                transaction.Commit();
+                return newId;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+
+        public void AddProcessDetailFinish(ProcessDetailFinish finish)
+        {
+            using var conn = new OleDbConnection(ConnectionString);
+            conn.Open();
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    INSERT INTO ProcessDetailFinish 
+                    (ProcessDetailId, FinishProcessDetailId) 
+                    VALUES (?ProcessDetailId?, ?FinishProcessDetailId?)";
+                conn.Execute(sql, new { ProcessDetailId = finish.ProcessDetailId, FinishProcessDetailId = finish.FinishProcessDetailId }, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessDetailFinish(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailFinish WHERE Id = ?Id?";
+            connection.Execute(sql, new { Id = id });
+        }
+
+        public void DeleteFinishesByProcessAndFinish(int processDetailId, int finishProcessDetailId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "DELETE FROM ProcessDetailFinish WHERE ProcessDetailId = ?ProcessDetailId? AND FinishProcessDetailId = ?FinishProcessDetailId?";
+            connection.Execute(sql, new { ProcessDetailId = processDetailId, FinishProcessDetailId = finishProcessDetailId });
+        }
+
+        public List<MnemonicTimerDevice> GetMnemonicTimerDevices()
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM MnemonicTimerDevice";
+            return connection.Query<MnemonicTimerDevice>(sql).ToList();
+        }
+
+        public void UpdateMnemonicTimerDevice(MnemonicTimerDevice device)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    UPDATE MnemonicTimerDevice SET 
+                        TimerCategoryId = ?TimerCategoryId?, 
+                        ProcessTimerDevice = ?ProcessTimerDevice?, 
+                        TimerDevice = ?TimerDevice?, 
+                        Comment1 = ?Comment1?, 
+                        Comment2 = ?Comment2?, 
+                        Comment3 = ?Comment3?
+                    WHERE MnemonicId = ?MnemonicId? 
+                      AND RecordId = ?RecordId? 
+                      AND TimerId = ?TimerId?";
+                
+                connection.Execute(sql, new
+                {
+                    device.TimerCategoryId,
+                    device.ProcessTimerDevice,
+                    device.TimerDevice,
+                    device.Comment1,
+                    device.Comment2,
+                    device.Comment3,
+                    device.MnemonicId,
+                    device.RecordId,
+                    device.TimerId
+                }, transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteMnemonicTimerDevice(int mnemonicId, int recordId, int timerId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+                DELETE FROM MnemonicTimerDevice 
+                WHERE MnemonicId = ?MnemonicId? 
+                  AND RecordId = ?RecordId? 
+                  AND TimerId = ?TimerId?";
+            
+            connection.Execute(sql, new { MnemonicId = mnemonicId, RecordId = recordId, TimerId = timerId });
+        }
+
+        public void AddMnemonicTimerDevice(MnemonicTimerDevice device)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                var sql = @"
+                    INSERT INTO MnemonicTimerDevice (
+                        MnemonicId, RecordId, TimerId, TimerCategoryId, 
+                        ProcessTimerDevice, TimerDevice, PlcId, CycleId, 
+                        Comment1, Comment2, Comment3
+                    ) VALUES (
+                        ?MnemonicId?, ?RecordId?, ?TimerId?, ?TimerCategoryId?, 
+                        ?ProcessTimerDevice?, ?TimerDevice?, ?PlcId?, ?CycleId?, 
+                        ?Comment1?, ?Comment2?, ?Comment3?
+                    )";
+                
+                connection.Execute(sql, new
+                {
+                    device.MnemonicId,
+                    device.RecordId,
+                    device.TimerId,
+                    device.TimerCategoryId,
+                    device.ProcessTimerDevice,
+                    device.TimerDevice,
+                    device.PlcId,
+                    device.CycleId,
+                    device.Comment1,
+                    device.Comment2,
+                    device.Comment3
+                }, transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
             }
         }
     }

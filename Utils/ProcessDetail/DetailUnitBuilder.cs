@@ -68,7 +68,11 @@ namespace KdxDesigner.Utils.ProcessDetail
             // --- 派生データ (コンストラクタで一度だけ計算) ---
             _label = detail.Mnemonic.DeviceLabel ?? string.Empty;
             _deviceNum = detail.Mnemonic.StartNum;
-            _process = _processes.First(p => p.Mnemonic.RecordId == _detail.Detail.ProcessId);
+            _process = _processes.FirstOrDefault(p => p.Mnemonic.RecordId == _detail.Detail.ProcessId);
+            if (_process == null)
+            {
+                throw new InvalidOperationException($"Process with RecordId {_detail.Detail.ProcessId} not found for ProcessDetail {_detail.Detail.Id}");
+            }
         }
 
         /// <summary>
@@ -97,7 +101,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             result.Add(LadderRow.AddLD(opFinishLabel + (opFinishNum + 19).ToString()));
 
-            if (_detail.Detail.SkipMode != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
@@ -170,7 +174,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 3行目　センサー名称からIOリスト参照
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
@@ -201,7 +205,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
                 // skipModeが設定されている場合は、スキップ処理を追加
-                if (_detail.Detail.SkipMode != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
                 {
                     if (_detail.Detail.SkipMode.Contains("_"))
                     {
@@ -257,7 +261,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             //3行目　センサー名称からIOリスト参照
 
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // ioの取得を共通コンポーネント化すること
                 var plcId = _mainViewModel.SelectedPlc!.Id;
@@ -289,7 +293,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
                 // skipModeが設定されている場合は、スキップ処理を追加
-                if (_detail.Detail.SkipMode != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
                 {
                     if (_detail.Detail.SkipMode.Contains("_"))
                     {
@@ -353,7 +357,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L1 操作開始
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 var ioSensor = _ioAddressService.GetSingleAddress(
                     _ioList,
@@ -389,7 +393,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 {
                     Message = "FinishSensor が設定されていません。",
                     RecordName = _detail.Detail.DetailName,
-                    MnemonicId = (int)MnemonicType.ProcessDetail,
+                    MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail,
                     RecordId = _detail.Detail.Id,
                     IsCritical = false
                 });
@@ -442,13 +446,13 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDeviceStartNum = process?.Mnemonic.StartNum ?? 0;
             var processDeviceLabel = process?.Mnemonic.DeviceLabel ?? string.Empty;
 
-            // ProcessDetailの開始条件
-            // この辺の処理がややこしいので共通コンポーネント化すること
-            var processDetailStartIds = _detail.Detail.StartIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailの開始条件を取得（中間テーブルから）
+            var processDetailStartIds = new List<int>();
+            
+            // 中間テーブルから取得
+            var connections = _repository.GetConnectionsByToId(_detail.Detail.Id);
+            processDetailStartIds.AddRange(connections.Select(c => c.FromProcessDetailId));
+            
             var processDetailStartDevices = _details
                 .Where(d => processDetailStartIds.Contains(d.Mnemonic.RecordId))
                 .ToList();
@@ -505,7 +509,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             
 
             // L1 操作開始
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // StartSensorが設定されている場合
                 result.Add(LadderRow.AddLD(_detail.Detail.FinishSensor));
@@ -519,7 +523,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOR(SettingsManager.Settings.DebugTest));
 
             // skipModeが設定されている場合は、スキップ処理を追加
-            if (_detail.Detail.SkipMode != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
@@ -537,7 +541,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
 
-            if (_detail.Detail.ILStart != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.ILStart))
             {
                 result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
                 result.Add(LadderRow.AddANI(_label + (_deviceNum + 1).ToString()));
@@ -571,21 +575,19 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.AddRange(detailFunctions.L0());
 
             // L1 操作開始
-            var detailOffIds = _detail.Detail.FinishIds?.Split(';')
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList() ?? new List<int>();
+            // ProcessDetailFinishテーブルから終了工程IDを取得
+            var finishes = _repository.GetFinishesByProcessDetailId(_detail.Detail.Id);
+            var detailOffIds = finishes.Select(f => f.FinishProcessDetailId).ToList();
 
             if (detailOffIds.Count != 1)
             {
-                detailFunctions.DetailError("工程OFF確認にFinishIdsが複数設定されています。");
+                detailFunctions.DetailError("工程OFF確認に終了工程が複数設定されています。");
                 return result; // エラーがある場合は、空のリストを返す
             }
 
-            if (detailOffIds == null)
+            if (detailOffIds.Count == 0)
             {
-                detailFunctions.DetailError("工程OFF確認にFinishIdsが設定されていません。");
+                detailFunctions.DetailError("工程OFF確認に終了工程が設定されていません。");
                 return result; // エラーがある場合は、空のリストを返す
             }
 
@@ -596,7 +598,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             if (detailOffDeviceMnemonic == null)
             {
-                detailFunctions.DetailError($"工程OFF確認のFinishIdsに設定されているデバイスが見つかりません。ID: {detailOffDevice}");
+                detailFunctions.DetailError($"工程OFF確認の終了工程に設定されているデバイスが見つかりません。ID: {detailOffDevice}");
                 return result; // エラーがある場合は、空のリストを返す
             }
             else
@@ -605,7 +607,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                     + detailOffDeviceMnemonic.Mnemonic.StartNum.ToString()));
 
                 // skipModeが設定されている場合は、スキップ処理を追加
-                if (_detail.Detail.SkipMode != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
                 {
                     if (_detail.Detail.SkipMode.Contains("_"))
                     {
@@ -662,7 +664,7 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L2 操作停止
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // ioの取得を共通コンポーネント化すること
                 var ioSensor = _ioAddressService.GetSingleAddress(
@@ -698,10 +700,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
 
             var processDetailFinishDevices = detailFunctions.FinishDevices();
-            if (_detail.Detail.FinishSensor != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
                 // FinishSensorが設定されている場合
-                // FinishIdsのStartNum+1を出力
+                // 終了工程のStartNum+1を出力
                 foreach (var d in processDetailFinishDevices)
                 {
                     result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
@@ -710,7 +712,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             else
             {
                 // FinishSensorが設定されていない場合
-                // FinishIdsのStartNum+5を出力
+                // 終了工程のStartNum+5を出力
                 foreach (var d in processDetailFinishDevices)
                 {
                     result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
@@ -718,7 +720,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             }
 
             // skipModeが設定されている場合は、スキップ処理を追加
-            if (_detail.Detail.SkipMode != null)
+            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
             {
                 if (_detail.Detail.SkipMode.Contains("_"))
                 {
@@ -914,12 +916,12 @@ namespace KdxDesigner.Utils.ProcessDetail
             var processDetailFinishDevices = detailFunctions.FinishDevices();
             if (processDetailFinishDevices.Count == 0)
             {
-                detailFunctions.DetailError("複数工程ではFinishIds が必須です");
+                detailFunctions.DetailError("複数工程では終了工程が必須です");
                 return result; // エラーがある場合は、空のリストを返す
             }
             else if (processDetailFinishDevices.Count != 1)
             {
-                detailFunctions.DetailError("複数工程ではFinishIds を1つにしてください");
+                detailFunctions.DetailError("複数工程では終了工程を1つにしてください");
                 return result; // エラーがある場合は、空のリストを返す
             }
             else
@@ -936,6 +938,27 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             result.Add(LadderRow.AddLDP(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddRST(_label + (_deviceNum + 3).ToString()));
+
+            return result;
+        }
+
+        /// <summary>
+        /// 複数工程のビルド
+        /// </summary>
+        /// <returns>ニモニックリスト</returns>
+        public List<LadderCsvRow> BuildReset()
+        {
+            var result = new List<LadderCsvRow>();
+
+            // 行間ステートメントを追加
+            result.Add(CreateStatement());
+            // L0 工程開始
+            var detailFunctions = CreateDetailFunctions();
+            result.AddRange(detailFunctions.L0());
+
+            // L4 操作実行
+            result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
+            result.Add(LadderRow.AddOUT(_label + (_deviceNum + 4).ToString()));
 
             return result;
         }

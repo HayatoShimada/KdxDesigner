@@ -36,7 +36,7 @@ namespace KdxDesigner.Services.IOAddress
             List<IO> ioList,
             string ioText,
             bool isOutput,
-            string recordName,
+            string? recordName,
             int? recordId,
             string? isnotInclude)
         {
@@ -65,7 +65,7 @@ namespace KdxDesigner.Services.IOAddress
                 workingList = workingList.Where(io => io.IOName != null && !io.IOName.Contains(isnotInclude)).ToList();
             }
 
-            var result = FindByIOTextInternal(workingList, ioText, recordName, recordId);
+            var result = FindByIOTextInternal(workingList, ioText, recordName ?? string.Empty, recordId);
 
             switch (result.State)
             {
@@ -75,7 +75,7 @@ namespace KdxDesigner.Services.IOAddress
                 case FindIOResultState.FoundMultiple:
                     // ★★★ 修正箇所 ★★★
                     // 複数件ヒットした場合、UI選択サービスを呼び出す
-                    IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches!, recordName, recordId);
+                    IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches ?? new List<IO>(), recordName ?? string.Empty, recordId);
 
                     if (selectedIo != null)
                     {
@@ -92,7 +92,7 @@ namespace KdxDesigner.Services.IOAddress
                         _errorAggregator.AddError(new OutputError
                         {
                             Message = $"IO '{ioText}' の選択がキャンセルされました。",
-                            RecordName = recordName,
+                            RecordName = recordName ?? string.Empty,
                             RecordId = recordId,
                             IsCritical = true // 処理を続行できないため致命的なエラーとする
                         });
@@ -134,7 +134,7 @@ namespace KdxDesigner.Services.IOAddress
                 workingList = workingList.Where(io => io.IOName != null && !io.IOName.Contains(isnotInclude)).ToList();
             }
 
-            var result = FindByIOTextInternal(workingList, ioText, operation.OperationName, operation.Id);
+            var result = FindByIOTextInternal(workingList, ioText, operation.OperationName ?? string.Empty, operation.Id);
 
             switch (result.State)
             {
@@ -143,7 +143,7 @@ namespace KdxDesigner.Services.IOAddress
 
                 case FindIOResultState.FoundMultiple:
                     // 複数件ヒットした場合、UI選択サービスを呼び出す
-                    IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches!, operation.OperationName, operation.Id);
+                    IO? selectedIo = _ioSelectorService.SelectIoFromMultiple(ioText, result.MultipleMatches ?? new List<IO>(), operation.OperationName ?? string.Empty, operation.Id);
 
                     if (selectedIo != null)
                     {
@@ -160,7 +160,7 @@ namespace KdxDesigner.Services.IOAddress
                         _errorAggregator.AddError(new OutputError
                         {
                             Message = $"IO '{ioText}' の選択がキャンセルされました。",
-                            RecordName = operation.OperationName,
+                            RecordName = operation.OperationName ?? string.Empty,
                             RecordId = operation.Id,
                             IsCritical = true // 処理を続行できないため致命的なエラーとする
                         });
@@ -185,7 +185,7 @@ namespace KdxDesigner.Services.IOAddress
             {
                 _errorAggregator.AddError(new OutputError
                 {
-                    Message = "IOテキストが指定されていません。",
+                    Message = "範囲指定でIOテキストが指定されていません。",
                     RecordName = processName,
                     RecordId = recordId,
                 });
