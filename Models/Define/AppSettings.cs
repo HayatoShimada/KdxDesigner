@@ -54,5 +54,14 @@ namespace KdxDesigner.Models.Define
 
         [Description("バルブ検索文字列")]
         public string ValveSearchWord { get; set; } = "SV";
+
+        [Description("前回選択した会社ID")]
+        public int? LastSelectedCompanyId { get; set; }
+
+        [Description("前回選択したモデルID")]
+        public int? LastSelectedModelId { get; set; }
+
+        [Description("前回選択したサイクルID")]
+        public int? LastSelectedCycleId { get; set; }
     }
 }

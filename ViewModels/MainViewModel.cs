@@ -15,6 +15,7 @@ using KdxDesigner.Views;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 
 namespace KdxDesigner.ViewModels
@@ -173,6 +174,39 @@ namespace KdxDesigner.ViewModels
             Companies = new ObservableCollection<Company>(_repository.GetCompanies());
             allProcesses = _repository.GetProcesses();
             allDetails = _repository.GetProcessDetails();
+
+            // 設定ファイルを読み込む
+            SettingsManager.Load();
+
+            // 前回の選択を復元
+            if (SettingsManager.Settings.LastSelectedCompanyId.HasValue)
+            {
+                var savedCompany = Companies.FirstOrDefault(c => c.Id == SettingsManager.Settings.LastSelectedCompanyId.Value);
+                if (savedCompany != null)
+                {
+                    SelectedCompany = savedCompany;
+
+                    // モデルも復元
+                    if (SettingsManager.Settings.LastSelectedModelId.HasValue)
+                    {
+                        var savedModel = Models.FirstOrDefault(m => m.Id == SettingsManager.Settings.LastSelectedModelId.Value);
+                        if (savedModel != null)
+                        {
+                            SelectedModel = savedModel;
+
+                            // サイクルも復元
+                            if (SettingsManager.Settings.LastSelectedCycleId.HasValue)
+                            {
+                                var savedCycle = Cycles.FirstOrDefault(c => c.Id == SettingsManager.Settings.LastSelectedCycleId.Value);
+                                if (savedCycle != null)
+                                {
+                                    SelectedCycle = savedCycle;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         partial void OnSelectedCompanyChanged(Company? value)
@@ -182,6 +216,10 @@ namespace KdxDesigner.ViewModels
             if (value == null) return;
             Models = new ObservableCollection<Model>(_repository!.GetModels().Where(m => m.CompanyId == value.Id));
             SelectedModel = null;
+
+            // 選択した会社IDを保存
+            SettingsManager.Settings.LastSelectedCompanyId = value.Id;
+            SettingsManager.Save();
         }
 
         partial void OnSelectedModelChanged(Model? value)
@@ -191,6 +229,10 @@ namespace KdxDesigner.ViewModels
             if (value == null) return;
             Plcs = new ObservableCollection<PLC>(_repository!.GetPLCs().Where(p => p.ModelId == value.Id));
             SelectedPlc = null;
+
+            // 選択したモデルIDを保存
+            SettingsManager.Settings.LastSelectedModelId = value.Id;
+            SettingsManager.Save();
         }
 
         partial void OnSelectedPlcChanged(PLC? value)
@@ -209,6 +251,10 @@ namespace KdxDesigner.ViewModels
             if (value == null) return;
             Processes = new ObservableCollection<Models.Process>(
                 allProcesses.Where(p => p.CycleId == value.Id).OrderBy(p => p.SortNumber));
+
+            // 選択したサイクルIDを保存
+            SettingsManager.Settings.LastSelectedCycleId = value.Id;
+            SettingsManager.Save();
         }
         public void OnProcessDetailSelected(ProcessDetail selected)
         {
