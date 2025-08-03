@@ -63,5 +63,8 @@ namespace KdxDesigner.Models.Define
 
         [Description("前回選択したサイクルID")]
         public int? LastSelectedCycleId { get; set; }
+
+        [Description("前回使用したメモリプロファイルID")]
+        public string? LastUsedMemoryProfileId { get; set; }
     }
 }

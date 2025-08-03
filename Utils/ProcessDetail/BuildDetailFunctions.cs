@@ -70,7 +70,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         /// L0 工程開始のLadderCsvRowを生成します。
         /// </summary>
         /// <returns></returns>
-        public List<LadderCsvRow> L0()
+        public List<LadderCsvRow> L0(MnemonicTimerDevice? timer)
         {
             List<LadderCsvRow> result = new();
 
@@ -90,41 +90,53 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L0 工程開始
             // StartSensorが設定されている場合は、IOリストからセンサーを取得
-            if (_detail.Detail.StartSensor != string.Empty && _detail.Detail.StartSensor != null)
-            { 
-                var ioSensor = _ioAddressService.GetSingleAddress(
-                    _ioList,
-                    _detail.Detail.StartSensor,
-                    false,
-                    _detail.Detail.DetailName!,
-                    _detail.Detail.Id,
-                    null);
-
-                if (ioSensor == null)
-                {
-                    result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
-                }
-                else
-                {
-                    if (_detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
-                    {
-                        result.Add(LadderRow.AddLDI(ioSensor));
-                        result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
-                    }
-                    else
-                    {
-                        result.Add(LadderRow.AddLD(ioSensor));
-                        result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
-                    }
-                }
-                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
-
+            if (timer != null)
+            {
+                // タイマーが設定されている場合は、タイマーの開始を追加
+                result.Add(LadderRow.AddLD(timer.ProcessTimerDevice));
             }
             else
             {
-                result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+                // タイマーが設定されていない場合は、常にONを使用
+                if (_detail.Detail.StartSensor != string.Empty && _detail.Detail.StartSensor != null)
+                {
+                    var ioSensor = _ioAddressService.GetSingleAddress(
+                        _ioList,
+                        _detail.Detail.StartSensor,
+                        false,
+                        _detail.Detail.DetailName!,
+                        _detail.Detail.Id,
+                        null);
 
+                    if (ioSensor == null)
+                    {
+                        result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysOFF));
+                    }
+                    else
+                    {
+                        if (_detail.Detail.StartSensor.Contains("_"))    // Containsではなく、先頭一文字
+                        {
+                            result.Add(LadderRow.AddLDI(ioSensor));
+                            result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
+                        }
+                        else
+                        {
+                            result.Add(LadderRow.AddLD(ioSensor));
+                            result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
+                        }
+                    }
+                    result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
+
+                }
+                else
+                {
+                    result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+
+                }
             }
+
+
+
             result.Add(LadderRow.AddOR(_label + (_outNum + 0).ToString()));
 
             // 複数工程かどうか

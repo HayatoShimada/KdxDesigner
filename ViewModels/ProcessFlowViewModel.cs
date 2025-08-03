@@ -45,6 +45,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private string _selectedNodeComment = "";
         [ObservableProperty] private string _selectedNodeILStart = "";
         [ObservableProperty] private int? _selectedNodeId;
+        [ObservableProperty] private int? _selectedNodeStartTimerId;
         [ObservableProperty] private string _selectedNodeDisplayName = "";
         [ObservableProperty] private bool _isNodeSelected = false;
         
@@ -61,6 +62,12 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private ObservableCollection<CompositeProcessGroup> _compositeGroups = new();
         [ObservableProperty] private ObservableCollection<Operation> _operations = new();
         [ObservableProperty] private ObservableCollection<Operation> _filteredOperations = new();
+        [ObservableProperty] private ObservableCollection<Models.Timer> _availableTimers = new();
+        [ObservableProperty] private ObservableCollection<Models.Timer> _filteredTimers = new();
+        [ObservableProperty] private string _timerFilterText = "";
+        [ObservableProperty] private bool _showOnlyOperationTimers = false;
+        [ObservableProperty] private bool _highlightStartSensor = false;
+        [ObservableProperty] private bool _highlightStartSensorWithoutTimer = false;
         
         private List<ProcessDetailConnection> _dbConnections = new();
         private List<ProcessDetailFinish> _dbFinishes = new();
@@ -294,11 +301,15 @@ namespace KdxDesigner.ViewModels
                 SelectedNodeComment = value.ProcessDetail.Comment ?? "";
                 SelectedNodeILStart = value.ProcessDetail.ILStart ?? "";
                 SelectedNodeId = value.ProcessDetail.Id;
+                SelectedNodeStartTimerId = value.ProcessDetail.StartTimerId;
                 SelectedNodeDisplayName = value.DisplayName;
                 IsNodeSelected = true;
                 
                 // FilteredOperationsを更新
                 UpdateFilteredOperations();
+                
+                // 選択されたノードのOperationIdに基づいてタイマーを読み込む
+                LoadAvailableTimers();
                 
                 // 接続の選択を解除
                 if (SelectedConnection != null)
@@ -321,8 +332,10 @@ namespace KdxDesigner.ViewModels
                 SelectedNodeComment = "";
                 SelectedNodeILStart = "";
                 SelectedNodeId = null;
+                SelectedNodeStartTimerId = null;
                 SelectedNodeDisplayName = "";
                 IsNodeSelected = false;
+                AvailableTimers.Clear();
             }
         }
         
@@ -693,9 +706,19 @@ namespace KdxDesigner.ViewModels
         {
             if (SelectedNode != null)
             {
+                // OperationIdがnullまたは0の場合は、現在のProcessDetailの値を維持
+                var operationId = SelectedNodeOperationId;
+                if (operationId == null || operationId == 0)
+                {
+                    // 現在のProcessDetailの値を使用
+                    operationId = SelectedNode.ProcessDetail.OperationId;
+                    // ViewModelのプロパティも更新
+                    SelectedNodeOperationId = operationId;
+                }
+                
                 // ProcessDetailのプロパティを更新
                 SelectedNode.ProcessDetail.DetailName = SelectedNodeDetailName;
-                SelectedNode.ProcessDetail.OperationId = SelectedNodeOperationId;
+                SelectedNode.ProcessDetail.OperationId = operationId;
                 SelectedNode.ProcessDetail.StartSensor = SelectedNodeStartSensor;
                 SelectedNode.ProcessDetail.FinishSensor = SelectedNodeFinishSensor;
                 SelectedNode.ProcessDetail.CategoryId = SelectedNodeCategoryId;
@@ -704,6 +727,7 @@ namespace KdxDesigner.ViewModels
                 SelectedNode.ProcessDetail.SortNumber = SelectedNodeSortNumber;
                 SelectedNode.ProcessDetail.Comment = SelectedNodeComment;
                 SelectedNode.ProcessDetail.ILStart = SelectedNodeILStart;
+                SelectedNode.ProcessDetail.StartTimerId = SelectedNodeStartTimerId;
                 
                 // データベースに保存
                 _repository.UpdateProcessDetail(SelectedNode.ProcessDetail);
@@ -737,6 +761,44 @@ namespace KdxDesigner.ViewModels
                 
                 // 表示名が変更された場合はUIを更新
                 OnPropertyChanged(nameof(SelectedNode));
+                
+                // UIのプロパティを更新（データベースから読み込んだ値でリフレッシュ）
+                var allDetails = _repository.GetProcessDetails();
+                var updatedDetail = allDetails.FirstOrDefault(d => d.Id == SelectedNode.ProcessDetail.Id);
+                if (updatedDetail != null)
+                {
+                    // ProcessDetailオブジェクトの値を更新
+                    SelectedNode.ProcessDetail.DetailName = updatedDetail.DetailName;
+                    SelectedNode.ProcessDetail.OperationId = updatedDetail.OperationId;
+                    SelectedNode.ProcessDetail.StartSensor = updatedDetail.StartSensor;
+                    SelectedNode.ProcessDetail.FinishSensor = updatedDetail.FinishSensor;
+                    SelectedNode.ProcessDetail.CategoryId = updatedDetail.CategoryId;
+                    SelectedNode.ProcessDetail.BlockNumber = updatedDetail.BlockNumber;
+                    SelectedNode.ProcessDetail.SkipMode = updatedDetail.SkipMode;
+                    SelectedNode.ProcessDetail.SortNumber = updatedDetail.SortNumber;
+                    SelectedNode.ProcessDetail.Comment = updatedDetail.Comment;
+                    SelectedNode.ProcessDetail.ILStart = updatedDetail.ILStart;
+                    SelectedNode.ProcessDetail.StartTimerId = updatedDetail.StartTimerId;
+                    
+                    // ViewModelのプロパティも更新
+                    SelectedNodeDetailName = updatedDetail.DetailName ?? "";
+                    SelectedNodeOperationId = updatedDetail.OperationId;
+                    SelectedNodeStartSensor = updatedDetail.StartSensor ?? "";
+                    SelectedNodeFinishSensor = updatedDetail.FinishSensor ?? "";
+                    SelectedNodeCategoryId = updatedDetail.CategoryId;
+                    SelectedNodeBlockNumber = updatedDetail.BlockNumber;
+                    SelectedNodeSkipMode = updatedDetail.SkipMode ?? "";
+                    SelectedNodeSortNumber = updatedDetail.SortNumber;
+                    SelectedNodeComment = updatedDetail.Comment ?? "";
+                    SelectedNodeILStart = updatedDetail.ILStart ?? "";
+                    SelectedNodeStartTimerId = updatedDetail.StartTimerId;
+                    
+                    // 表示名を再度更新
+                    SelectedNode.UpdateDisplayName();
+                    
+                    // 開始センサー関連のプロパティ変更を通知
+                    SelectedNode.NotifyStartSensorPropertiesChanged();
+                }
             }
         }
         
@@ -1502,12 +1564,102 @@ namespace KdxDesigner.ViewModels
         
         private void UpdateFilteredOperations()
         {
+            // 現在選択されているOperationIdを保存
+            var currentOperationId = SelectedNodeOperationId;
+            
             FilteredOperations.Clear();
             var filteredOps = Operations.Where(o => o.CycleId == CycleId).OrderBy(o => o.OperationName);
             foreach (var operation in filteredOps)
             {
                 FilteredOperations.Add(operation);
             }
+            
+            // FilteredOperationsが更新された後、選択を復元
+            if (currentOperationId.HasValue && FilteredOperations.Any(o => o.Id == currentOperationId.Value))
+            {
+                SelectedNodeOperationId = currentOperationId;
+            }
+        }
+
+
+        private void LoadAvailableTimers()
+        {
+            AvailableTimers.Clear();
+            
+            // すべてのタイマーを取得
+            var allTimers = _repository.GetTimersByCycleId(CycleId);
+            
+            foreach (var timer in allTimers.OrderBy(t => t.TimerName))
+            {
+                AvailableTimers.Add(timer);
+            }
+            
+            // フィルタリングされたタイマーを初期表示
+            ApplyTimerFilter();
+        }
+
+        private void ApplyTimerFilter()
+        {
+            // 選択されているタイマーIDを一時保存
+            var previousSelectedId = SelectedNodeStartTimerId;
+            
+            FilteredTimers.Clear();
+            
+            var query = AvailableTimers.AsEnumerable();
+            
+            // テキストフィルタ
+            if (!string.IsNullOrWhiteSpace(TimerFilterText))
+            {
+                var filterText = TimerFilterText.ToLower();
+                query = query.Where(t => 
+                    (t.TimerName?.ToLower().Contains(filterText) ?? false) ||
+                    (t.ID.ToString().Contains(filterText)));
+            }
+            
+            // Operation関連のタイマーのみ表示
+            if (ShowOnlyOperationTimers && SelectedNodeOperationId.HasValue)
+            {
+                // MnemonicIdが3（Operation）で、RecordIdが選択されたOperationIdのタイマーデバイスを取得
+                var timerDevices = _repository.GetTimersByRecordId(CycleId, 3, SelectedNodeOperationId.Value);
+                var operationTimerIds = timerDevices.Select(td => td.TimerId).ToHashSet();
+                query = query.Where(t => operationTimerIds.Contains(t.ID));
+            }
+            
+            foreach (var timer in query)
+            {
+                FilteredTimers.Add(timer);
+            }
+            
+            // フィルタリング後も選択状態を維持
+            // FilteredTimersに含まれている場合は選択を維持、含まれていない場合はnullにする
+            if (previousSelectedId.HasValue && FilteredTimers.Any(t => t.ID == previousSelectedId.Value))
+            {
+                SelectedNodeStartTimerId = previousSelectedId;
+            }
+            else if (previousSelectedId.HasValue)
+            {
+                // フィルタリングで選択していたタイマーが除外された場合
+                SelectedNodeStartTimerId = null;
+            }
+            
+            // 選択状態の変更を通知
+            OnPropertyChanged(nameof(SelectedNodeStartTimerId));
+        }
+        
+        partial void OnTimerFilterTextChanged(string value)
+        {
+            ApplyTimerFilter();
+        }
+        
+        partial void OnShowOnlyOperationTimersChanged(bool value)
+        {
+            ApplyTimerFilter();
+        }
+        
+        partial void OnSelectedNodeStartTimerIdChanged(int? value)
+        {
+            // タイマーが変更されてもOperationIdは維持する
+            // 何もしない - OperationIdの変更を防ぐ
         }
         
     }

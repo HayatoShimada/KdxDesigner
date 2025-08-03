@@ -127,6 +127,18 @@ namespace KdxDesigner.Services.Access
             return connection.Query<Models.Timer>(sql, new { CycleId = cycleId }).ToList();
         }
 
+        public List<MnemonicTimerDevice> GetTimersByRecordId(int cycleId, int mnemonicId, int recordId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM MnemonicTimerDevice WHERE CycleId = @CycleId AND MnemonicId = @MnemonicId AND RecordId = @RecordId";
+            return connection.Query<MnemonicTimerDevice>(sql, new
+                          {
+                              CycleId = cycleId,
+                              MnemonicId = mnemonicId,
+                              RecordId = recordId
+                          }).ToList();
+        }
+
         public void AddTimer(Models.Timer timer)
         {
             using var connection = new OleDbConnection(ConnectionString);
@@ -313,7 +325,8 @@ UPDATE ProcessDetail SET
     SkipMode = ?SkipMode?,
     SortNumber = ?SortNumber?,
     Comment = ?Comment?,
-    ILStart = ?ILStart?
+    ILStart = ?ILStart?,
+    StartTimerId = ?StartTimerId?
 WHERE Id = ?Id?";
 
                 connection.Execute(sql, new
@@ -328,6 +341,7 @@ WHERE Id = ?Id?";
                     SortNumber = processDetail.SortNumber,
                     Comment = processDetail.Comment ?? "",
                     ILStart = processDetail.ILStart ?? "",
+                    StartTimerId = processDetail.StartTimerId,
                     Id = processDetail.Id
                 }, transaction);
                 
@@ -357,11 +371,11 @@ WHERE Id = ?Id?";
 INSERT INTO ProcessDetail (
     ProcessId, OperationId, DetailName, StartSensor, 
     CategoryId, FinishSensor, BlockNumber, SkipMode, 
-    CycleId, SortNumber, Comment, ILStart
+    CycleId, SortNumber, Comment, ILStart, StartTimerId
 ) VALUES (
     ?ProcessId?, ?OperationId?, ?DetailName?, ?StartSensor?, 
     ?CategoryId?, ?FinishSensor?, ?BlockNumber?, ?SkipMode?, 
-    ?CycleId?, ?SortNumber?, ?Comment?, ?ILStart?
+    ?CycleId?, ?SortNumber?, ?Comment?, ?ILStart?, ?StartTimerId?
 )";
                 connection.Execute(sql, new
                 {
@@ -376,7 +390,8 @@ INSERT INTO ProcessDetail (
                     processDetail.CycleId,
                     processDetail.SortNumber,
                     processDetail.Comment,
-                    processDetail.ILStart
+                    processDetail.ILStart,
+                    processDetail.StartTimerId
                 }, transaction);
 
                 // 挿入されたレコードのIDを取得

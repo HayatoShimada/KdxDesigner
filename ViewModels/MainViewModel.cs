@@ -206,6 +206,9 @@ namespace KdxDesigner.ViewModels
             // 設定ファイルを読み込む
             SettingsManager.Load();
 
+            // メモリプロファイルを読み込む
+            LoadMemoryProfile();
+
             // 前回の選択を復元
             if (SettingsManager.Settings.LastSelectedCompanyId.HasValue)
             {
@@ -413,6 +416,43 @@ namespace KdxDesigner.ViewModels
             view.ShowDialog();
         }
 
+        [RelayCommand]
+        private void OpenMemoryProfileManager()
+        {
+            var view = new MemoryProfileView(this);
+            view.ShowDialog();
+        }
+
+        private void LoadMemoryProfile()
+        {
+            var profileManager = new MemoryProfileManager();
+            MemoryProfile? profileToLoad = null;
+
+            // 前回使用したプロファイルを取得
+            if (!string.IsNullOrEmpty(SettingsManager.Settings.LastUsedMemoryProfileId))
+            {
+                profileToLoad = profileManager.GetProfile(SettingsManager.Settings.LastUsedMemoryProfileId);
+            }
+
+            // 前回のプロファイルがない場合はデフォルトプロファイルを使用
+            if (profileToLoad == null)
+            {
+                profileToLoad = profileManager.GetDefaultProfile();
+            }
+
+            // プロファイルを適用
+            if (profileToLoad != null)
+            {
+                profileManager.ApplyProfileToViewModel(profileToLoad, this);
+            }
+        }
+
+        public void SaveLastUsedProfile(string profileId)
+        {
+            SettingsManager.Settings.LastUsedMemoryProfileId = profileId;
+            SettingsManager.Save();
+        }
+
         #endregion
 
         // 出力処理
@@ -582,7 +622,20 @@ namespace KdxDesigner.ViewModels
             if (_repository == null || SelectedPlc == null || _ioSelectorService == null)
             {
                 MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
-                return new();
+                return (
+                    (new List<MnemonicDeviceWithProcess>(),
+                     new List<MnemonicDeviceWithProcessDetail>(),
+                     new List<MnemonicTimerDeviceWithDetail>(),
+                     new List<MnemonicDeviceWithOperation>(),
+                     new List<MnemonicDeviceWithCylinder>(),
+                     new List<MnemonicTimerDeviceWithOperation>(),
+                     new List<MnemonicTimerDeviceWithCylinder>(),
+                     new List<MnemonicSpeedDevice>(),
+                     new List<Error>(),
+                     new List<ProsTime>(),
+                     new List<IO>()),
+                    new List<OutputError>()
+                );
             }
 
             var plcId = SelectedPlc!.Id;

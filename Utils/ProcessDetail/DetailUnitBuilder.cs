@@ -85,8 +85,8 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             var detailFunctions = CreateDetailFunctions();
 
-            // L0 工程開始
-            result.AddRange(detailFunctions.L0());
+            var timer = GetTimerForOperation();
+            result.AddRange(detailFunctions.L0(timer));
 
             // L1 操作開始
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
@@ -138,7 +138,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
 
             //3行目 M3300
@@ -170,7 +181,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             // 3行目　センサー名称からIOリスト参照
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
@@ -255,7 +277,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+                        // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
 
             //3行目　センサー名称からIOリスト参照
@@ -353,7 +386,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             // L1 操作開始
             // FinishSensorが設定されている場合は、IOリストからセンサーを取得
@@ -504,9 +548,20 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
 
-            
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
+
+
 
             // L1 操作開始
             if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
@@ -572,7 +627,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             // L1 操作開始
             // ProcessDetailFinishテーブルから終了工程IDを取得
@@ -654,7 +720,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             // L1 操作開始
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
@@ -769,7 +846,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timersDetail = _repository.GetTimersByRecordId(_mainViewModel.SelectedCycle!.Id, 3, _detail.Detail.OperationId.Value);
+
+                var timer = timersDetail.Where(t => t.TimerCategoryId == 15).FirstOrDefault();
+
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             var timers = detailTimers.Where(t => t.Timer.RecordId == _detail.Detail.Id);
 
@@ -843,7 +934,21 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timersDetail = _repository.GetTimersByRecordId(_mainViewModel.SelectedCycle!.Id, 3, _detail.Detail.OperationId.Value);
+
+                var timer = timersDetail.Where(t => t.TimerCategoryId == 15).FirstOrDefault();
+
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             var timers = detailTimers.Where(t => t.Timer.RecordId == _detail.Detail.Id);
 
@@ -906,7 +1011,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             // L1 操作実行
             result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
@@ -954,7 +1070,18 @@ namespace KdxDesigner.Utils.ProcessDetail
             result.Add(CreateStatement());
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
-            result.AddRange(detailFunctions.L0());
+            // L0 工程開始
+            if (_detail.Detail.OperationId != null)
+            {
+                var timer = GetTimerForOperation();
+                result.AddRange(detailFunctions.L0(timer));
+
+            }
+            else
+            {
+                result.AddRange(detailFunctions.L0(null));
+
+            }
 
             // L4 操作実行
             result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
@@ -964,7 +1091,28 @@ namespace KdxDesigner.Utils.ProcessDetail
         }
 
 
-        #region Private Helper Methods
+
+        /// <summary>
+        /// OperationIdに基づいて適切なTimerを取得
+        /// </summary>
+        private MnemonicTimerDevice? GetTimerForOperation()
+        {
+            // StartTimerIdが設定されている場合は、直接そのタイマーを使用
+            if (_detail.Detail.StartTimerId.HasValue)
+            {
+                // MnemonicTimerDeviceテーブルから、指定されたTimerIdを持つレコードを取得
+                var timerDevices = _repository.GetMnemonicTimerDevices();
+                var timerDevice = timerDevices.FirstOrDefault(t => 
+                    t.TimerId == _detail.Detail.StartTimerId.Value);
+                
+                if (timerDevice != null)
+                {
+                    return timerDevice;
+                }
+            }
+            
+            return null; // タイマーが見つからない場合はnullを返す
+        }
 
         /// <summary>
         /// 行間ステートメントを生成する共通処理
@@ -995,6 +1143,5 @@ namespace KdxDesigner.Utils.ProcessDetail
             );
         }
 
-        #endregion
     }
 }

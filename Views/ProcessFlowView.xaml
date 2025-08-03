@@ -29,6 +29,17 @@
                 </StackPanel>
             </Button>
             <Separator/>
+            <CheckBox IsChecked="{Binding HighlightStartSensor}" 
+                      VerticalAlignment="Center" 
+                      Margin="10,0,5,0">
+                <TextBlock Text="開始センサー有りを強調表示"/>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding HighlightStartSensorWithoutTimer}" 
+                      VerticalAlignment="Center" 
+                      Margin="5,0">
+                <TextBlock Text="タイマー未設定を強調表示"/>
+            </CheckBox>
+            <Separator/>
             <Button Command="{Binding AddNewNodeCommand}" Padding="10,5">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="➕" Margin="0,0,5,0"/>
@@ -317,6 +328,25 @@
                                                     <Setter Property="Background" Value="LightBlue"/>
                                                     <Setter Property="BorderBrush" Value="Blue"/>
                                                     <Setter Property="BorderThickness" Value="3"/>
+                                                </MultiDataTrigger>
+                                                <!-- 開始センサー有りの強調表示 -->
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding HasStartSensor}" Value="True"/>
+                                                        <Condition Binding="{Binding DataContext.HighlightStartSensor, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="BorderBrush" Value="Green"/>
+                                                    <Setter Property="BorderThickness" Value="3"/>
+                                                </MultiDataTrigger>
+                                                <!-- タイマー未設定の強調表示 -->
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding HasStartSensorWithoutTimer}" Value="True"/>
+                                                        <Condition Binding="{Binding DataContext.HighlightStartSensorWithoutTimer, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="BorderBrush" Value="Red"/>
+                                                    <Setter Property="BorderThickness" Value="4"/>
+                                                    <Setter Property="Background" Value="LightPink"/>
                                                 </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>

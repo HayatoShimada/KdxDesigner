@@ -11,6 +11,9 @@
       "Bash(grep:*)",
       "Bash(findstr:*)",
       "Bash(mv:*)",
+      "Bash(dotnet build:*)",
+      "Bash(findstr:*)",
+      "Bash(find:*)",
       "Bash(dotnet build:*)"
     ],
     "deny": []

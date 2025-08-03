@@ -99,6 +99,12 @@ namespace KdxDesigner.Services.Access
         List<Models.Timer> GetTimersByCycleId(int cycleId);
 
         /// <summary>
+        /// 指定されたサイクルIDに紐づくタイマー情報を取得します。
+        /// </summary>
+        /// <param name="cycleId">取得対象のサイクルID。</param>
+        List<MnemonicTimerDevice> GetTimersByRecordId(int cycleId, int mnemonicId, int recordId);
+
+        /// <summary>
         /// 新しいタイマーを追加します。
         /// </summary>
         /// <param name="timer">追加するタイマー情報。</param>
