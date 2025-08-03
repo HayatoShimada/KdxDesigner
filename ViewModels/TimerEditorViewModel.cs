@@ -44,6 +44,9 @@ namespace KdxDesigner.ViewModels
 
         [ObservableProperty]
         private bool _isLoading;
+        
+        [ObservableProperty]
+        private bool _showUnassignedOnly;
 
         public ICollectionView FilteredTimers { get; }
 
@@ -87,6 +90,10 @@ namespace KdxDesigner.ViewModels
         private bool FilterTimers(object item)
         {
             if (item is not TimerViewModel vm)
+                return false;
+
+            // MnemonicType未設定のみ表示フィルタ
+            if (ShowUnassignedOnly && vm.MnemonicId != null)
                 return false;
 
             // MnemonicTypeでフィルタ
@@ -383,6 +390,11 @@ namespace KdxDesigner.ViewModels
                 // RecordIdsが更新されたので表示を更新
                 SelectedTimer.RecordIdsDisplay = string.Join(", ", SelectedTimer.RecordIds);
             }
+        }
+        
+        partial void OnShowUnassignedOnlyChanged(bool value)
+        {
+            FilteredTimers.Refresh();
         }
     }
 }

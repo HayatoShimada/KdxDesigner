@@ -66,11 +66,15 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="MnemonicType:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                         <ComboBox Grid.Column="1" ItemsSource="{Binding MnemonicTypes}" 
                                   SelectedItem="{Binding SelectedMnemonicType}"
                                   DisplayMemberPath="TableName"/>
+                        <CheckBox Grid.Column="2" Content="未設定のみ表示" 
+                                  IsChecked="{Binding ShowUnassignedOnly}" 
+                                  VerticalAlignment="Center" Margin="10,0,0,0"/>
                     </Grid>
 
                     <TextBox Grid.Row="1" Margin="5" 
