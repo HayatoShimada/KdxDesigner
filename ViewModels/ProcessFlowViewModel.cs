@@ -20,6 +20,7 @@ namespace KdxDesigner.ViewModels
         private Point _dragOffset;
         private ProcessFlowNode? _connectionStartNode;
         private bool _isCreatingConnection;
+        private bool _isCreatingFinishConnection;
         private bool _isSelecting;
         private Point _selectionStartPoint;
         private List<ProcessFlowNode> _selectedNodes = new();
@@ -68,6 +69,7 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool _showOnlyOperationTimers = false;
         [ObservableProperty] private bool _highlightStartSensor = false;
         [ObservableProperty] private bool _highlightStartSensorWithoutTimer = false;
+        [ObservableProperty] private bool _canChangeConnectionType = false;
         
         private List<ProcessDetailConnection> _dbConnections = new();
         private List<ProcessDetailFinish> _dbFinishes = new();
@@ -357,8 +359,16 @@ namespace KdxDesigner.ViewModels
                 // ノードの選択を解除
                 SelectedNode = null;
                 
+                // 接続種別変更が可能かチェック（ToNodeが期間工程または複合工程の場合）
+                CanChangeConnectionType = value.ToNode.ProcessDetail.CategoryId == 15 || 
+                                        value.ToNode.ProcessDetail.CategoryId == 18;
+                
                 // 接続情報ウィンドウを表示するイベントを発生させる
                 ConnectionSelected?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                CanChangeConnectionType = false;
             }
         }
         
@@ -399,10 +409,16 @@ namespace KdxDesigner.ViewModels
         private void NodeMouseDown(ProcessFlowNode node)
         {
             
-            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+            if ((Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && 
+                (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)))
             {
-                // Ctrlキーが押されている場合は接続モード
-                StartConnection(node);
+                // Ctrl+Shiftキーが押されている場合は終了条件接続モード
+                StartConnection(node, true);
+            }
+            else if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+            {
+                // Ctrlキーが押されている場合は通常の接続モード
+                StartConnection(node, false);
             }
             else
             {
@@ -469,7 +485,7 @@ namespace KdxDesigner.ViewModels
             if (_isCreatingConnection && _connectionStartNode != null && _connectionStartNode != node)
             {
                 // 接続を完了
-                CreateConnection(_connectionStartNode, node);
+                CreateConnection(_connectionStartNode, node, _isCreatingFinishConnection);
             }
             
             if (_selectedNodes.Count > 0)
@@ -618,10 +634,11 @@ namespace KdxDesigner.ViewModels
             EndConnection();
         }
         
-        private void StartConnection(ProcessFlowNode node)
+        private void StartConnection(ProcessFlowNode node, bool isFinishConnection = false)
         {
             _connectionStartNode = node;
             _isCreatingConnection = true;
+            _isCreatingFinishConnection = isFinishConnection;
             IsConnecting = true;
             ConnectionStartPoint = new Point(
                 node.Position.X + 70,
@@ -633,33 +650,73 @@ namespace KdxDesigner.ViewModels
         {
             _connectionStartNode = null;
             _isCreatingConnection = false;
+            _isCreatingFinishConnection = false;
             IsConnecting = false;
         }
         
-        private void CreateConnection(ProcessFlowNode from, ProcessFlowNode to)
+        private void CreateConnection(ProcessFlowNode from, ProcessFlowNode to, bool isFinishConnection = false)
         {
-            // 既存の接続を確認
-            var existingConnection = Connections.FirstOrDefault(
-                c => c.FromNode == from && c.ToNode == to
-            );
-            
-            if (existingConnection == null)
+            if (isFinishConnection)
             {
-                // 新しい接続を作成（変更フラグをtrueに設定）
-                var connection = new ProcessFlowConnection(from, to, true);
-                AllConnections.Add(connection);
-                if (!IsFiltered || (FilterNode != null && GetRelatedNodes(FilterNode).Contains(from) && GetRelatedNodes(FilterNode).Contains(to)))
+                // 終了条件接続の場合
+                // fromが終了工程、toが期間工程（カテゴリID=15）または複合工程（カテゴリID=18）である必要がある
+                if (to.ProcessDetail.CategoryId != 15 && to.ProcessDetail.CategoryId != 18)
                 {
-                    Connections.Add(connection);
+                    System.Windows.MessageBox.Show("終了条件は期間工程または複合工程に対してのみ設定できます。", "エラー", 
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    return;
                 }
                 
-                // 中間テーブルに追加
-                var dbConnection = new ProcessDetailConnection
+                // 既存の終了条件接続を確認
+                var existingFinishConnection = AllConnections.FirstOrDefault(
+                    c => c.FromNode == from && c.ToNode == to && c.IsFinishConnection
+                );
+                
+                if (existingFinishConnection == null)
                 {
-                    FromProcessDetailId = from.Id,
-                    ToProcessDetailId = to.Id
-                };
-                _repository.AddProcessDetailConnection(dbConnection);
+                    // 新しい終了条件接続を作成
+                    var connection = new ProcessFlowConnection(from, to, true);
+                    connection.IsFinishConnection = true;
+                    AllConnections.Add(connection);
+                    if (!IsFiltered || (FilterNode != null && GetRelatedNodes(FilterNode).Contains(from) && GetRelatedNodes(FilterNode).Contains(to)))
+                    {
+                        Connections.Add(connection);
+                    }
+                    
+                    // ProcessDetailFinishテーブルに追加
+                    var dbFinish = new ProcessDetailFinish
+                    {
+                        ProcessDetailId = to.Id,  // 期間工程
+                        FinishProcessDetailId = from.Id  // 終了工程
+                    };
+                    _repository.AddProcessDetailFinish(dbFinish);
+                }
+            }
+            else
+            {
+                // 通常の接続の場合
+                var existingConnection = Connections.FirstOrDefault(
+                    c => c.FromNode == from && c.ToNode == to && !c.IsFinishConnection
+                );
+                
+                if (existingConnection == null)
+                {
+                    // 新しい接続を作成（変更フラグをtrueに設定）
+                    var connection = new ProcessFlowConnection(from, to, true);
+                    AllConnections.Add(connection);
+                    if (!IsFiltered || (FilterNode != null && GetRelatedNodes(FilterNode).Contains(from) && GetRelatedNodes(FilterNode).Contains(to)))
+                    {
+                        Connections.Add(connection);
+                    }
+                    
+                    // 中間テーブルに追加
+                    var dbConnection = new ProcessDetailConnection
+                    {
+                        FromProcessDetailId = from.Id,
+                        ToProcessDetailId = to.Id
+                    };
+                    _repository.AddProcessDetailConnection(dbConnection);
+                }
             }
         }
         
@@ -669,8 +726,16 @@ namespace KdxDesigner.ViewModels
             AllConnections.Remove(connection);
             Connections.Remove(connection);
             
-            // 中間テーブルから削除
-            _repository.DeleteConnectionsByFromAndTo(connection.FromNode.Id, connection.ToNode.Id);
+            if (connection.IsFinishConnection)
+            {
+                // 終了条件接続の場合、ProcessDetailFinishから削除
+                _repository.DeleteFinishesByProcessAndFinish(connection.ToNode.Id, connection.FromNode.Id);
+            }
+            else
+            {
+                // 通常の接続の場合、中間テーブルから削除
+                _repository.DeleteConnectionsByFromAndTo(connection.FromNode.Id, connection.ToNode.Id);
+            }
             
             // 削除によってtoNodeに接続されている他の接続も変更済みとしてマーク
             var toNode = connection.ToNode;
@@ -1660,6 +1725,54 @@ namespace KdxDesigner.ViewModels
         {
             // タイマーが変更されてもOperationIdは維持する
             // 何もしない - OperationIdの変更を防ぐ
+        }
+        
+        [RelayCommand]
+        private void ChangeConnectionType()
+        {
+            if (SelectedConnection == null || !CanChangeConnectionType) return;
+            
+            if (SelectedConnection.IsFinishConnection)
+            {
+                // 終了条件から通常の接続に変更
+                // ProcessDetailFinishから削除
+                _repository.DeleteFinishesByProcessAndFinish(SelectedConnection.ToNode.Id, SelectedConnection.FromNode.Id);
+                
+                // ProcessDetailConnectionに追加
+                var dbConnection = new ProcessDetailConnection
+                {
+                    FromProcessDetailId = SelectedConnection.FromNode.Id,
+                    ToProcessDetailId = SelectedConnection.ToNode.Id
+                };
+                _repository.AddProcessDetailConnection(dbConnection);
+                
+                // フラグを更新
+                SelectedConnection.IsFinishConnection = false;
+            }
+            else
+            {
+                // 通常の接続から終了条件に変更
+                // ProcessDetailConnectionから削除
+                _repository.DeleteConnectionsByFromAndTo(SelectedConnection.FromNode.Id, SelectedConnection.ToNode.Id);
+                
+                // ProcessDetailFinishに追加
+                var dbFinish = new ProcessDetailFinish
+                {
+                    ProcessDetailId = SelectedConnection.ToNode.Id,  // 期間工程
+                    FinishProcessDetailId = SelectedConnection.FromNode.Id  // 終了工程
+                };
+                _repository.AddProcessDetailFinish(dbFinish);
+                
+                // フラグを更新
+                SelectedConnection.IsFinishConnection = true;
+            }
+            
+            // 変更をUIに反映
+            OnPropertyChanged(nameof(SelectedConnection));
+            // 接続の再選択で変更を反映
+            var temp = SelectedConnection;
+            SelectedConnection = null;
+            SelectedConnection = temp;
         }
         
     }

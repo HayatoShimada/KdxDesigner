@@ -89,7 +89,8 @@
                 </StackPanel>
             </Button>
             <Separator/>
-            <TextBlock Text="Ctrlキーを押しながらノードをクリックして接続を作成" VerticalAlignment="Center" Margin="10,0"/>
+            <TextBlock Text="Ctrl+クリック: 通常接続、Ctrl+Shift+クリック: 終了条件接続（期間・複合工程）" 
+                      VerticalAlignment="Center" Margin="10,0" FontSize="11" Foreground="DarkGray"/>
             <TextBlock VerticalAlignment="Center" Margin="10,0">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
