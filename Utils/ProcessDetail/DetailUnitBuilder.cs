@@ -850,7 +850,6 @@ namespace KdxDesigner.Utils.ProcessDetail
             if (_detail.Detail.OperationId != null)
             {
                 var timersDetail = _repository.GetTimersByRecordId(_mainViewModel.SelectedCycle!.Id, 3, _detail.Detail.OperationId.Value);
-
                 var timer = timersDetail.Where(t => t.TimerCategoryId == 15).FirstOrDefault();
 
                 result.AddRange(detailFunctions.L0(timer));

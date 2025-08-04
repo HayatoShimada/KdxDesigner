@@ -3,9 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KdxDesigner.Views"
         mc:Ignorable="d"
         Title="メモリプロファイル管理" Height="600" Width="800"
         WindowStartupLocation="CenterOwner">
+    
+    <Window.Resources>
+        <local:BoolToDefaultTextConverter x:Key="BoolToDefaultTextConverter"/>
+    </Window.Resources>
     
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -110,6 +115,61 @@
                             <TextBlock Grid.Row="11" Grid.Column="1" Text="{Binding CyTimeStartZR}" Margin="0,2"/>
                         </Grid>
                         
+                        <!-- Memoryテーブルレコード数予測 -->
+                        <Border BorderBrush="LightGray" BorderThickness="1" CornerRadius="5" Padding="10" Margin="0,20,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Memoryテーブルレコード数予測" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <TextBlock Text="{Binding DataContext.MemoryRecordSummary, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                          TextWrapping="Wrap" LineHeight="20"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- デバイス重複チェック -->
+                        <Border BorderBrush="LightGray" BorderThickness="1" CornerRadius="5" Padding="10" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="デバイスアドレス重複チェック" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <ItemsControl ItemsSource="{Binding DataContext.DeviceOverlaps, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="Red" BorderThickness="1" CornerRadius="3" Padding="5" Margin="0,2" Background="#FFFEEEE">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Message}" Foreground="Red" FontWeight="Bold"/>
+                                                    <TextBlock>
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="  {0}: {1}">
+                                                                <Binding Path="Category1"/>
+                                                                <Binding Path="Range1"/>
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                    <TextBlock>
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="  {0}: {1}">
+                                                                <Binding Path="Category2"/>
+                                                                <Binding Path="Range2"/>
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="重複がありません" Foreground="Green" Margin="0,5,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.DeviceOverlaps.Count, RelativeSource={RelativeSource AncestorType=Window}}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                        
                         <!-- プロファイル操作ボタン -->
                         <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
                             <Button Content="このプロファイルを読み込む" Command="{Binding DataContext.LoadProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
@@ -150,8 +210,4 @@
         <Button Grid.Row="3" Content="閉じる" Click="CloseButton_Click" 
                 Width="100" Height="30" HorizontalAlignment="Right"/>
     </Grid>
-    
-    <Window.Resources>
-        <local:BoolToDefaultTextConverter x:Key="BoolToDefaultTextConverter" xmlns:local="clr-namespace:KdxDesigner.Views"/>
-    </Window.Resources>
 </Window>

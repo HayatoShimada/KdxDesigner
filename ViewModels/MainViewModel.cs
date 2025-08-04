@@ -419,7 +419,12 @@ namespace KdxDesigner.ViewModels
         [RelayCommand]
         private void OpenMemoryProfileManager()
         {
-            var view = new MemoryProfileView(this);
+            if (_repository == null)
+            {
+                MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+                return;
+            }
+            var view = new MemoryProfileView(this, _repository);
             view.ShowDialog();
         }
 

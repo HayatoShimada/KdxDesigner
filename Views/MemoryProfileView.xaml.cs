@@ -4,15 +4,16 @@ using System.Windows;
 using System.Windows.Data;
 
 using KdxDesigner.ViewModels;
+using KdxDesigner.Services.Access;
 
 namespace KdxDesigner.Views
 {
     public partial class MemoryProfileView : Window
     {
-        public MemoryProfileView(MainViewModel mainViewModel)
+        public MemoryProfileView(MainViewModel mainViewModel, IAccessRepository repository)
         {
             InitializeComponent();
-            DataContext = new MemoryProfileViewModel(mainViewModel);
+            DataContext = new MemoryProfileViewModel(mainViewModel, repository);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
