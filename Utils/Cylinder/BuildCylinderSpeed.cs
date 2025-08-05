@@ -232,28 +232,6 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.ManualButton());
             result.Add(LadderRow.AddNOP());
 
-            // 行き方向自動
-            result.Add(LadderRow.AddLD(label + (startNum + 0).ToString()));
-            result.Add(LadderRow.AddOR(label + (startNum + 2).ToString()));
-            result.Add(LadderRow.AddOUT(label + (startNum + 12).ToString()));
-
-            // 帰り方向自動
-            result.Add(LadderRow.AddLD(label + (startNum + 1).ToString()));
-            result.Add(LadderRow.AddOR(label + (startNum + 3).ToString()));
-            result.Add(LadderRow.AddOUT(label + (startNum + 13).ToString()));
-
-            // 指令ON
-            result.Add(LadderRow.AddLD(label + (startNum + 12).ToString()));
-            result.Add(LadderRow.AddOR(label + (startNum + 13).ToString()));
-            result.Add(LadderRow.AddLD(label + (startNum + 7).ToString()));
-            result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
-            result.Add(LadderRow.AddORB());
-            result.Add(LadderRow.AddLD(label + (startNum + 8).ToString()));
-            result.Add(LadderRow.AddAND(cylinder.Cylinder.ManualButton));
-            result.Add(LadderRow.AddORB());
-            result.Add(LadderRow.AddOUT(label + (startNum + 14).ToString()));
-            result.Add(LadderRow.AddNOP());
-
             // 強制減速・手動操作
             var timerList = cylinderTimers.Where(t => t.Timer.RecordId == cylinder.Cylinder.Id).ToList();
             var fltTimer = timerList.FirstOrDefault(t => t.Timer.TimerCategoryId == 14); // 強制減速タイマ

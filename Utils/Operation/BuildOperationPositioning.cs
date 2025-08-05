@@ -159,26 +159,9 @@ namespace KdxDesigner.Utils.Operation
             var operationTimerStable = timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
             var operationTimerONWait = timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
 
-            if (operationTimerStable != null)
-            {
-                result.Add(LadderRow.AddLD(label + (outNum + 18).ToString()));
-                result.Add(LadderRow.AddANI(label + (outNum + 19).ToString()));
-                result.AddRange(LadderRow.AddTimer(
-                    operationTimerStable.Timer.ProcessTimerDevice ?? "",
-                    operationTimerStable.Timer.TimerDevice ?? ""));
-            }
-
             // M19
-            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
-            if (operationTimerStable != null)
-            {
-                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.ProcessTimerDevice!));
+            result.AddRange(operationFunction.GenerateM19());
 
-            }
-            result.Add(LadderRow.AddOR(label + (outNum + 19).ToString()));
-            result.Add(LadderRow.AddAND(label + (outNum + 18).ToString()));
-            result.Add(LadderRow.AddOUT(label + (outNum + 19).ToString()));
 
             // Reset信号の生成
             result.AddRange(operationFunction.GenerateReset());

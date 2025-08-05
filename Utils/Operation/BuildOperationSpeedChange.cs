@@ -56,7 +56,9 @@ namespace KdxDesigner.Utils.Operation
             }
 
             List<MnemonicTimerDeviceWithOperation> operationTimers = timers
-                .Where(t => t.Operation.Id == operation!.Operation.Id).ToList();
+                .Where(t => t.Timer.MnemonicId == 3 && t.Timer.RecordId == operation.Operation.Id)
+                .ToList();
+
 
             string id = operation!.Operation.Id.ToString();
             if (string.IsNullOrEmpty(operation.Operation.OperationName))
@@ -156,7 +158,8 @@ namespace KdxDesigner.Utils.Operation
             }
 
             // M17
-            var operationTimerONWait = timers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
+            var operationTimersSecond = timers.Where(t => t.Operation.Id == operation.Operation.Id).ToList();
+            var operationTimerONWait = operationTimersSecond.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {

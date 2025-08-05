@@ -457,8 +457,12 @@ namespace KdxDesigner.Utils.Operation
         public List<LadderCsvRow> GenerateM19()
         {
             var result = new List<LadderCsvRow>();
+
             var thisTimer = _timers.Where(t => t.Timer.RecordId == _operation.Operation.Id).ToList();
-            var operationTimerStable = thisTimer.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
+            List<MnemonicTimerDeviceWithOperation> operationTimers = thisTimer
+.Where(t => t.Timer.MnemonicId == 3 && t.Timer.RecordId == _operation.Operation.Id)
+.ToList();
+            var operationTimerStable = operationTimers.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
 
             if (operationTimerStable != null)
             {
