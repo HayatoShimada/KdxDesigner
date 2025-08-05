@@ -49,5 +49,8 @@ namespace KdxDesigner.Models
             OnPropertyChanged(nameof(HasStartSensor));
             OnPropertyChanged(nameof(HasStartSensorWithoutTimer));
         }
+        
+        // 他サイクルのノードかどうかを示すプロパティ
+        [ObservableProperty] private bool _isOtherCycleNode = false;
     }
 }

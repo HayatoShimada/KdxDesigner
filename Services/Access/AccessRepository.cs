@@ -592,6 +592,13 @@ INSERT INTO ProcessDetail (
                 WHERE pd.CycleId = ?CycleId?";
             return connection.Query<ProcessDetailConnection>(sql, new { CycleId = cycleId }).ToList();
         }
+        
+        public List<ProcessDetailConnection> GetAllProcessDetailConnections()
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailConnection";
+            return connection.Query<ProcessDetailConnection>(sql).ToList();
+        }
 
         public List<ProcessDetailConnection> GetConnectionsByToId(int toProcessDetailId)
         {
@@ -658,6 +665,13 @@ INSERT INTO ProcessDetail (
                 INNER JOIN ProcessDetail pd ON pdf.ProcessDetailId = pd.Id
                 WHERE pd.CycleId = ?CycleId?";
             return connection.Query<ProcessDetailFinish>(sql, new { CycleId = cycleId }).ToList();
+        }
+        
+        public List<ProcessDetailFinish> GetAllProcessDetailFinishes()
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = "SELECT * FROM ProcessDetailFinish";
+            return connection.Query<ProcessDetailFinish>(sql).ToList();
         }
 
         public List<ProcessDetailFinish> GetFinishesByProcessDetailId(int processDetailId)
