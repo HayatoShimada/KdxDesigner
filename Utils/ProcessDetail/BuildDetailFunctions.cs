@@ -98,7 +98,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             else
             {
                 // タイマーが設定されていない場合は、常にONを使用
-                if (_detail.Detail.StartSensor != string.Empty && _detail.Detail.StartSensor != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.StartSensor) && !string.IsNullOrEmpty(_detail.Detail.StartSensor))
                 {
                     var ioSensor = _ioAddressService.GetSingleAddress(
                         _ioList,
@@ -161,14 +161,14 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             foreach (var d in processDetailStartDevices)
             {
-                if (_detail.Detail.StartSensor != null)
+                if (!string.IsNullOrEmpty(_detail.Detail.StartSensor))
                 {
                     result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
                 }
                 else
                 {
                     // ブロック工程の場合は1にしたい
-                    if (d.Detail.BlockNumber != 0)
+                    if (d.Detail.BlockNumber != d.Detail.Id)
                     {
                         result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
                     }

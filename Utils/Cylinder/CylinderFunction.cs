@@ -73,7 +73,6 @@ namespace KdxDesigner.Utils.Cylinder
                 var operationOutcoil = off.Mnemonic.StartNum; // 出力番号の取得
                 result.Add(LadderRow.AddLD(operationLabel + (operationOutcoil + 6).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddANI(operationLabel + (operationOutcoil + 17).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddAND(operationLabel + (operationOutcoil + 2).ToString())); // ラベルのLD命令を追加
                 if (isFirst)
                 {
                     isFirst = false; // 最初のOperationの場合、フラグを更新
@@ -846,7 +845,7 @@ namespace KdxDesigner.Utils.Cylinder
             result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddAND(_label + (_startNum + 15).ToString()));
 
-            result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
+            result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
             result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
             result.Add(LadderRow.AddAND(_label + (_startNum + 18).ToString()));
             result.Add(LadderRow.AddORB());
@@ -862,7 +861,7 @@ namespace KdxDesigner.Utils.Cylinder
                 result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 14).ToString()));
 
-                result.Add(LadderRow.AddLD(_label + (_startNum + 11).ToString()));
+                result.Add(LadderRow.AddLD(_label + (_startNum + 10).ToString()));
                 result.Add(LadderRow.AddAND(_cylinder.Cylinder.ManualButton));
                 result.Add(LadderRow.AddAND(_label + (_startNum + 17).ToString()));
                 result.Add(LadderRow.AddORB());
