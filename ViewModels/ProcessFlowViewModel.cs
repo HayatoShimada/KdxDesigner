@@ -23,6 +23,7 @@ namespace KdxDesigner.ViewModels
         private bool _isCreatingFinishConnection;
         private bool _isSelecting;
         private Point _selectionStartPoint;
+        private bool _hasMouseMoved;
         private List<ProcessFlowNode> _selectedNodes = new();
         private Dictionary<ProcessFlowNode, Point> _dragOffsets = new();
         
@@ -49,6 +50,8 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private int? _selectedNodeStartTimerId;
         [ObservableProperty] private string _selectedNodeDisplayName = "";
         [ObservableProperty] private bool _isNodeSelected = false;
+        [ObservableProperty] private int? _selectedNodeProcessId;
+        [ObservableProperty] private ObservableCollection<Models.Process> _processes = new();
         
         [ObservableProperty] private Point _mousePosition;
         [ObservableProperty] private bool _isConnecting;
@@ -70,6 +73,12 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private bool _highlightStartSensor = false;
         [ObservableProperty] private bool _highlightStartSensorWithoutTimer = false;
         [ObservableProperty] private bool _canChangeConnectionType = false;
+        [ObservableProperty] private bool _showAllConnections = false;
+        [ObservableProperty] private ObservableCollection<ProcessFlowConnection> _incomingConnections = new();
+        [ObservableProperty] private ObservableCollection<ProcessFlowConnection> _outgoingConnections = new();
+        [ObservableProperty] private bool _hasOtherCycleConnections = false;
+        [ObservableProperty] private ObservableCollection<Cycle> _cycles = new();
+        [ObservableProperty] private Cycle? _selectedCycle;
         
         private List<ProcessDetailConnection> _dbConnections = new();
         private List<ProcessDetailFinish> _dbFinishes = new();
@@ -82,6 +91,12 @@ namespace KdxDesigner.ViewModels
             // 初期値を設定
             IsNodeSelected = false;
             SelectedNodeDisplayName = "";
+            
+            // サイクル一覧を読み込み
+            LoadCycles();
+            
+            // Process一覧を読み込み
+            LoadProcesses();
         }
         
         private ProcessFlowNode CreateNode(ProcessDetail detail, Point position, List<ProcessDetailCategory> categoriesList, Dictionary<int, string> processMap)
@@ -110,6 +125,15 @@ namespace KdxDesigner.ViewModels
         {
             CycleId = cycleId;
             LoadOperations();
+            
+            // サイクル一覧を再読み込みして選択状態を更新
+            if (SelectedCycle == null || SelectedCycle.Id != cycleId)
+            {
+                LoadCycles();
+            }
+            
+            // Process一覧を再読み込み
+            LoadProcesses();
             var details = _repository.GetProcessDetails()
                 .Where(d => d.CycleId == cycleId)
                 .OrderBy(d => d.SortNumber)
@@ -133,8 +157,18 @@ namespace KdxDesigner.ViewModels
                 .ToDictionary(p => p.Id, p => p.ProcessName ?? $"工程{p.Id}");
             
             // 中間テーブルから接続情報を取得
-            _dbConnections = _repository.GetProcessDetailConnections(cycleId);
-            _dbFinishes = _repository.GetProcessDetailFinishes(cycleId);
+            if (ShowAllConnections)
+            {
+                // 全ての接続を取得（他サイクルへの接続も含む）
+                _dbConnections = _repository.GetAllProcessDetailConnections();
+                _dbFinishes = _repository.GetAllProcessDetailFinishes();
+            }
+            else
+            {
+                // 現在のサイクルの接続のみ取得
+                _dbConnections = _repository.GetProcessDetailConnections(cycleId);
+                _dbFinishes = _repository.GetProcessDetailFinishes(cycleId);
+            }
             
             System.Diagnostics.Debug.WriteLine($"Loading {details.Count} ProcessDetails for CycleId: {cycleId}");
             
@@ -209,6 +243,59 @@ namespace KdxDesigner.ViewModels
                     AllConnections.Add(connection);
                     Connections.Add(connection);
                 }
+                else if (ShowAllConnections)
+                {
+                    // 他サイクルへの接続の場合、ダミーノードを作成して表示
+                    ProcessFlowNode? fromNode = null;
+                    ProcessFlowNode? toNode = null;
+                    
+                    if (nodeDict.ContainsKey(conn.FromProcessDetailId))
+                    {
+                        fromNode = nodeDict[conn.FromProcessDetailId];
+                        // ToNodeが他サイクルのノード
+                        var otherDetail = _repository.GetProcessDetails()
+                            .FirstOrDefault(d => d.Id == conn.ToProcessDetailId);
+                        if (otherDetail != null)
+                        {
+                            // ダミーノードをfromNodeの右側に配置
+                            var dummyPosition = new Point(
+                                fromNode.Position.X + 200,
+                                fromNode.Position.Y
+                            );
+                            toNode = new ProcessFlowNode(otherDetail, dummyPosition);
+                            toNode.IsOtherCycleNode = true;
+                            AllNodes.Add(toNode);  // AllNodesに追加
+                            Nodes.Add(toNode);      // Nodesに追加して表示
+                            var connection = new ProcessFlowConnection(fromNode, toNode);
+                            connection.IsOtherCycleConnection = true;
+                            AllConnections.Add(connection);
+                            Connections.Add(connection);
+                        }
+                    }
+                    else if (nodeDict.ContainsKey(conn.ToProcessDetailId))
+                    {
+                        toNode = nodeDict[conn.ToProcessDetailId];
+                        // FromNodeが他サイクルのノード
+                        var otherDetail = _repository.GetProcessDetails()
+                            .FirstOrDefault(d => d.Id == conn.FromProcessDetailId);
+                        if (otherDetail != null)
+                        {
+                            // ダミーノードをtoNodeの左側に配置
+                            var dummyPosition = new Point(
+                                toNode.Position.X - 200,
+                                toNode.Position.Y
+                            );
+                            fromNode = new ProcessFlowNode(otherDetail, dummyPosition);
+                            fromNode.IsOtherCycleNode = true;
+                            AllNodes.Add(fromNode);  // AllNodesに追加
+                            Nodes.Add(fromNode);      // Nodesに追加して表示
+                            var connection = new ProcessFlowConnection(fromNode, toNode);
+                            connection.IsOtherCycleConnection = true;
+                            AllConnections.Add(connection);
+                            Connections.Add(connection);
+                        }
+                    }
+                }
             }
             
             // 期間工程の終了IDからのコネクションを作成
@@ -223,6 +310,59 @@ namespace KdxDesigner.ViewModels
                     connection.IsFinishConnection = true; // 終了条件の接続であることを示す
                     AllConnections.Add(connection);
                     Connections.Add(connection);
+                }
+                else if (ShowAllConnections)
+                {
+                    // 他サイクルへの終了条件接続の場合
+                    ProcessFlowNode? fromNode = null;
+                    ProcessFlowNode? toNode = null;
+                    
+                    if (nodeDict.ContainsKey(finish.ProcessDetailId))
+                    {
+                        toNode = nodeDict[finish.ProcessDetailId];
+                        // FinishNodeが他サイクルのノード
+                        var otherDetail = _repository.GetProcessDetails()
+                            .FirstOrDefault(d => d.Id == finish.FinishProcessDetailId);
+                        if (otherDetail != null)
+                        {
+                            // ダミーノードをtoNodeの左下に配置（終了条件用）
+                            var dummyPosition = new Point(
+                                toNode.Position.X - 150,
+                                toNode.Position.Y + 60
+                            );
+                            fromNode = new ProcessFlowNode(otherDetail, dummyPosition);
+                            fromNode.IsOtherCycleNode = true;
+                            var connection = new ProcessFlowConnection(fromNode, toNode);
+                            connection.IsFinishConnection = true;
+                            connection.IsOtherCycleConnection = true;
+                            AllConnections.Add(connection);
+                            Connections.Add(connection);
+                        }
+                    }
+                    else if (nodeDict.ContainsKey(finish.FinishProcessDetailId))
+                    {
+                        fromNode = nodeDict[finish.FinishProcessDetailId];
+                        // ProcessDetailが他サイクルのノード
+                        var otherDetail = _repository.GetProcessDetails()
+                            .FirstOrDefault(d => d.Id == finish.ProcessDetailId);
+                        if (otherDetail != null)
+                        {
+                            // ダミーノードをfromNodeの右上に配置（終了条件から）
+                            var dummyPosition = new Point(
+                                fromNode.Position.X + 150,
+                                fromNode.Position.Y - 60
+                            );
+                            toNode = new ProcessFlowNode(otherDetail, dummyPosition);
+                            toNode.IsOtherCycleNode = true;
+                            AllNodes.Add(toNode);  // AllNodesに追加
+                            Nodes.Add(toNode);      // Nodesに追加して表示
+                            var connection = new ProcessFlowConnection(fromNode, toNode);
+                            connection.IsFinishConnection = true;
+                            connection.IsOtherCycleConnection = true;
+                            AllConnections.Add(connection);
+                            Connections.Add(connection);
+                        }
+                    }
                 }
             }
         }
@@ -306,12 +446,16 @@ namespace KdxDesigner.ViewModels
                 SelectedNodeStartTimerId = value.ProcessDetail.StartTimerId;
                 SelectedNodeDisplayName = value.DisplayName;
                 IsNodeSelected = true;
+                SelectedNodeProcessId = value.ProcessDetail.ProcessId;
                 
                 // FilteredOperationsを更新
                 UpdateFilteredOperations();
                 
                 // 選択されたノードのOperationIdに基づいてタイマーを読み込む
                 LoadAvailableTimers();
+                
+                // 選択されたノードの接続情報を更新
+                UpdateNodeConnections(value);
                 
                 // 接続の選択を解除
                 if (SelectedConnection != null)
@@ -337,6 +481,7 @@ namespace KdxDesigner.ViewModels
                 SelectedNodeStartTimerId = null;
                 SelectedNodeDisplayName = "";
                 IsNodeSelected = false;
+                SelectedNodeProcessId = null;
                 AvailableTimers.Clear();
             }
         }
@@ -515,6 +660,13 @@ namespace KdxDesigner.ViewModels
                 
                 if (_isSelecting)
                 {
+                    // マウスが移動したことを記録
+                    if (!_hasMouseMoved)
+                    {
+                        _hasMouseMoved = true;
+                        IsRectangleSelecting = true;
+                    }
+                    
                     // 選択矩形を更新
                     var currentPoint = position;
                     var x = Math.Min(_selectionStartPoint.X, currentPoint.X);
@@ -594,9 +746,10 @@ namespace KdxDesigner.ViewModels
                 var position = e.GetPosition(canvas);
                 _isSelecting = true;
                 _selectionStartPoint = position;
+                _hasMouseMoved = false;
                 // 選択矩形を開始点に初期化（サイズ0で見えないようにする）
                 SelectionRectangle = new Rect(position.X, position.Y, 0, 0);
-                IsRectangleSelecting = true;
+                IsRectangleSelecting = false;  // マウスが移動するまで表示しない
                 
                 // Ctrl キーが押されていない場合は、既存の選択をクリア
                 if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl))
@@ -613,6 +766,7 @@ namespace KdxDesigner.ViewModels
             {
                 _isSelecting = false;
                 IsRectangleSelecting = false;
+                _hasMouseMoved = false;
                 // 矩形を画面外に移動してから、サイズを0にする
                 SelectionRectangle = new Rect(-1, -1, 0, 0);
             }
@@ -767,10 +921,12 @@ namespace KdxDesigner.ViewModels
         }
         
         [RelayCommand]
-        private void UpdateSelectedNodeProperties()
+        private async Task UpdateSelectedNodeProperties()
         {
             if (SelectedNode != null)
             {
+                try
+                {
                 // OperationIdがnullまたは0の場合は、現在のProcessDetailの値を維持
                 var operationId = SelectedNodeOperationId;
                 if (operationId == null || operationId == 0)
@@ -864,7 +1020,16 @@ namespace KdxDesigner.ViewModels
                     // 開始センサー関連のプロパティ変更を通知
                     SelectedNode.NotifyStartSensorPropertiesChanged();
                 }
+                
+                // 成功メッセージを表示
+                await ShowUpdateSuccessMessage();
             }
+            catch (Exception ex)
+            {
+                // エラーメッセージを表示
+                await ShowUpdateErrorMessage(ex.Message);
+            }
+        }
         }
         
         private void RefreshConnections()
@@ -1725,6 +1890,137 @@ namespace KdxDesigner.ViewModels
         {
             // タイマーが変更されてもOperationIdは維持する
             // 何もしない - OperationIdの変更を防ぐ
+        }
+        
+        partial void OnSelectedNodeProcessIdChanged(int? value)
+        {
+            if (SelectedNode?.ProcessDetail != null)
+            {
+                SelectedNode.ProcessDetail.ProcessId = value ?? 0;
+                
+                // 変更を追跡（必要に応じて保存フラグを立てる）
+                // _hasChanges = true;
+            }
+        }
+        
+        partial void OnShowAllConnectionsChanged(bool value)
+        {
+            // 全接続表示の切り替え時に再読み込み
+            LoadProcessDetails(CycleId);
+        }
+        
+        partial void OnSelectedCycleChanged(Cycle? value)
+        {
+            if (value != null)
+            {
+                // 選択されたサイクルで工程フローを読み込み
+                LoadProcessDetails(value.Id);
+            }
+        }
+        
+        private void LoadCycles()
+        {
+            try
+            {
+                var cycles = _repository.GetCycles();
+                Cycles.Clear();
+                foreach (var cycle in cycles.OrderBy(c => c.Id))
+                {
+                    Cycles.Add(cycle);
+                }
+                
+                // 現在のサイクルを選択
+                if (CycleId > 0)
+                {
+                    SelectedCycle = Cycles.FirstOrDefault(c => c.Id == CycleId);
+                }
+            }
+            catch (Exception ex)
+            {
+                // エラー処理
+                System.Diagnostics.Debug.WriteLine($"LoadCycles error: {ex.Message}");
+            }
+        }
+        
+        private void LoadProcesses()
+        {
+            try
+            {
+                var processes = _repository.GetProcesses();
+                Processes.Clear();
+                
+                // 現在のサイクルのProcessのみをフィルタ
+                foreach (var process in processes.Where(p => p.CycleId == CycleId).OrderBy(p => p.SortNumber ?? 0).ThenBy(p => p.Id))
+                {
+                    Processes.Add(process);
+                }
+            }
+            catch (Exception ex)
+            {
+                // エラー処理
+                System.Diagnostics.Debug.WriteLine($"LoadProcesses error: {ex.Message}");
+            }
+        }
+        
+        private async Task ShowUpdateSuccessMessage()
+        {
+            await Task.Run(() => 
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    System.Windows.MessageBox.Show(
+                        "工程詳細の更新が完了しました。",
+                        "更新完了",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                });
+            });
+        }
+        
+        private async Task ShowUpdateErrorMessage(string errorMessage)
+        {
+            await Task.Run(() => 
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    System.Windows.MessageBox.Show(
+                        $"工程詳細の更新中にエラーが発生しました。\n\nエラー内容: {errorMessage}",
+                        "更新エラー",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                });
+            });
+        }
+        
+        private void UpdateNodeConnections(ProcessFlowNode? node)
+        {
+            IncomingConnections.Clear();
+            OutgoingConnections.Clear();
+            HasOtherCycleConnections = false;
+            
+            if (node == null) return;
+            
+            // 接続元（このノードへの接続）を取得
+            var incoming = AllConnections.Where(c => c.ToNode.Id == node.Id).ToList();
+            foreach (var conn in incoming.OrderBy(c => c.FromNode.DisplayName))
+            {
+                IncomingConnections.Add(conn);
+                if (conn.IsOtherCycleConnection)
+                {
+                    HasOtherCycleConnections = true;
+                }
+            }
+            
+            // 接続先（このノードからの接続）を取得
+            var outgoing = AllConnections.Where(c => c.FromNode.Id == node.Id).ToList();
+            foreach (var conn in outgoing.OrderBy(c => c.ToNode.DisplayName))
+            {
+                OutgoingConnections.Add(conn);
+                if (conn.IsOtherCycleConnection)
+                {
+                    HasOtherCycleConnections = true;
+                }
+            }
         }
         
         [RelayCommand]

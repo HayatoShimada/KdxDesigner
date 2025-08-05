@@ -49,15 +49,37 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
                 <!-- 詳細名 -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="詳細名:" VerticalAlignment="Center" Margin="0,5"/>
                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedNodeDetailName, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
-                <!-- 操作ID -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="操作:" VerticalAlignment="Center" Margin="0,5"/>
+                <!-- ProcessID -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Process:" VerticalAlignment="Center" Margin="0,5"/>
                 <ComboBox Grid.Row="1" Grid.Column="1" 
+                          ItemsSource="{Binding Processes}"
+                          SelectedValue="{Binding SelectedNodeProcessId, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedValuePath="Id"
+                          Margin="0,5">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0} - {1}">
+                                        <Binding Path="Id"/>
+                                        <Binding Path="ProcessName"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                
+                <!-- 操作ID -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="操作:" VerticalAlignment="Center" Margin="0,5"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" 
                           ItemsSource="{Binding FilteredOperations}"
                           SelectedValue="{Binding SelectedNodeOperationId, UpdateSourceTrigger=PropertyChanged}"
                           SelectedValuePath="Id"
@@ -71,12 +93,12 @@
                 </ComboBox>
                 
                 <!-- 開始センサー -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="開始センサー:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedNodeStartSensor, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="開始センサー:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedNodeStartSensor, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- 開始タイマー -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="開始タイマー:" VerticalAlignment="Top" Margin="0,5"/>
-                <StackPanel Grid.Row="3" Grid.Column="1">
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="開始タイマー:" VerticalAlignment="Top" Margin="0,5"/>
+                <StackPanel Grid.Row="4" Grid.Column="1">
                     <!-- タイマーフィルタ -->
                     <Grid Margin="0,5,0,2">
                         <Grid.ColumnDefinitions>
@@ -132,12 +154,12 @@
                 </StackPanel>
                 
                 <!-- 終了センサー -->
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="終了センサー:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedNodeFinishSensor, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="終了センサー:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedNodeFinishSensor, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- カテゴリID -->
-                <TextBlock Grid.Row="5" Grid.Column="0" Text="カテゴリ:" VerticalAlignment="Center" Margin="0,5"/>
-                <ComboBox Grid.Row="5" Grid.Column="1" 
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="カテゴリ:" VerticalAlignment="Center" Margin="0,5"/>
+                <ComboBox Grid.Row="6" Grid.Column="1" 
                           ItemsSource="{Binding Categories}"
                           SelectedValue="{Binding SelectedNodeCategoryId, UpdateSourceTrigger=PropertyChanged}"
                           SelectedValuePath="Id"
@@ -151,24 +173,24 @@
                 </ComboBox>
                 
                 <!-- ブロック番号 -->
-                <TextBlock Grid.Row="6" Grid.Column="0" Text="ブロック番号:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SelectedNodeBlockNumber, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="ブロック番号:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedNodeBlockNumber, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- スキップモード -->
-                <TextBlock Grid.Row="7" Grid.Column="0" Text="スキップモード:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedNodeSkipMode, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="スキップモード:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedNodeSkipMode, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- ソート番号 -->
-                <TextBlock Grid.Row="8" Grid.Column="0" Text="ソート番号:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedNodeSortNumber, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="ソート番号:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedNodeSortNumber, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- ILStart -->
-                <TextBlock Grid.Row="9" Grid.Column="0" Text="ILStart:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedNodeILStart, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
+                <TextBlock Grid.Row="10" Grid.Column="0" Text="ILStart:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedNodeILStart, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- コメント -->
-                <TextBlock Grid.Row="10" Grid.Column="0" Text="コメント:" VerticalAlignment="Top" Margin="0,5"/>
-                <TextBox Grid.Row="10" Grid.Column="1" 
+                <TextBlock Grid.Row="11" Grid.Column="0" Text="コメント:" VerticalAlignment="Top" Margin="0,5"/>
+                <TextBox Grid.Row="11" Grid.Column="1" 
                          Text="{Binding SelectedNodeComment, UpdateSourceTrigger=PropertyChanged}" 
                          TextWrapping="Wrap" 
                          AcceptsReturn="True"
@@ -177,8 +199,8 @@
                          Margin="0,5"/>
                 
                 <!-- ID (読み取り専用) -->
-                <TextBlock Grid.Row="11" Grid.Column="0" Text="ID:" VerticalAlignment="Center" Margin="0,5"/>
-                <TextBox Grid.Row="11" Grid.Column="1" 
+                <TextBlock Grid.Row="12" Grid.Column="0" Text="ID:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="12" Grid.Column="1" 
                          Text="{Binding SelectedNodeId}" 
                          IsReadOnly="True" 
                          Background="LightGray"

@@ -124,5 +124,8 @@ namespace KdxDesigner.Models
         
         // ToNodeのStartSensorを表示
         public string StartSensor => ToNode?.ProcessDetail?.StartSensor ?? "";
+        
+        // 他サイクルへの接続かどうかを示すプロパティ
+        [ObservableProperty] private bool _isOtherCycleConnection = false;
     }
 }

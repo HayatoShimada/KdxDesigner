@@ -165,7 +165,7 @@ namespace KdxDesigner.Utils.Cylinder
             string cyNumSub = cylinder.Cylinder.CYNameSub.ToString() ?? ""; // シリンダー名の取得  
             string cyName = cyNum + cyNumSub;                               // シリンダー名の組み合わせ  
 
-            result.Add(LadderRow.AddStatement(id + ":" + cyName + " シングルバルブ"));
+            result.Add(LadderRow.AddStatement(id + ":" + cyName + " ダブルバルブ"));
 
             var label = cylinder.Mnemonic.DeviceLabel; // ラベルの取得  
             var startNum = cylinder.Mnemonic.StartNum; // ラベルの取得  

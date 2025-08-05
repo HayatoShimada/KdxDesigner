@@ -269,6 +269,7 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         /// <param name="cycleId">取得対象のサイクルID。</param>
         List<ProcessDetailConnection> GetProcessDetailConnections(int cycleId);
+        List<ProcessDetailConnection> GetAllProcessDetailConnections();
 
         /// <summary>
         /// 指定されたToProcessDetailIdに紐づく接続情報を取得します。
@@ -306,6 +307,7 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         /// <param name="cycleId">取得対象のサイクルID。</param>
         List<ProcessDetailFinish> GetProcessDetailFinishes(int cycleId);
+        List<ProcessDetailFinish> GetAllProcessDetailFinishes();
 
         /// <summary>
         /// 指定されたProcessDetailIdに紐づく終了情報を取得します。

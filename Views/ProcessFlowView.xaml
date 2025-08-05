@@ -22,6 +22,26 @@
         
         <!-- ツールバー -->
         <ToolBar Grid.Row="0">
+            <Label Content="サイクル:" VerticalAlignment="Center"/>
+            <ComboBox ItemsSource="{Binding Cycles}" 
+                      SelectedItem="{Binding SelectedCycle}"
+                      Width="200"
+                      Margin="5,0,10,0"
+                      VerticalAlignment="Center">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} - {1}">
+                                    <Binding Path="Id"/>
+                                    <Binding Path="CycleName"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Separator/>
             <Button Command="{Binding SaveChangesCommand}" Padding="10,5">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="💾" Margin="0,0,5,0"/>
@@ -38,6 +58,12 @@
                       VerticalAlignment="Center" 
                       Margin="5,0">
                 <TextBlock Text="タイマー未設定を強調表示"/>
+            </CheckBox>
+            <Separator/>
+            <CheckBox IsChecked="{Binding ShowAllConnections}" 
+                      VerticalAlignment="Center" 
+                      Margin="10,0,5,0">
+                <TextBlock Text="全接続線を表示（他サイクル含む）" FontWeight="Bold"/>
             </CheckBox>
             <Separator/>
             <Button Command="{Binding AddNewNodeCommand}" Padding="10,5">
@@ -107,7 +133,7 @@
         </ToolBar>
         
         <!-- メインキャンバス -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="ProcessFlowScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <Grid>
                 <Canvas x:Name="MainCanvas" 
                         Width="{Binding CanvasWidth}" 
@@ -166,12 +192,36 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Canvas>
-                                    <!-- 接続線 -->
-                                    <Path StrokeThickness="2" Fill="Transparent" Cursor="Hand">
+                                    <!-- クリック判定用の透明な太い線 -->
+                                    <Path StrokeThickness="12" Stroke="Transparent" Fill="Transparent" Cursor="Hand">
+                                        <Path.Data>
+                                            <PathGeometry>
+                                                <PathFigure StartPoint="{Binding StartPoint}">
+                                                    <LineSegment Point="{Binding EndPoint}"/>
+                                                </PathFigure>
+                                            </PathGeometry>
+                                        </Path.Data>
+                                        <Path.InputBindings>
+                                            <MouseBinding MouseAction="LeftClick" 
+                                                          Command="{Binding DataContext.SelectConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}"/>
+                                            <MouseBinding MouseAction="RightClick" 
+                                                          Command="{Binding DataContext.DeleteConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}"/>
+                                        </Path.InputBindings>
+                                    </Path>
+                                    
+                                    <!-- 見た目の接続線 -->
+                                    <Path StrokeThickness="2" Fill="Transparent" IsHitTestVisible="False">
                                         <Path.Style>
                                             <Style TargetType="Path">
                                                 <Setter Property="Stroke" Value="DarkBlue"/>
                                                 <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOtherCycleConnection}" Value="True">
+                                                        <Setter Property="Stroke" Value="LightBlue"/>
+                                                        <Setter Property="StrokeDashArray" Value="5,3"/>
+                                                        <Setter Property="StrokeThickness" Value="3"/>
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsFinishConnection}" Value="True">
                                                         <Setter Property="Stroke" Value="Green"/>
                                                         <Setter Property="StrokeDashArray" Value="5,3"/>
@@ -191,6 +241,15 @@
                                                         <Setter Property="Stroke" Value="OrangeRed"/>
                                                         <Setter Property="StrokeThickness" Value="3"/>
                                                     </MultiDataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsOtherCycleConnection}" Value="True"/>
+                                                            <Condition Binding="{Binding IsFinishConnection}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Stroke" Value="LightSeaGreen"/>
+                                                        <Setter Property="StrokeDashArray" Value="8,2"/>
+                                                        <Setter Property="StrokeThickness" Value="3"/>
+                                                    </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Path.Style>
@@ -201,14 +260,6 @@
                                                 </PathFigure>
                                             </PathGeometry>
                                         </Path.Data>
-                                        <Path.InputBindings>
-                                            <MouseBinding MouseAction="LeftClick" 
-                                                          Command="{Binding DataContext.SelectConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                          CommandParameter="{Binding}"/>
-                                            <MouseBinding MouseAction="RightClick" 
-                                                          Command="{Binding DataContext.DeleteConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                          CommandParameter="{Binding}"/>
-                                        </Path.InputBindings>
                                     </Path>
                                     
                                     <!-- StartSensorテキスト -->
@@ -223,6 +274,9 @@
                                             <Style TargetType="Border">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding StartSensor}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsFinishConnection}" Value="True">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -316,6 +370,12 @@
                                             <Setter Property="BorderBrush" Value="DarkBlue"/>
                                             <Setter Property="BorderThickness" Value="2"/>
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOtherCycleNode}" Value="True">
+                                                    <Setter Property="Background" Value="LightCyan"/>
+                                                    <Setter Property="BorderBrush" Value="LightBlue"/>
+                                                    <Setter Property="BorderThickness" Value="3"/>
+                                                    <Setter Property="Opacity" Value="0.8"/>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                     <Setter Property="Background" Value="LightYellow"/>
                                                     <Setter Property="BorderBrush" Value="Orange"/>
@@ -391,12 +451,22 @@
                                                        TextTrimming="CharacterEllipsis"/>
                                         </Border>
                                         <TextBlock Grid.Row="2" 
-                                                   Text="{Binding DisplayName}" 
                                                    HorizontalAlignment="Center" 
                                                    VerticalAlignment="Center"
                                                    FontWeight="Bold"
                                                    FontSize="10"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding DisplayName}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOtherCycleNode}" Value="True">
+                                                            <Setter Property="Text" Value="{Binding DisplayName, StringFormat='[他サイクル] {0}'}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <TextBlock Grid.Row="3" 
                                                    Text="{Binding StartSensor}" 
                                                    HorizontalAlignment="Center"
@@ -411,5 +481,98 @@
                 </Canvas>
             </Grid>
         </ScrollViewer>
+        
+        <!-- ノード選択時の接続線リスト表示 -->
+        <Popup IsOpen="{Binding IsNodeSelected}" 
+               PlacementTarget="{Binding ElementName=ProcessFlowScrollViewer}"
+               Placement="Right"
+               StaysOpen="True"
+               AllowsTransparency="True">
+            <Border Background="White" 
+                    BorderBrush="Gray" 
+                    BorderThickness="1"
+                    CornerRadius="5"
+                    Margin="10">
+                <StackPanel Margin="15" MinWidth="400" MaxWidth="500">
+                    <TextBlock Text="{Binding SelectedNodeDisplayName, StringFormat='ノード: {0}'}" 
+                               FontWeight="Bold" 
+                               FontSize="16"
+                               Margin="0,0,0,15"/>
+                    
+                    <!-- 接続元（このノードへの接続） -->
+                    <TextBlock Text="接続元:" FontWeight="Bold" FontSize="14" Margin="0,5,0,5"/>
+                    <ItemsControl ItemsSource="{Binding IncomingConnections}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="LightGray" BorderThickness="0,0,0,1" Padding="8,5" Margin="0,2">
+                                    <StackPanel>
+                                        <TextBlock>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding FromNode.DisplayName}"/>
+                                                    <Setter Property="FontSize" Value="12"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOtherCycleConnection}" Value="True">
+                                                            <Setter Property="Foreground" Value="DodgerBlue"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsFinishConnection}" Value="True">
+                                                            <Setter Property="Foreground" Value="Green"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding FromNode.ProcessDetail.CycleId, StringFormat='(サイクル: {0})'}" 
+                                                   FontSize="11" 
+                                                   Foreground="Gray"
+                                                   Visibility="{Binding IsOtherCycleConnection, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    
+                    <!-- 接続先（このノードからの接続） -->
+                    <TextBlock Text="接続先:" FontWeight="Bold" FontSize="14" Margin="0,15,0,5"/>
+                    <ItemsControl ItemsSource="{Binding OutgoingConnections}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="LightGray" BorderThickness="0,0,0,1" Padding="8,5" Margin="0,2">
+                                    <StackPanel>
+                                        <TextBlock>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding ToNode.DisplayName}"/>
+                                                    <Setter Property="FontSize" Value="12"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOtherCycleConnection}" Value="True">
+                                                            <Setter Property="Foreground" Value="DodgerBlue"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding ToNode.ProcessDetail.CycleId, StringFormat='(サイクル: {0})'}" 
+                                                   FontSize="11" 
+                                                   Foreground="Gray"
+                                                   Visibility="{Binding IsOtherCycleConnection, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    
+                    <!-- 警告メッセージ -->
+                    <TextBlock Text="⚠️ 他サイクルへの接続が含まれています" 
+                               Foreground="Red"
+                               FontWeight="Bold"
+                               FontSize="13"
+                               Margin="0,15,0,0"
+                               Visibility="{Binding HasOtherCycleConnections, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+            </Border>
+        </Popup>
     </Grid>
 </Window>
