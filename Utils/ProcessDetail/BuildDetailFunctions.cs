@@ -168,13 +168,12 @@ namespace KdxDesigner.Utils.ProcessDetail
                 else
                 {
                     // ブロック工程の場合は1にしたい
-                    if (d.Detail.BlockNumber != d.Detail.Id)
+                    if (_detail.Detail.BlockNumber != d.Detail.Id)
                     {
                         result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 4).ToString()));
                     }
                     else
                     {
-                        result.Add(LadderRow.AddAND(d.Mnemonic.DeviceLabel + (d.Mnemonic.StartNum + 1).ToString()));
                     }
                 }
             }
