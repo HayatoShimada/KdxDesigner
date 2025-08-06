@@ -1,7 +1,7 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
-using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
@@ -49,7 +49,7 @@ namespace KdxDesigner.Utils.Operation
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + operation.Operation.OperationName));
+                result.Add(LadderRow.AddStatement(id + ":" + operation.Operation.OperationName + "保持"));
             }
 
             // OperationIdが一致する工程詳細のフィルタリング
@@ -183,7 +183,7 @@ namespace KdxDesigner.Utils.Operation
             }
             else
             {
-                result.Add(LadderRow.AddStatement(id + ":" + operation.Operation.OperationName));
+                result.Add(LadderRow.AddStatement(id + ":" + operation.Operation.OperationName + "励磁"));
             }
 
             // OperationIdが一致する工程詳細のフィルタリング
@@ -201,21 +201,34 @@ namespace KdxDesigner.Utils.Operation
             result.AddRange(operationFunction.GenerateM6());
 
             // M17
-            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
-            result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
-            result.Add(LadderRow.AddANI(label + (outNum + 0).ToString()));
-            result.Add(LadderRow.AddOR(label + (outNum + 17).ToString()));
-            result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
-            result.Add(LadderRow.AddOUT(label + (outNum + 17).ToString()));
-
-
-            // M18
             var operationTimerONWait = operationTimers.FirstOrDefault(t => t.Timer.TimerCategoryId == 5);
             // 深当たりタイマがある場合
             if (operationTimerONWait != null)
             {
-                result.Add(LadderRow.AddLD(label + (outNum + 8).ToString()));
-                result.Add(LadderRow.AddANI(label + (outNum + 18).ToString()));
+                bool isFirst = true;
+                foreach (var detail in operationDetails)
+                {
+                    var detailLabel = detail.Mnemonic.DeviceLabel; // 工程詳細のラベル取得
+                    var detailOutNum = detail.Mnemonic.StartNum; // 工程詳細のラベル取得
+
+                    if (isFirst)
+                    {
+                        result.Add(LadderRow.AddLD(detailLabel + (detailOutNum + 2).ToString()));
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        result.Add(LadderRow.AddOR(detailLabel + (detailOutNum + 2).ToString()));
+                    }
+                }
+
+                result.Add(LadderRow.AddOR(label + (outNum + 16).ToString()));
+                result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
+                result.Add(LadderRow.AddOUT(label + (outNum + 16).ToString()));
+
+                result.Add(LadderRow.AddLD(label + (outNum + 16).ToString()));
+                result.Add(LadderRow.AddANI(label + (outNum + 17).ToString()));
+
                 result.AddRange(LadderRow.AddTimer(
                     operationTimerONWait.Timer.ProcessTimerDevice ?? "",
                     operationTimerONWait.Timer.TimerDevice ?? ""
@@ -224,17 +237,56 @@ namespace KdxDesigner.Utils.Operation
 
             result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
             result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
+            
             // 深当たりタイマがある場合
             if (operationTimerONWait != null && operationTimerONWait.Timer.ProcessTimerDevice != null)
             {
                 result.Add(LadderRow.AddAND(operationTimerONWait.Timer.ProcessTimerDevice));
             }
+            else
+            {
+                result.Add(LadderRow.AddANI(label + (outNum + 0).ToString()));
+
+            }
+
+            result.Add(LadderRow.AddOR(label + (outNum + 17).ToString()));
+            result.Add(LadderRow.AddAND(label + (outNum + 6).ToString()));
+            result.Add(LadderRow.AddOUT(label + (outNum + 17).ToString()));
+
+            // M18
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
             result.Add(LadderRow.AddOR(label + (outNum + 18).ToString()));
             result.Add(LadderRow.AddAND(label + (outNum + 17).ToString()));
             result.Add(LadderRow.AddOUT(label + (outNum + 18).ToString()));
 
             // M19
-            result.AddRange(operationFunction.GenerateM19());
+            var thisTimer = timers.Where(t => t.Timer.RecordId == operation.Operation.Id).ToList();
+            List<MnemonicTimerDeviceWithOperation> stTimers = thisTimer
+.Where(t => t.Timer.MnemonicId == 3 && t.Timer.RecordId == operation.Operation.Id)
+.ToList();
+            var operationTimerStable = operationTimers.FirstOrDefault(t => t.Timer.TimerCategoryId == 2);
+
+            if (operationTimerStable != null)
+            {
+                result.Add(LadderRow.AddLD(label + (outNum + 17).ToString()));
+                result.Add(LadderRow.AddANI(label + (outNum + 19).ToString()));
+                result.AddRange(LadderRow.AddTimer(
+                    operationTimerStable.Timer.ProcessTimerDevice ?? "",
+                    operationTimerStable.Timer.TimerDevice ?? ""
+                    ));
+            }
+
+            result.Add(LadderRow.AddLD(SettingsManager.Settings.PauseSignal));
+            result.Add(LadderRow.AddOR(label + (outNum + 2).ToString()));
+            // 深当たりタイマがある場合
+            if (operationTimerStable != null)
+            {
+                result.Add(LadderRow.AddAND(operationTimerStable!.Timer.ProcessTimerDevice!));
+            }
+            result.Add(LadderRow.AddOR(label + (outNum + 19).ToString()));
+            result.Add(LadderRow.AddAND(label + (outNum + 18).ToString()));
+            result.Add(LadderRow.AddOUT(label + (outNum + 19).ToString()));
 
             // Reset信号の生成
             result.AddRange(operationFunction.GenerateReset());
