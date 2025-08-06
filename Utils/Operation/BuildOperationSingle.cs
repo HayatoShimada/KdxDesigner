@@ -116,6 +116,10 @@ namespace KdxDesigner.Utils.Operation
             }
             result.Add(LadderRow.AddOUT(label + (outNum + 17).ToString()));
 
+
+
+
+
             // M19
             result.AddRange(operationFunction.GenerateM19());
 

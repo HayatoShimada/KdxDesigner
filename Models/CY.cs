@@ -29,6 +29,9 @@ namespace KdxDesigner.Models
         public int? Cycle { get; set; }
         public int? FlowCount { get; set; }
         public string ManualButton { get; set; } = string.Empty;
+        public string? FlowCYGo { get; set; } = string.Empty;
+        public string? FlowCYBack { get; set; } = string.Empty;
+
 
     }
 

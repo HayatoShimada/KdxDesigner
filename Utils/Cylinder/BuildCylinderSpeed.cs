@@ -124,8 +124,59 @@ namespace KdxDesigner.Utils.Cylinder
             result.AddRange(functions.ILOK());
             result.Add(LadderRow.AddNOP());
 
-            // バルブ指令
-            if (speedDevice != null)
+            // flowCYGoとflowCYBackの処理
+            if (!string.IsNullOrEmpty(cylinder.Cylinder.FlowCYGo))
+            {
+                var flowCyGo =_ioAddressService.GetSingleAddress(ioList, cylinder.Cylinder.FlowCYGo,
+                    true,
+                    (cylinder.Cylinder.CYNum + cyName) ?? string.Empty, // Ensure concatenated string is not null
+                    cylinder.Cylinder.Id,
+                    null);
+
+                if (flowCyGo != null)
+                {
+                    result.Add(LadderRow.AddLD(label + (startNum + 35).ToString()));
+                    result.Add(LadderRow.AddOUT(flowCyGo));
+                }
+                else
+                {
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
+                        RecordId = cylinder.Cylinder.Id,
+                        RecordName = cylinder.Cylinder.CYNum,
+                        Message = $"CY{cylinder.Cylinder.CYNum}の行き方向流量併用バルブが見つかりません。",
+                    });
+                }
+            }
+
+            if (!string.IsNullOrEmpty(cylinder.Cylinder.FlowCYBack))
+            {
+                var flowCyBack = _ioAddressService.GetSingleAddress(ioList, cylinder.Cylinder.FlowCYBack,
+                    true,
+                    (cylinder.Cylinder.CYNum + cyName) ?? string.Empty, // Ensure concatenated string is not null
+                    cylinder.Cylinder.Id,
+                    null);
+
+                if (flowCyBack != null)
+                {
+                    result.Add(LadderRow.AddLD(label + (startNum + 36).ToString()));
+                    result.Add(LadderRow.AddOUT(flowCyBack));
+                }
+                else
+                {
+                    _errorAggregator.AddError(new OutputError
+                    {
+                        MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
+                        RecordId = cylinder.Cylinder.Id,
+                        RecordName = cylinder.Cylinder.CYNum,
+                        Message = $"CY{cylinder.Cylinder.CYNum}の帰り方向流量併用バルブが見つかりません。",
+                    });
+                }
+
+            }
+                    // バルブ指令
+                    if (speedDevice != null)
             {
                 if (cylinder.Cylinder.FlowCount != null)
                 {
