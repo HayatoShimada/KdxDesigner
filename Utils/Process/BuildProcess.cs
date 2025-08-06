@@ -119,7 +119,7 @@ namespace KdxDesigner.Utils.Process
                 // CJの実装
                 result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
                 result.Add(LadderRow.AddAND(debugStartContact));
-                result.Add(LadderRow.AddCJ("P0"));          // issue#11
+                result.Add(LadderRow.AddCJ($"P{process.Process.CycleId}"));          // issue#11
 
                 // OUT L2 実行中
                 result.Add(LadderRow.AddLD(outcoilLabel + (outcoilNum + 1).ToString()));
@@ -263,7 +263,8 @@ namespace KdxDesigner.Utils.Process
                 // CJの実装
                 result.Add(LadderRow.AddLDP(outcoilLabel + (outcoilNum + 1).ToString()));
                 result.Add(LadderRow.AddAND(debugStartContact));
-                result.Add(LadderRow.AddCJ("P0"));          // issue#11
+                result.Add(LadderRow.AddCJ($"P{process.Process.CycleId}"));          // issue#11
+
             }
 
 
@@ -560,7 +561,9 @@ namespace KdxDesigner.Utils.Process
                 .ToList();
 
             result.Add(LadderRow.AddFEND()); // FEND命令を追加
-            result.Add(LadderRow.AddPoint("P0")); // FEND命令を追加
+            result.Add(LadderRow.AddPoint($"P{process.First().Process.CycleId}"));          // issue#11
+
+
             result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysON));
             foreach(var testStart in testStartList)
             {

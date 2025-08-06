@@ -312,7 +312,15 @@ namespace KdxDesigner.Utils.Operation
                     }
                 }
 
-                result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                if (speedCount == 0)
+                {
+                    result.Add(LadderRow.AddAND(_label + (_outNum + 6).ToString()));
+                }
+                else
+                {
+                    result.Add(LadderRow.AddAND(_label + (_outNum + 10 + speedCount - 1).ToString()));
+
+                }
                 result.Add(LadderRow.AddANI(_label + (_outNum + 10 + speedCount).ToString()));
                 result.AddRange(LadderRow.AddTimer(
                         operationTimer.Timer.ProcessTimerDevice ?? "",
