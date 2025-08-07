@@ -118,11 +118,37 @@ namespace KdxDesigner.Utils.ProcessDetail
                         {
                             result.Add(LadderRow.AddLDI(ioSensor));
                             result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
+                            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
+                            {
+                                if (_detail.Detail.SkipMode.Contains("_"))
+                                {
+
+                                    result.Add(LadderRow.AddORI(_detail.Detail.SkipMode.Replace("_", "")));
+                                }
+                                else
+                                {
+                                    result.Add(LadderRow.AddOR(_detail.Detail.SkipMode));
+                                }
+                            }
+
                         }
                         else
                         {
                             result.Add(LadderRow.AddLD(ioSensor));
                             result.Add(LadderRow.AddOR(_label + (_outNum + 3).ToString()));
+                            if (!string.IsNullOrEmpty(_detail.Detail.SkipMode))
+                            {
+                                if (_detail.Detail.SkipMode.Contains("_"))
+                                {
+                                    result.Add(LadderRow.AddORI(_detail.Detail.SkipMode.Replace("_", "")));
+
+                                }
+                                else
+                                {
+                                    result.Add(LadderRow.AddOR(_detail.Detail.SkipMode));
+                                }
+                            }
+
                         }
                     }
                     result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
@@ -157,7 +183,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                 }
 
             }
-            result.Add(LadderRow.AddLD(processDeviceLabel + (processDeviceStartNum + 0).ToString()));
+            result.Add(LadderRow.AddLD(processDeviceLabel + (processDeviceStartNum + 1).ToString()));
 
             foreach (var d in processDetailStartDevices)
             {
