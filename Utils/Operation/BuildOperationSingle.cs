@@ -87,6 +87,7 @@ namespace KdxDesigner.Utils.Operation
             {
                 result.Add(LadderRow.AddLD(label + (outNum + 16).ToString()));
                 result.Add(LadderRow.AddANI(label + (outNum + 17).ToString()));
+                result.Add(LadderRow.AddAND(SettingsManager.Settings.PauseSignal));
                 result.AddRange(LadderRow.AddTimer(
                     operationTimerONWait.Timer.ProcessTimerDevice ?? "",
                     operationTimerONWait.Timer.TimerDevice ?? ""

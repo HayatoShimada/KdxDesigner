@@ -48,7 +48,6 @@ namespace KdxDesigner.Utils.Cylinder
                 var operationOutcoil = go.Mnemonic.StartNum; // 出力番号の取得
                 result.Add(LadderRow.AddLD(operationLabel + (operationOutcoil + 6).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddANI(operationLabel + (operationOutcoil + 17).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddAND(operationLabel + (operationOutcoil + 0).ToString())); // ラベルのLD命令を追加
                 if (isFirst)
                 {
                     isFirst = false; // 最初のOperationの場合、フラグを更新
@@ -99,7 +98,6 @@ namespace KdxDesigner.Utils.Cylinder
                 var operationOutcoil = back.Mnemonic.StartNum; // 出力番号の取得
                 result.Add(LadderRow.AddLD(operationLabel + (operationOutcoil + 6).ToString())); // ラベルのLD命令を追加
                 result.Add(LadderRow.AddANI(operationLabel + (operationOutcoil + 17).ToString())); // ラベルのLD命令を追加
-                result.Add(LadderRow.AddAND(operationLabel + (operationOutcoil + 0).ToString())); // ラベルのLD命令を追加
                 if (isFirst)
                 {
                     isFirst = false; // 最初のOperationの場合、フラグを更新
