@@ -307,6 +307,8 @@ namespace KdxDesigner.Utils.Cylinder
                     // issue78
                     // 強制減速タイマは正転用と逆転用が必要。
                     // というよりも工程分必要。
+                    // processDetail分foreachを回してそれに対応した強制減速を使うべき。
+                    // 強制減速はdetail側にあった方がよい。
 
                     result.AddRange(LadderRow.AddLDE(speedDevice, "K1"));
                     result.AddRange(LadderRow.AddORE(speedDevice, "K5"));
