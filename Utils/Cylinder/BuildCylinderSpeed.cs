@@ -304,8 +304,11 @@ namespace KdxDesigner.Utils.Cylinder
                 if (speedDevice != null)
                 {
                     // 強制減速タイマがある場合の処理
+                    result.AddRange(LadderRow.AddLDE(speedDevice, "K1"));
+                    result.AddRange(LadderRow.AddORE(speedDevice, "K5"));
+                    result.Add(LadderRow.AddRST(fltTimer.Timer.ProcessTimerDevice));
 
-                    // issue
+                    // issue78
                     result.AddRange(LadderRow.AddLDN(speedDevice, "K1"));
                     result.AddRange(LadderRow.AddANDN(speedDevice, "K5"));
                     result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));

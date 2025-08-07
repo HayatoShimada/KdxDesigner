@@ -1,7 +1,5 @@
 ﻿using KdxDesigner.Models.Define;
 
-using System.Net;
-
 namespace KdxDesigner.Utils.MnemonicCommon
 {
     public static class LadderRow
@@ -66,6 +64,14 @@ namespace KdxDesigner.Utils.MnemonicCommon
             => CreateMOV(Command.LDL, source, destination);
         public static List<LadderCsvRow> AddLDN(string source, string destination)
             => CreateMOV(Command.LDN, source, destination);
+        public static List<LadderCsvRow> AddORE(string source, string destination)
+=> CreateMOV(Command.ORE, source, destination);
+        public static List<LadderCsvRow> AddORG(string source, string destination)
+=> CreateMOV(Command.ORG, source, destination);
+        public static List<LadderCsvRow> AddORL(string source, string destination)
+=> CreateMOV(Command.ORL, source, destination);
+        public static List<LadderCsvRow> AddORN(string source, string destination)
+=> CreateMOV(Command.ORN, source, destination);
         public static List<LadderCsvRow> AddANDG(string source, string destination)
             => CreateMOV(Command.ANDG, source, destination);
         public static List<LadderCsvRow> AddANDL(string source, string destination)
