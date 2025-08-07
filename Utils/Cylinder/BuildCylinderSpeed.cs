@@ -304,11 +304,15 @@ namespace KdxDesigner.Utils.Cylinder
                 if (speedDevice != null)
                 {
                     // 強制減速タイマがある場合の処理
+                    // issue78
+                    // 強制減速タイマは正転用と逆転用が必要。
+                    // というよりも工程分必要。
+
                     result.AddRange(LadderRow.AddLDE(speedDevice, "K1"));
                     result.AddRange(LadderRow.AddORE(speedDevice, "K5"));
+                    result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));
                     result.Add(LadderRow.AddRST(fltTimer.Timer.ProcessTimerDevice));
 
-                    // issue78
                     result.AddRange(LadderRow.AddLDN(speedDevice, "K1"));
                     result.AddRange(LadderRow.AddANDN(speedDevice, "K5"));
                     result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));
