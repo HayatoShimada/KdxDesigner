@@ -1025,6 +1025,24 @@ namespace KdxDesigner.ViewModels
         }
         
         [RelayCommand]
+        private void DeleteSelectedConnection()
+        {
+            if (SelectedConnection != null)
+            {
+                DeleteConnection(SelectedConnection);
+            }
+        }
+        
+        [RelayCommand]
+        private void Close()
+        {
+            // ウィンドウを閉じるためのイベントを発行
+            RequestClose?.Invoke();
+        }
+        
+        public event Action? RequestClose;
+        
+        [RelayCommand]
         private void FilterBySelectedNode()
         {
             if (SelectedNode == null) return;
