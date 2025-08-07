@@ -81,7 +81,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         public List<LadderCsvRow> BuildNormal()
         {
             var result = new List<LadderCsvRow>();
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("通常工程"));
 
             var detailFunctions = CreateDetailFunctions();
 
@@ -135,7 +135,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("工程まとめ"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -177,7 +177,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("センサON確認"));
             
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
@@ -274,7 +274,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("センサOFF確認"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
                         // L0 工程開始
@@ -383,7 +383,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("工程分岐"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -472,14 +472,8 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // 行間ステートメントを追加
             string id = _detail.Detail.Id.ToString();
-            if (string.IsNullOrEmpty(_detail.Detail.DetailName))
-            {
-                result.Add(LadderRow.AddStatement(id));
-            }
-            else
-            {
-                result.Add(LadderRow.AddStatement(id + ":" + _detail.Detail.DetailName));
-            }
+            result.Add(CreateStatement("工程合流"));
+
 
             // L0 の初期値を設定
             var deviceNum = _detail.Mnemonic.StartNum;
@@ -545,7 +539,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("IL待ち"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -624,7 +618,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
             
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("工程OFF確認"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -717,7 +711,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("期間工程"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -843,7 +837,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("タイマ工程"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -930,7 +924,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("タイマ"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -999,7 +993,7 @@ namespace KdxDesigner.Utils.ProcessDetail
         }
 
         /// <summary>
-        /// 複数工程のビルド
+        /// 複合工程のビルド
         /// </summary>
         /// <returns>ニモニックリスト</returns>
         public List<LadderCsvRow> BuildModule()
@@ -1007,7 +1001,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("複合工程"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -1025,7 +1019,6 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             // L1 操作実行
             result.Add(LadderRow.AddLD(_label + (_deviceNum + 0).ToString()));
-            result.Add(LadderRow.AddANI(_label + (_deviceNum + 4).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 
             var processDetailFinishDevices = detailFunctions.FinishDevices();
@@ -1066,7 +1059,7 @@ namespace KdxDesigner.Utils.ProcessDetail
             var result = new List<LadderCsvRow>();
 
             // 行間ステートメントを追加
-            result.Add(CreateStatement());
+            result.Add(CreateStatement("リセット"));
             // L0 工程開始
             var detailFunctions = CreateDetailFunctions();
             // L0 工程開始
@@ -1116,10 +1109,10 @@ namespace KdxDesigner.Utils.ProcessDetail
         /// <summary>
         /// 行間ステートメントを生成する共通処理
         /// </summary>
-        private LadderCsvRow CreateStatement()
+        private LadderCsvRow CreateStatement(string collection)
         {
             string id = _detail.Detail.Id.ToString();
-            return LadderRow.AddStatement(id + ":" + _detail.Detail.DetailName);
+            return LadderRow.AddStatement(id + ":" + _detail.Detail.DetailName + "_" + collection);
         }
 
         /// <summary>
