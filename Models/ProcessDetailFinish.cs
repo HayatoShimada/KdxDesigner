@@ -14,6 +14,8 @@ namespace KdxDesigner.Models
         
         public int FinishProcessDetailId { get; set; }
         
+        public string? FinishSensor { get; set; }
+        
         // ナビゲーションプロパティ（必要に応じて）
         [ForeignKey("ProcessDetailId")]
         public virtual ProcessDetail? ProcessDetail { get; set; }

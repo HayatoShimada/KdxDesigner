@@ -14,6 +14,8 @@ namespace KdxDesigner.Models
         
         public int ToProcessDetailId { get; set; }
         
+        public string? StartSensor { get; set; }
+        
         // ナビゲーションプロパティ（必要に応じて）
         [ForeignKey("FromProcessDetailId")]
         public virtual ProcessDetail? FromProcessDetail { get; set; }

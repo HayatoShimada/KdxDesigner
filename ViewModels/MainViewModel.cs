@@ -31,6 +31,9 @@ namespace KdxDesigner.ViewModels
         protected private readonly MnemonicSpeedDeviceService? _speedService; // クラス名が不明なため仮定
         protected private readonly MemoryService? _memoryService;
         protected private readonly WpfIOSelectorService? _ioSelectorService;
+        
+        // 開いているProcessFlowDetailWindowのリスト
+        private readonly List<Window> _openProcessFlowWindows = new();
 
         [ObservableProperty] private ObservableCollection<Company> companies = new();
         [ObservableProperty] private ObservableCollection<Model> models = new();
@@ -354,8 +357,43 @@ namespace KdxDesigner.ViewModels
             view.ShowDialog();
         }
 
+        // 工程フローは工程フロー詳細に統一されたため、このメソッドは使用されません
+        // [RelayCommand]
+        // private void OpenProcessFlow()
+        // {
+        //     if (SelectedCycle == null)
+        //     {
+        //         MessageBox.Show("サイクルを選択してください。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+        //         return;
+        //     }
+        //
+        //     if (_repository == null)
+        //     {
+        //         MessageBox.Show("システムの初期化が不完全なため、処理を実行できません。", "エラー");
+        //         return;
+        //     }
+        //
+        //     var viewModel = new ProcessFlowViewModel(_repository);
+        //     viewModel.LoadProcessDetails(SelectedCycle.Id);
+        //     
+        //     var view = new ProcessFlowView(viewModel);
+        //     
+        //     // ウィンドウが閉じられたときにリストから削除
+        //     view.Closed += (s, e) =>
+        //     {
+        //         if (s is Window w)
+        //         {
+        //             _openProcessFlowWindows.Remove(w);
+        //         }
+        //     };
+        //     
+        //     // リストに追加して非モーダルで表示
+        //     _openProcessFlowWindows.Add(view);
+        //     view.Show();
+        // }
+        
         [RelayCommand]
-        private void OpenProcessFlow()
+        private void OpenProcessFlowDetail()
         {
             if (SelectedCycle == null)
             {
@@ -369,11 +407,33 @@ namespace KdxDesigner.ViewModels
                 return;
             }
 
-            var viewModel = new ProcessFlowViewModel(_repository);
-            viewModel.LoadProcessDetails(SelectedCycle.Id);
+            // 新しいウィンドウを作成
+            var window = new ProcessFlowDetailWindow(_repository, SelectedCycle.Id, SelectedCycle.CycleName ?? $"サイクル{SelectedCycle.Id}");
             
-            var view = new ProcessFlowView(viewModel);
-            view.ShowDialog();
+            // ウィンドウが閉じられたときにリストから削除
+            window.Closed += (s, e) =>
+            {
+                if (s is Window w)
+                {
+                    _openProcessFlowWindows.Remove(w);
+                }
+            };
+            
+            // リストに追加して表示
+            _openProcessFlowWindows.Add(window);
+            window.Show();
+        }
+        
+        [RelayCommand]
+        private void CloseAllProcessFlowWindows()
+        {
+            // すべてのProcessFlowDetailWindowを閉じる
+            var windowsToClose = _openProcessFlowWindows.ToList();
+            foreach (var window in windowsToClose)
+            {
+                window.Close();
+            }
+            _openProcessFlowWindows.Clear();
         }
 
         [RelayCommand]

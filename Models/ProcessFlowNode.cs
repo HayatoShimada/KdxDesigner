@@ -10,6 +10,7 @@ namespace KdxDesigner.Models
         [ObservableProperty] private bool _isSelected;
         [ObservableProperty] private bool _isDragging;
         [ObservableProperty] private double _opacity = 1.0;
+        [ObservableProperty] private bool _isModified = false;
         
         public ProcessFlowNode(ProcessDetail detail, Point position)
         {
@@ -52,5 +53,11 @@ namespace KdxDesigner.Models
         
         // 他サイクルのノードかどうかを示すプロパティ
         [ObservableProperty] private bool _isOtherCycleNode = false;
+        
+        // ノードの現在の高さ（表示オプションに応じて変動）
+        [ObservableProperty] private double _nodeHeight = 45;
+        
+        // ノードの幅（固定）
+        public double NodeWidth => 160;
     }
 }
