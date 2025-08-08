@@ -9,7 +9,10 @@ using System.Diagnostics;
 
 namespace KdxDesigner.Services
 {
-    internal class DifinitionsService
+    /// <summary>
+    /// 定義情報のデータ操作を行うサービス実装
+    /// </summary>
+    internal class DifinitionsService : IDifinitionsService
     {
 
         private readonly string _connectionString;

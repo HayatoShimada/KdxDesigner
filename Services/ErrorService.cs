@@ -9,7 +9,10 @@ using System.Data.OleDb;
 
 namespace KdxDesigner.Services
 {
-    internal class ErrorService
+    /// <summary>
+    /// エラー情報のデータ操作を行うサービス実装
+    /// </summary>
+    internal class ErrorService : IErrorService
     {
         private readonly string _connectionString;
 

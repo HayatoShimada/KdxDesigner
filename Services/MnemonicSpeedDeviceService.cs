@@ -8,7 +8,10 @@ using System.Data.OleDb;
 
 namespace KdxDesigner.Services
 {
-    internal class MnemonicSpeedDeviceService
+    /// <summary>
+    /// ニーモニック速度デバイスのデータ操作を行うサービス実装
+    /// </summary>
+    internal class MnemonicSpeedDeviceService : IMnemonicSpeedDeviceService
     {
         private readonly string _connectionString;
 

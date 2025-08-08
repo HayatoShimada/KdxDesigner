@@ -12,7 +12,10 @@ using static Dapper.SqlMapper;
 
 namespace KdxDesigner.Services
 {
-    internal class MemoryService
+    /// <summary>
+    /// メモリデータの操作を行うサービス実装
+    /// </summary>
+    internal class MemoryService : IMemoryService
     {
         private readonly string _connectionString;
 

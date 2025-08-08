@@ -8,7 +8,7 @@ namespace KdxDesigner.Services
     /// <summary>
     /// OperationIOテーブルのデータ操作を行うサービスクラス
     /// </summary>
-    public class OperationIOService
+    public class OperationIOService : IOperationIOService
     {
         private readonly string _connectionString;
 

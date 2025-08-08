@@ -8,7 +8,7 @@ namespace KdxDesigner.Services
     /// <summary>
     /// CylinderIOテーブルのデータ操作を行うサービスクラス
     /// </summary>
-    public class CylinderIOService
+    public class CylinderIOService : ICylinderIOService
     {
         private readonly string _connectionString;
 

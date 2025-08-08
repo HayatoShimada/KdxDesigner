@@ -9,7 +9,10 @@ using KdxDesigner.Services.Access; // Dictionary を使用するために追加
 
 namespace KdxDesigner.Services
 {
-    internal class ProsTimeDeviceService
+    /// <summary>
+    /// ProsTime（工程時間）デバイスの管理サービス実装
+    /// </summary>
+    internal class ProsTimeDeviceService : IProsTimeDeviceService
     {
         private readonly string _connectionString;
         private readonly Dictionary<int, OperationProsTimeConfig> _loadedOperationConfigs; // ★変更: staticでなくインスタンスフィールドに

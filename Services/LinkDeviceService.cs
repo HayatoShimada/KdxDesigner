@@ -7,7 +7,10 @@ using KdxDesigner.ViewModels;
 
 namespace KdxDesigner.Services
 {
-    public class LinkDeviceService
+    /// <summary>
+    /// リンクデバイスのデータ操作を行うサービス実装
+    /// </summary>
+    public class LinkDeviceService : ILinkDeviceService
     {
         private readonly IAccessRepository _repository;
         // エラー集約サービスもコンストラクタで受け取ることを推奨

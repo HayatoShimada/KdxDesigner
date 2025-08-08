@@ -11,7 +11,10 @@ using System.Data.OleDb;
 
 namespace KdxDesigner.Services
 {
-    internal class MnemonicDeviceService
+    /// <summary>
+    /// ニーモニックデバイスのデータ操作を行うサービス実装
+    /// </summary>
+    internal class MnemonicDeviceService : IMnemonicDeviceService
     {
         private readonly string _connectionString;
         private readonly IAccessRepository _repository;

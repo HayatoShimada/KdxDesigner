@@ -13,7 +13,7 @@ namespace KdxDesigner.Services
     /// <summary>
     /// MnemonicTimerDeviceのデータ操作を行うサービスクラス
     /// </summary>
-    public class MnemonicTimerDeviceService
+    public class MnemonicTimerDeviceService : IMnemonicTimerDeviceService
     {
         private readonly string _connectionString;
         private readonly MainViewModel _mainViewModel;
