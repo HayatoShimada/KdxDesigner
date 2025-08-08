@@ -1,8 +1,9 @@
 ﻿using KdxDesigner.Models;
+
 using System;
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.Memory
 {
     /// <summary>
     /// メモリデータの操作を行うサービスインターフェース
@@ -14,7 +15,7 @@ namespace KdxDesigner.Services
         /// </summary>
         /// <param name="plcId">PLC ID</param>
         /// <returns>メモリレコードのリスト</returns>
-        List<Memory> GetMemories(int plcId);
+        List<Models.Memory> GetMemories(int plcId);
 
         /// <summary>
         /// メモリカテゴリーのリストを取得する
@@ -28,14 +29,14 @@ namespace KdxDesigner.Services
         /// <param name="plcId">PLC ID</param>
         /// <param name="memories">保存するメモリレコードのリスト</param>
         /// <param name="progressCallback">進捗コールバック（オプション）</param>
-        void SaveMemories(int plcId, List<Memory> memories, Action<string>? progressCallback = null);
+        void SaveMemories(int plcId, List<Models.Memory> memories, Action<string>? progressCallback = null);
 
         /// <summary>
         /// ニーモニックデバイスのメモリ情報を保存する
         /// </summary>
         /// <param name="device">ニーモニックデバイス</param>
         /// <returns>保存成功の場合はtrue</returns>
-        bool SaveMnemonicMemories(MnemonicDevice device);
+        bool SaveMnemonicMemories(Models.MnemonicDevice device);
 
         /// <summary>
         /// ニーモニックタイマーデバイスのZRメモリ情報を保存する

@@ -5,11 +5,12 @@ using DocumentFormat.OpenXml.Bibliography;
 using KdxDesigner.Models;
 using KdxDesigner.Models.Define;
 using KdxDesigner.Services.Access;
+using KdxDesigner.Services.Memory;
 
 using System.Data;
 using System.Data.OleDb;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.MnemonicDevice
 {
     /// <summary>
     /// ニーモニックデバイスのデータ操作を行うサービス実装
@@ -38,11 +39,11 @@ namespace KdxDesigner.Services
         /// </summary>
         /// <param name="plcId"></param>
         /// <returns></returns>
-        public List<MnemonicDevice> GetMnemonicDevice(int plcId)
+        public List<Models.MnemonicDevice> GetMnemonicDevice(int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM MnemonicDevice WHERE PlcId = @PlcId";
-            return connection.Query<MnemonicDevice>(sql, new { PlcId = plcId }).ToList();
+            return connection.Query<Models.MnemonicDevice>(sql, new { PlcId = plcId }).ToList();
         }
 
         /// <summary>
@@ -51,11 +52,11 @@ namespace KdxDesigner.Services
         /// <param name="plcId"></param>
         /// <param name="mnemonicId"></param>
         /// <returns></returns>
-        public List<MnemonicDevice> GetMnemonicDeviceByMnemonic(int plcId, int mnemonicId)
+        public List<Models.MnemonicDevice> GetMnemonicDeviceByMnemonic(int plcId, int mnemonicId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM MnemonicDevice WHERE PlcId = @PlcId AND MnemonicId = @MnemonicId";
-            return connection.Query<MnemonicDevice>(sql, new { PlcId = plcId, MnemonicId = mnemonicId }).ToList();
+            return connection.Query<Models.MnemonicDevice>(sql, new { PlcId = plcId, MnemonicId = mnemonicId }).ToList();
         }
 
         /// <summary>
@@ -87,18 +88,18 @@ namespace KdxDesigner.Services
         /// <param name="processes"></param>
         /// <param name="startNum"></param>
         /// <param name="plcId"></param>
-        public void SaveMnemonicDeviceProcess(List<Models.Process> processes, int startNum, int plcId)
+        public void SaveMnemonicDeviceProcess(List<Process> processes, int startNum, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
             try
             {
-                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)KdxDesigner.Models.Define.MnemonicType.Process);
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.Process);
                 var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
-                var allMemoriesToSave = new List<Memory>(); // ★ 保存するメモリを蓄積するリスト
+                var allMemoriesToSave = new List<Models.Memory>(); // ★ 保存するメモリを蓄積するリスト
                 int count = 0;
-                foreach (Models.Process process in processes)
+                foreach (Process process in processes)
                 {
                     if (process == null) continue;
 
@@ -107,14 +108,12 @@ namespace KdxDesigner.Services
 
                     string input = process.ProcessName ?? "";
 
-                    parameters.Add("MnemonicId", (int)KdxDesigner.Models.Define.MnemonicType.Process, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)MnemonicType.Process, DbType.Int32);
                     parameters.Add("RecordId", process.Id, DbType.Int32);
                     parameters.Add("DeviceLabel", "L", DbType.String);
-                    parameters.Add("StartNum", (count * 5 + startNum), DbType.Int32);
+                    parameters.Add("StartNum", count * 5 + startNum, DbType.Int32);
                     parameters.Add("OutCoilCount", 5, DbType.Int32);
                     parameters.Add("PlcId", plcId, DbType.Int32);
-
-
                     parameters.Add("Comment1", process.Comment1, DbType.String); // Memoryのrow_3兼用
                     parameters.Add("Comment2", process.Comment2, DbType.String); // Memoryのrow_4兼用
 
@@ -132,10 +131,10 @@ namespace KdxDesigner.Services
 
                         // 2. パラメータをSQL文の出現順と完全に一致させる
                         // --- SET句のパラメータ ---
-                        updateParams.Add("p1", (int)KdxDesigner.Models.Define.MnemonicType.Process, DbType.Int32);
+                        updateParams.Add("p1", (int)MnemonicType.Process, DbType.Int32);
                         updateParams.Add("p2", process.Id, DbType.Int32);
                         updateParams.Add("p3", "L", DbType.String);
-                        updateParams.Add("p4", (count * 5 + startNum), DbType.Int32);
+                        updateParams.Add("p4", count * 5 + startNum, DbType.Int32);
                         updateParams.Add("p5", 5, DbType.Int32);
                         updateParams.Add("p6", plcId, DbType.Int32);
                         updateParams.Add("p7", process.Comment1 ?? "", DbType.String);
@@ -158,7 +157,7 @@ namespace KdxDesigner.Services
                     }
 
                     // --- 2. 対応するMemoryレコードを生成し、リストに蓄積 ---
-                    int mnemonicStartNum = (count * 5 + startNum);
+                    int mnemonicStartNum = count * 5 + startNum;
                     for (int i = 0; i < 5; i++) // OutCoilCount=5 は固定と仮定
                     {
                         string row_2 = i switch
@@ -171,7 +170,7 @@ namespace KdxDesigner.Services
                             _ => ""
                         };
 
-                        var memory = new Memory
+                        var memory = new Models.Memory
                         {
                             PlcId = plcId,
                             Device = "L" + (mnemonicStartNum + i), // デバイス名の形式を修正
@@ -188,7 +187,7 @@ namespace KdxDesigner.Services
                             Confirm = "",
                             Note = "",
                             GOT = "false",
-                            MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.Process,
+                            MnemonicId = (int)MnemonicType.Process,
                             RecordId = process.Id,
                             OutcoilNumber = i
                         };
@@ -225,10 +224,10 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
             try
             {
-                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail);
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.ProcessDetail);
                 var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
 
-                var allMemoriesToSave = new List<Memory>();
+                var allMemoriesToSave = new List<Models.Memory>();
                 int count = 0;
 
                 foreach (ProcessDetail detail in processes)
@@ -257,7 +256,7 @@ namespace KdxDesigner.Services
                         }
                     }
 
-                    int mnemonicStartNum = (count * 5 + startNum);
+                    int mnemonicStartNum = count * 5 + startNum;
                     // AccessRepositoryは、このメソッドのクラスのフィールドとして保持されている
                     // _repository を使うのが望ましいですが、ここでは元のコードの形式を維持します。
                     var repository = new AccessRepository(_connectionString);
@@ -302,10 +301,10 @@ namespace KdxDesigner.Services
 
                     // --- MnemonicDeviceのUPSERT ---
                     var parameters = new DynamicParameters();
-                    parameters.Add("MnemonicId", (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)MnemonicType.ProcessDetail, DbType.Int32);
                     parameters.Add("RecordId", detail.Id, DbType.Int32);
                     parameters.Add("DeviceLabel", "L", DbType.String);
-                    parameters.Add("StartNum", (count * 5 + startNum), DbType.Int32); // ProcessDetailは10点区切り
+                    parameters.Add("StartNum", count * 5 + startNum, DbType.Int32); // ProcessDetailは10点区切り
                     parameters.Add("OutCoilCount", 5, DbType.Int32);
                     parameters.Add("PlcId", plcId, DbType.Int32);
                     parameters.Add("Comment1", comment1, DbType.String);
@@ -322,10 +321,10 @@ namespace KdxDesigner.Services
 
                         var updateParams = new DynamicParameters();
                         // パラメータをSQL文の '?' の出現順と完全に一致させる
-                        updateParams.Add("p1", (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail, DbType.Int32);
+                        updateParams.Add("p1", (int)MnemonicType.ProcessDetail, DbType.Int32);
                         updateParams.Add("p2", detail.Id, DbType.Int32);
                         updateParams.Add("p3", "L", DbType.String);
-                        updateParams.Add("p4", (count * 5 + startNum), DbType.Int32); // ProcessDetailは10点区切り
+                        updateParams.Add("p4", count * 5 + startNum, DbType.Int32); // ProcessDetailは10点区切り
                         updateParams.Add("p5", 5, DbType.Int32);
                         updateParams.Add("p6", plcId, DbType.Int32);
                         updateParams.Add("p7", comment1, DbType.String);
@@ -358,7 +357,7 @@ namespace KdxDesigner.Services
                             _ => ""
                         };
 
-                        var memory = new Memory
+                        var memory = new Models.Memory
                         {
                             PlcId = plcId,
                             Device = "L" + (mnemonicStartNum + i),
@@ -370,7 +369,7 @@ namespace KdxDesigner.Services
                             Row_2 = row_2,
                             Row_3 = comment1,
                             Row_4 = comment2,
-                            MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.ProcessDetail,
+                            MnemonicId = (int)MnemonicType.ProcessDetail,
                             RecordId = detail.Id,
                             OutcoilNumber = i
                         };
@@ -402,9 +401,9 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
             try
             {
-                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)KdxDesigner.Models.Define.MnemonicType.Operation);
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.Operation);
                 var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
-                var allMemoriesToSave = new List<Memory>(); // ★ 保存するメモリを蓄積するリスト
+                var allMemoriesToSave = new List<Models.Memory>(); // ★ 保存するメモリを蓄積するリスト
 
                 int count = 0;
                 foreach (Operation operation in operations)
@@ -414,10 +413,10 @@ namespace KdxDesigner.Services
                     existingLookup.TryGetValue(operation.Id, out var existing);
 
                     var parameters = new DynamicParameters();
-                    parameters.Add("MnemonicId", (int)KdxDesigner.Models.Define.MnemonicType.Operation, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
                     parameters.Add("RecordId", operation.Id, DbType.Int32);
                     parameters.Add("DeviceLabel", "M", DbType.String);
-                    parameters.Add("StartNum", (count * 20 + startNum), DbType.Int32);
+                    parameters.Add("StartNum", count * 20 + startNum, DbType.Int32);
                     parameters.Add("OutCoilCount", 20, DbType.Int32);
                     parameters.Add("PlcId", plcId, DbType.Int32);
                     parameters.Add("Comment1", operation.OperationName ?? "", DbType.String);
@@ -434,10 +433,10 @@ namespace KdxDesigner.Services
 
                         var updateParams = new DynamicParameters();
                         // パラメータをSQL文の '?' の出現順と完全に一致させる
-                        updateParams.Add("p1", (int)KdxDesigner.Models.Define.MnemonicType.Operation, DbType.Int32);
+                        updateParams.Add("p1", (int)MnemonicType.Operation, DbType.Int32);
                         updateParams.Add("p2", operation.Id, DbType.Int32);
                         updateParams.Add("p3", "M", DbType.String);
-                        updateParams.Add("p4", (count * 20 + startNum), DbType.Int32);
+                        updateParams.Add("p4", count * 20 + startNum, DbType.Int32);
                         updateParams.Add("p5", 20, DbType.Int32);
                         updateParams.Add("p6", plcId, DbType.Int32);
                         updateParams.Add("p7", operation.OperationName ?? "", DbType.String);
@@ -457,7 +456,7 @@ namespace KdxDesigner.Services
                             parameters, transaction);
                     }
 
-                    int mnemonicStartNum = (count * 20 + startNum);
+                    int mnemonicStartNum = count * 20 + startNum;
                     // AccessRepositoryは、このメソッドのクラスのフィールドとして保持されている
                     // _repository を使うのが望ましいですが、ここでは元のコードの形式を維持します。
                     var repository = new AccessRepository(_connectionString);
@@ -528,7 +527,7 @@ namespace KdxDesigner.Services
                             _ => ""
                         };
 
-                        var memory = new Memory
+                        var memory = new Models.Memory
                         {
                             PlcId = plcId,
                             Device = "M" + (mnemonicStartNum + i), // デバイス名の形式を修正
@@ -545,7 +544,7 @@ namespace KdxDesigner.Services
                             Confirm = "",
                             Note = "",
                             GOT = "False",
-                            MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.Operation,
+                            MnemonicId = (int)MnemonicType.Operation,
                             RecordId = operation.Id,
                             OutcoilNumber = i
                         };
@@ -576,9 +575,9 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
             try
             {
-                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)KdxDesigner.Models.Define.MnemonicType.CY);
+                var allExisting = GetMnemonicDeviceByMnemonic(plcId, (int)MnemonicType.CY);
                 var existingLookup = allExisting.ToDictionary(m => m.RecordId, m => m);
-                var allMemoriesToSave = new List<Memory>(); // ★ 保存するメモリを蓄積するリスト
+                var allMemoriesToSave = new List<Models.Memory>(); // ★ 保存するメモリを蓄積するリスト
 
                 int count = 0;
                 foreach (CY cylinder in cylinders)
@@ -587,10 +586,10 @@ namespace KdxDesigner.Services
                     existingLookup.TryGetValue(cylinder.Id, out var existing);
 
                     var parameters = new DynamicParameters();
-                    parameters.Add("MnemonicId", (int)KdxDesigner.Models.Define.MnemonicType.CY, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)MnemonicType.CY, DbType.Int32);
                     parameters.Add("RecordId", cylinder.Id, DbType.Int32);
                     parameters.Add("DeviceLabel", "M", DbType.String);
-                    parameters.Add("StartNum", (count * 50 + startNum), DbType.Int32);
+                    parameters.Add("StartNum", count * 50 + startNum, DbType.Int32);
                     parameters.Add("OutCoilCount", 50, DbType.Int32);
                     parameters.Add("PlcId", plcId, DbType.Int32);
                     parameters.Add("Comment1", cylinder.CYNum, DbType.String);
@@ -607,10 +606,10 @@ namespace KdxDesigner.Services
 
                         var updateParams = new DynamicParameters();
                         // パラメータをSQL文の '?' の出現順と完全に一致させる
-                        updateParams.Add("p1", (int)KdxDesigner.Models.Define.MnemonicType.CY, DbType.Int32);
+                        updateParams.Add("p1", (int)MnemonicType.CY, DbType.Int32);
                         updateParams.Add("p2", cylinder.Id, DbType.Int32);
                         updateParams.Add("p3", "M", DbType.String);
-                        updateParams.Add("p4", (count * 50 + startNum), DbType.Int32); // Cylinderは100点区切り
+                        updateParams.Add("p4", count * 50 + startNum, DbType.Int32); // Cylinderは100点区切り
                         updateParams.Add("p5", 50, DbType.Int32);
                         updateParams.Add("p6", plcId, DbType.Int32);
                         updateParams.Add("p7", cylinder.CYNum ?? "", DbType.String);
@@ -630,7 +629,7 @@ namespace KdxDesigner.Services
                             )",
                             parameters, transaction);
                     }
-                    int mnemonicStartNum = (count * 50 + startNum);
+                    int mnemonicStartNum = count * 50 + startNum;
                     // AccessRepositoryは、このメソッドのクラスのフィールドとして保持されている
                     // _repository を使うのが望ましいですが、ここでは元のコードの形式を維持します。
                     var repository = new AccessRepository(_connectionString);
@@ -777,7 +776,7 @@ namespace KdxDesigner.Services
                             _ => ""
                         };
 
-                        var memory = new Memory
+                        var memory = new Models.Memory
                         {
                             PlcId = plcId,
                             Device = "M" + (mnemonicStartNum + i), // デバイス名の形式を修正
@@ -794,7 +793,7 @@ namespace KdxDesigner.Services
                             Confirm = "",
                             Note = "",
                             GOT = "False",
-                            MnemonicId = (int)KdxDesigner.Models.Define.MnemonicType.CY,
+                            MnemonicId = (int)MnemonicType.CY,
                             RecordId = cylinder.Id,
                             OutcoilNumber = i
                         };

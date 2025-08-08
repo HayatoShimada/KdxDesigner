@@ -6,7 +6,7 @@ using KdxDesigner.Services.Access;
 using System.Data;
 using System.Data.OleDb;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.MnemonicSpeedDevice
 {
     /// <summary>
     /// ニーモニック速度デバイスのデータ操作を行うサービス実装
@@ -29,11 +29,11 @@ namespace KdxDesigner.Services
         }
 
         // MnemonicDeviceテーブルからPlcIdとCycleIdに基づいてデータを取得する
-        public List<MnemonicSpeedDevice> GetMnemonicSpeedDevice(int plcId)
+        public List<Models.MnemonicSpeedDevice> GetMnemonicSpeedDevice(int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM MnemonicSpeedDevice WHERE PlcId = @PlcId";
-            return connection.Query<MnemonicSpeedDevice>(sql, new { PlcId = plcId }).ToList();
+            return connection.Query<Models.MnemonicSpeedDevice>(sql, new { PlcId = plcId }).ToList();
         }
 
         public void Save(

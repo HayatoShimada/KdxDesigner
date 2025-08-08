@@ -5,9 +5,9 @@ using System.Data;
 using System.Data.OleDb;
 using System.Linq; // ToList, GroupBy, Any を使用するために追加
 using System.Collections.Generic;
-using KdxDesigner.Services.Access; // Dictionary を使用するために追加
+using KdxDesigner.Services.Access;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.ProsTimeDevice
 {
     /// <summary>
     /// ProsTime（工程時間）デバイスの管理サービス実装
@@ -144,7 +144,7 @@ namespace KdxDesigner.Services
 
             operations.Sort((o1, o2) => o1.Id.CompareTo(o2.Id));
 
-            var allExistingProsTimesRaw = GetProsTimeByMnemonicId(plcId, (int)KdxDesigner.Models.Define.MnemonicType.Operation);
+            var allExistingProsTimesRaw = GetProsTimeByMnemonicId(plcId, (int)MnemonicType.Operation);
             var existingProsTimeMap = allExistingProsTimesRaw
                 .GroupBy(pt => pt.RecordId)
                 .ToDictionary(
@@ -183,7 +183,7 @@ namespace KdxDesigner.Services
                     var parameters = new DynamicParameters();
 
                     parameters.Add("PlcId", plcId, DbType.Int32);
-                    parameters.Add("MnemonicId", (int)KdxDesigner.Models.Define.MnemonicType.Operation, DbType.Int32);
+                    parameters.Add("MnemonicId", (int)MnemonicType.Operation, DbType.Int32);
                     parameters.Add("RecordId", operation.Id, DbType.Int32);
                     parameters.Add("SortId", i, DbType.Int32);
                     parameters.Add("CurrentDevice", currentDevice, DbType.String);

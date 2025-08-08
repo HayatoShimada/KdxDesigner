@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services.CylinderIOService
+namespace KdxDesigner.Services.CylinderIO
 {
     /// <summary>
     /// CylinderIOテーブルのデータ操作を行うサービスインターフェース
@@ -15,7 +15,7 @@ namespace KdxDesigner.Services.CylinderIOService
         /// <param name="cylinderId">シリンダーID</param>
         /// <param name="plcId">PLC ID</param>
         /// <returns>CylinderIOレコードのリスト</returns>
-        List<CylinderIO> GetCylinderIOs(int cylinderId, int plcId);
+        List<Models.CylinderIO> GetCylinderIOs(int cylinderId, int plcId);
 
         /// <summary>
         /// 指定されたIOに関連付けられたCYのリストを取得
@@ -23,7 +23,7 @@ namespace KdxDesigner.Services.CylinderIOService
         /// <param name="ioAddress">IOアドレス</param>
         /// <param name="plcId">PLC ID</param>
         /// <returns>CylinderIOレコードのリスト</returns>
-        List<CylinderIO> GetIOCylinders(string ioAddress, int plcId);
+        List<Models.CylinderIO> GetIOCylinders(string ioAddress, int plcId);
 
         /// <summary>
         /// CYとIOの関連付けを追加
@@ -48,6 +48,6 @@ namespace KdxDesigner.Services.CylinderIOService
         /// </summary>
         /// <param name="plcId">PLC ID</param>
         /// <returns>CylinderIOレコードのリスト</returns>
-        List<CylinderIO> GetAllAssociations(int plcId);
+        List<Models.CylinderIO> GetAllAssociations(int plcId);
     }
 }

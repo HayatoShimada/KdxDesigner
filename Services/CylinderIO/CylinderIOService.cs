@@ -5,7 +5,7 @@ using KdxDesigner.Services.Access;
 
 using System.Data.OleDb;
 
-namespace KdxDesigner.Services.CylinderIOService
+namespace KdxDesigner.Services.CylinderIO
 {
     /// <summary>
     /// CylinderIOテーブルのデータ操作を行うサービスクラス
@@ -22,7 +22,7 @@ namespace KdxDesigner.Services.CylinderIOService
         /// <summary>
         /// 指定されたCYに関連付けられたIOのリストを取得
         /// </summary>
-        public List<CylinderIO> GetCylinderIOs(int cylinderId, int plcId)
+        public List<Models.CylinderIO> GetCylinderIOs(int cylinderId, int plcId)
         {
             try
             {
@@ -31,26 +31,26 @@ namespace KdxDesigner.Services.CylinderIOService
                     SELECT * FROM CylinderIO 
                     WHERE CylinderId = @CylinderId AND PlcId = @PlcId
                     ORDER BY SortOrder, IOType";
-                return connection.Query<CylinderIO>(sql, new { CylinderId = cylinderId, PlcId = plcId }).ToList();
+                return connection.Query<Models.CylinderIO>(sql, new { CylinderId = cylinderId, PlcId = plcId }).ToList();
             }
             catch (OleDbException ex) when (ex.Message.Contains("CylinderIO") && ex.Message.Contains("見つかりませんでした"))
             {
                 // テーブルが存在しない場合は空のリストを返す
-                return new List<CylinderIO>();
+                return new List<Models.CylinderIO>();
             }
         }
 
         /// <summary>
         /// 指定されたIOに関連付けられたCYのリストを取得
         /// </summary>
-        public List<CylinderIO> GetIOCylinders(string ioAddress, int plcId)
+        public List<Models.CylinderIO> GetIOCylinders(string ioAddress, int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = @"
                 SELECT * FROM CylinderIO 
                 WHERE IOAddress = @IOAddress AND PlcId = @PlcId
                 ORDER BY CylinderId";
-            return connection.Query<CylinderIO>(sql, new { IOAddress = ioAddress, PlcId = plcId }).ToList();
+            return connection.Query<Models.CylinderIO>(sql, new { IOAddress = ioAddress, PlcId = plcId }).ToList();
         }
 
         /// <summary>
@@ -117,11 +117,11 @@ namespace KdxDesigner.Services.CylinderIOService
         /// <summary>
         /// 指定されたPLCのすべての関連付けを取得
         /// </summary>
-        public List<CylinderIO> GetAllAssociations(int plcId)
+        public List<Models.CylinderIO> GetAllAssociations(int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM CylinderIO WHERE PlcId = @PlcId ORDER BY CylinderId, SortOrder";
-            return connection.Query<CylinderIO>(sql, new { PlcId = plcId }).ToList();
+            return connection.Query<Models.CylinderIO>(sql, new { PlcId = plcId }).ToList();
         }
     }
 }
