@@ -5,7 +5,7 @@ using KdxDesigner.Utils;
 using KdxDesigner.Utils.MnemonicCommon;
 using KdxDesigner.ViewModels;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.LinkDevice
 {
     /// <summary>
     /// リンクデバイスのデータ操作を行うサービス実装
@@ -134,7 +134,7 @@ namespace KdxDesigner.Services
                 }
 
                 // XかYかでコメントを切り替える
-                string comment = (io.Address?.StartsWith("X") == true) ? io.XComment ?? "" : io.YComment ?? "";
+                string comment = io.Address?.StartsWith("X") == true ? io.XComment ?? "" : io.YComment ?? "";
 
                 csvData.Add(new[] { linkDevice, comment });
 

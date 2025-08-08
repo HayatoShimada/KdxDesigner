@@ -1,7 +1,8 @@
 ﻿using KdxDesigner.Models;
+
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.CylinderIOService
 {
     /// <summary>
     /// CylinderIOテーブルのデータ操作を行うサービスインターフェース

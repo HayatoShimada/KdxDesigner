@@ -1,4 +1,5 @@
 ﻿using Dapper;
+
 using KdxDesigner.Models;
 using KdxDesigner.Services.Access;
 
@@ -7,7 +8,7 @@ using System.Data.OleDb;
 using System.Diagnostics;
 
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.IDifinitions
 {
     /// <summary>
     /// 定義情報のデータ操作を行うサービス実装

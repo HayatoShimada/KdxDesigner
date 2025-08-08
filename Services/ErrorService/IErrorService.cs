@@ -1,7 +1,8 @@
 ﻿using KdxDesigner.Models;
+
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.ErrorService
 {
     /// <summary>
     /// エラー情報のデータ操作を行うサービスインターフェース

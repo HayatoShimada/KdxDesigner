@@ -7,6 +7,7 @@ using KdxDesigner.Models.Define;
 using KdxDesigner.Services;
 using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
+using KdxDesigner.Services.ErrorService;
 using KdxDesigner.Services.IOAddress;
 using KdxDesigner.Services.IOSelectorService;
 using KdxDesigner.Utils;

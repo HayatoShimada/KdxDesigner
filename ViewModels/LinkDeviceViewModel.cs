@@ -2,8 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 
 using KdxDesigner.Models;
-using KdxDesigner.Services;
 using KdxDesigner.Services.Access;
+using KdxDesigner.Services.LinkDevice;
 
 using System.Collections.ObjectModel;
 using System.Linq;

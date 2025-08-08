@@ -15,6 +15,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Data;
+using KdxDesigner.Services.CylinderIOService;
+using KdxDesigner.Services.LinkDevice;
 
 namespace KdxDesigner.ViewModels
 {

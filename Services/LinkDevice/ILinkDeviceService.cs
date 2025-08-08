@@ -1,8 +1,9 @@
 ﻿using KdxDesigner.Models;
 using KdxDesigner.ViewModels;
+
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.LinkDevice
 {
     /// <summary>
     /// リンクデバイスのデータ操作を行うサービスインターフェース

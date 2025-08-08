@@ -1,9 +1,11 @@
 using Dapper;
+
 using KdxDesigner.Models;
 using KdxDesigner.Services.Access;
+
 using System.Data.OleDb;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.CylinderIOService
 {
     /// <summary>
     /// CylinderIOテーブルのデータ操作を行うサービスクラス

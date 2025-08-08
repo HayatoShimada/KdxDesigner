@@ -1,7 +1,8 @@
 ﻿using KdxDesigner.Models;
+
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.IDifinitions
 {
     /// <summary>
     /// 定義情報のデータ操作を行うサービスインターフェース
