@@ -1025,6 +1025,24 @@ namespace KdxDesigner.ViewModels
         }
         
         [RelayCommand]
+        private void DeleteSelectedConnection()
+        {
+            if (SelectedConnection != null)
+            {
+                DeleteConnection(SelectedConnection);
+            }
+        }
+        
+        [RelayCommand]
+        private void Close()
+        {
+            // ウィンドウを閉じるためのイベントを発行
+            RequestClose?.Invoke();
+        }
+        
+        public event Action? RequestClose;
+        
+        [RelayCommand]
         private void FilterBySelectedNode()
         {
             if (SelectedNode == null) return;
@@ -1146,6 +1164,113 @@ namespace KdxDesigner.ViewModels
             // Operation編集画面を開く（実装は別途必要）
             MessageBox.Show($"Operation編集機能は未実装です。\nノード: {SelectedNode.DisplayName}", 
                 "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        
+        [RelayCommand]
+        private async Task UpdateSelectedNodeProperties()
+        {
+            if (SelectedNode != null)
+            {
+                try
+                {
+                    // OperationIdがnullまたは0の場合は、現在のProcessDetailの値を維持
+                    var operationId = SelectedNodeOperationId;
+                    if (operationId == null || operationId == 0)
+                    {
+                        // 現在のProcessDetailの値を使用
+                        operationId = SelectedNode.ProcessDetail.OperationId;
+                        // ViewModelのプロパティも更新
+                        SelectedNodeOperationId = operationId;
+                    }
+                    
+                    // ProcessDetailのプロパティを更新
+                    SelectedNode.ProcessDetail.DetailName = SelectedNodeDetailName;
+                    SelectedNode.ProcessDetail.ProcessId = SelectedNodeProcessId ?? 0;
+                    SelectedNode.ProcessDetail.OperationId = operationId;
+                    SelectedNode.ProcessDetail.StartSensor = SelectedNodeStartSensor;
+                    SelectedNode.ProcessDetail.FinishSensor = SelectedNodeFinishSensor;
+                    SelectedNode.ProcessDetail.CategoryId = SelectedNodeCategoryId;
+                    SelectedNode.ProcessDetail.BlockNumber = SelectedNodeBlockNumber;
+                    SelectedNode.ProcessDetail.SkipMode = SelectedNodeSkipMode;
+                    SelectedNode.ProcessDetail.SortNumber = SelectedNodeSortNumber;
+                    SelectedNode.ProcessDetail.Comment = SelectedNodeComment;
+                    SelectedNode.ProcessDetail.ILStart = SelectedNodeILStart;
+                    SelectedNode.ProcessDetail.StartTimerId = SelectedNodeStartTimerId;
+                    
+                    // データベースに保存
+                    await Task.Run(() => _repository.UpdateProcessDetail(SelectedNode.ProcessDetail));
+                    
+                    // カテゴリ名を更新
+                    if (SelectedNode.ProcessDetail.CategoryId.HasValue)
+                    {
+                        var category = Categories.FirstOrDefault(c => c.Id == SelectedNode.ProcessDetail.CategoryId.Value);
+                        SelectedNode.CategoryName = category?.CategoryName;
+                    }
+                    else
+                    {
+                        SelectedNode.CategoryName = null;
+                    }
+                    
+                    // BlockNumberが変更された場合、対応する工程名を更新
+                    if (SelectedNode.ProcessDetail.BlockNumber.HasValue)
+                    {
+                        // Process情報を再取得してすべての工程から工程名を更新
+                        var processes = await Task.Run(() => _repository.GetProcesses()
+                            .Where(p => p.CycleId == _cycleId)
+                            .ToList());
+                        
+                        var process = processes.FirstOrDefault(p => p.Id == SelectedNode.ProcessDetail.BlockNumber.Value);
+                        SelectedNode.CompositeProcessName = process?.ProcessName ?? null;
+                    }
+                    else
+                    {
+                        SelectedNode.CompositeProcessName = null;
+                    }
+                    
+                    // 表示名が変更された場合はUIを更新
+                    OnPropertyChanged(nameof(SelectedNode));
+                    
+                    // UIのプロパティを更新（データベースから読み込んだ値でリフレッシュ）
+                    var allDetails = await Task.Run(() => _repository.GetProcessDetails());
+                    var updatedDetail = allDetails.FirstOrDefault(d => d.Id == SelectedNode.ProcessDetail.Id);
+                    if (updatedDetail != null)
+                    {
+                        // ProcessDetailオブジェクトの値を更新
+                        SelectedNode.ProcessDetail.DetailName = updatedDetail.DetailName;
+                        SelectedNode.ProcessDetail.ProcessId = updatedDetail.ProcessId;
+                        SelectedNode.ProcessDetail.OperationId = updatedDetail.OperationId;
+                        SelectedNode.ProcessDetail.StartSensor = updatedDetail.StartSensor;
+                        SelectedNode.ProcessDetail.FinishSensor = updatedDetail.FinishSensor;
+                        SelectedNode.ProcessDetail.CategoryId = updatedDetail.CategoryId;
+                        SelectedNode.ProcessDetail.BlockNumber = updatedDetail.BlockNumber;
+                        SelectedNode.ProcessDetail.SkipMode = updatedDetail.SkipMode;
+                        SelectedNode.ProcessDetail.SortNumber = updatedDetail.SortNumber;
+                        SelectedNode.ProcessDetail.Comment = updatedDetail.Comment;
+                        SelectedNode.ProcessDetail.ILStart = updatedDetail.ILStart;
+                        SelectedNode.ProcessDetail.StartTimerId = updatedDetail.StartTimerId;
+                        
+                        // UIプロパティもリフレッシュ
+                        SelectedNodeDetailName = updatedDetail.DetailName;
+                        SelectedNodeProcessId = updatedDetail.ProcessId;
+                        SelectedNodeOperationId = updatedDetail.OperationId;
+                        SelectedNodeStartSensor = updatedDetail.StartSensor;
+                        SelectedNodeFinishSensor = updatedDetail.FinishSensor;
+                        SelectedNodeCategoryId = updatedDetail.CategoryId;
+                        SelectedNodeBlockNumber = updatedDetail.BlockNumber;
+                        SelectedNodeSkipMode = updatedDetail.SkipMode;
+                        SelectedNodeSortNumber = updatedDetail.SortNumber;
+                        SelectedNodeComment = updatedDetail.Comment;
+                        SelectedNodeILStart = updatedDetail.ILStart;
+                        SelectedNodeStartTimerId = updatedDetail.StartTimerId;
+                    }
+                    
+                    MessageBox.Show("工程詳細を更新しました。", "更新完了", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"更新に失敗しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
         
         partial void OnShowAllConnectionsChanged(bool value)

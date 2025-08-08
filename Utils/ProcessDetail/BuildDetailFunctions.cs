@@ -230,9 +230,12 @@ namespace KdxDesigner.Utils.ProcessDetail
             return processDetailStartDevices;
         }
 
+        /// <summary>
+        /// ProcessDetailFinishテーブルからこのインスタンスの終了工程IDを取得
+        /// </summary>
+        /// <returns>List<MnemonicDeviceWithProcessDetail>終了工程ID</returns>
         public List<MnemonicDeviceWithProcessDetail> FinishDevices()
         {
-            // ProcessDetailFinishテーブルから終了工程IDを取得
             var finishes = _repository.GetFinishesByProcessDetailId(_detail.Detail.Id);
             var processDetailFinishIds = finishes.Select(f => f.FinishProcessDetailId).ToList();
             
@@ -242,7 +245,10 @@ namespace KdxDesigner.Utils.ProcessDetail
             return processDetailFinishDevices;
         }
 
-
+        /// <summary>
+        /// Detail用のｴﾗｰ出力メソッド
+        /// </summary>
+        /// <param name="message"></param>
         public void DetailError(string message)
         {
             // エラーをアグリゲートするメソッドを呼び出す

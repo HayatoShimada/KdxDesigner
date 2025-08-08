@@ -210,7 +210,6 @@ namespace KdxDesigner.Services
                             {
                                 case 6: // 異常時BK (EBT)
                                 case 7: // 正常時BK (NBT)
-
                                     timerStartWith = "T";
                                     break;
                                 default:

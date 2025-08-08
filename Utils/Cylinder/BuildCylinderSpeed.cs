@@ -304,9 +304,23 @@ namespace KdxDesigner.Utils.Cylinder
                 if (speedDevice != null)
                 {
                     // 強制減速タイマがある場合の処理
+                    // issue78
+                    // 強制減速タイマは正転用と逆転用が必要。
+                    // というよりも工程分必要。
+                    // processDetail分foreachを回してそれに対応した強制減速を使うべき。
+                    // 強制減速はdetail側にあった方がよい。 
+                     
+
+                    result.AddRange(LadderRow.AddLDE(speedDevice, "K1"));
+                    result.AddRange(LadderRow.AddORE(speedDevice, "K5"));
+                    result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));
+                    result.Add(LadderRow.AddRST(fltTimer.Timer.ProcessTimerDevice));
+
                     result.AddRange(LadderRow.AddLDN(speedDevice, "K1"));
                     result.AddRange(LadderRow.AddANDN(speedDevice, "K5"));
+                    result.Add(LadderRow.AddAND(label + (startNum + 37).ToString()));
                     result.AddRange(LadderRow.AddTimer(fltTimer.Timer.ProcessTimerDevice, fltTimer.Timer.TimerDevice));
+                    
                     result.Add(LadderRow.AddLD(fltTimer.Timer.ProcessTimerDevice));
                     result.Add(LadderRow.AddMPS());
                     result.Add(LadderRow.AddAND(label + (startNum + 35).ToString()));

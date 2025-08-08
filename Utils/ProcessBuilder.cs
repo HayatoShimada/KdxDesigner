@@ -53,7 +53,7 @@ namespace KdxDesigner.Utils
                     case 4:     // センサON確認 #issue17
                         mnemonic.AddRange(BuildProcess.BuildIL(pros, details));
                         break;
-                    case 5:     // センサOFF確認 #issue18
+                    case 5:     // リセット
                         mnemonic.AddRange(BuildProcess.BuildReset(pros, details));
                         break;
                     default:

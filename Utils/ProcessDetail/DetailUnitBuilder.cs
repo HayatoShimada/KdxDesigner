@@ -555,8 +555,6 @@ namespace KdxDesigner.Utils.ProcessDetail
 
             }
 
-
-
             // L1 操作開始
             if (!string.IsNullOrEmpty(_detail.Detail.FinishSensor))
             {
@@ -586,6 +584,7 @@ namespace KdxDesigner.Utils.ProcessDetail
                     result.Add(LadderRow.AddOR(skipDevice));
                 }
             }
+            result.Add(LadderRow.AddOR(_label + (_deviceNum + 1).ToString()));
             result.Add(LadderRow.AddAND(_label + (_deviceNum + 0).ToString()));
             result.Add(LadderRow.AddOUT(_label + (_deviceNum + 1).ToString()));
 

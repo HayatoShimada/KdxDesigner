@@ -56,6 +56,12 @@
         </DrawingImage>
     </Window.Icon>
     
+    <Window.InputBindings>
+        <KeyBinding Key="Delete" Command="{Binding DeleteSelectedConnectionCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveChangesCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding CloseCommand}"/>
+    </Window.InputBindings>
+    
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <local:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
@@ -286,10 +292,18 @@
                                             <MouseBinding MouseAction="LeftClick" 
                                                           Command="{Binding DataContext.SelectConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                           CommandParameter="{Binding}"/>
-                                            <MouseBinding MouseAction="RightClick" 
-                                                          Command="{Binding DataContext.DeleteConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                          CommandParameter="{Binding}"/>
                                         </Path.InputBindings>
+                                        <Path.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="接続線を削除" 
+                                                          Command="{Binding DataContext.DeleteConnectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="✖" Foreground="Red" FontWeight="Bold"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </Path.ContextMenu>
                                     </Path>
                                     
                                     <!-- 見た目の接続線 -->

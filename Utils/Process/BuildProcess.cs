@@ -553,25 +553,25 @@ namespace KdxDesigner.Utils.Process
             var result = new List<LadderCsvRow>();
             result.Add(LadderRow.AddStatement("SubRoutine"));
 
-            // TestStart を重複なしで取得
-            List<string> testStartList = process
-                .Where(p => p.Process.TestStart != null) // null除外
-                .Select(p => p.Process.TestStart!)       // stringに変換
-                .Distinct()                              // 重複排除
-                .ToList();
+            //// TestStart を重複なしで取得
+            //List<string> testStartList = process
+            //    .Where(p => p.Process.TestStart != null) // null除外
+            //    .Select(p => p.Process.TestStart!)       // stringに変換
+            //    .Distinct()                              // 重複排除
+            //    .ToList();
 
-            result.Add(LadderRow.AddFEND()); // FEND命令を追加
-            result.Add(LadderRow.AddPoint($"P{process.First().Process.CycleId}"));          // issue#11
+            //result.Add(LadderRow.AddFEND()); // FEND命令を追加
+            //result.Add(LadderRow.AddPoint($"P{process.First().Process.CycleId}"));          // issue#11
 
 
-            result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysON));
-            foreach(var testStart in testStartList)
-            {
-                // TestStartごとにLDP命令を追加
-                result.Add(LadderRow.AddRST(testStart));
+            //result.Add(LadderRow.AddLD(SettingsManager.Settings.AlwaysON));
+            //foreach(var testStart in testStartList)
+            //{
+            //    // TestStartごとにLDP命令を追加
+            //    result.Add(LadderRow.AddRST(testStart));
 
-            }
-            result.Add(LadderRow.AddRET()); // FEND命令を追加
+            //}
+            //result.Add(LadderRow.AddRET()); // FEND命令を追加
 
             return result;
         }

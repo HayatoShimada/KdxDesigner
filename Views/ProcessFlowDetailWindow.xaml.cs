@@ -24,6 +24,9 @@ namespace KdxDesigner.Views
             DataContext = _viewModel;
             _viewModel.LoadNodesAsync();
             
+            // RequestCloseイベントをサブスクライブ
+            _viewModel.RequestClose += () => Close();
+            
             // Loadedイベントでコントロールを取得
             Loaded += OnLoaded;
         }

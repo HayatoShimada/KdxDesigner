@@ -11,6 +11,11 @@
         public const string LDL = "\"LD<\"";
         public const string LDN = "\"LD<>\"";
 
+        public const string ORE = "\"OR=\"";
+        public const string ORG = "\"OR>\"";
+        public const string ORL = "\"OR<\"";
+        public const string ORN = "\"OR<>\"";
+
         public const string ANDE = "\"AND=\"";
         public const string ANDG = "\"AND>\"";
         public const string ANDL = "\"AND<\"";
