@@ -2,7 +2,7 @@
 using KdxDesigner.ViewModels;
 using KdxDesigner.Views;
 
-namespace KdxDesigner.Services.IOSelectorService
+namespace KdxDesigner.Services.IOSelector
 {
     /// <summary>
     /// WPFのIO選択ビューを使って IIOSelectorService を実装します。

@@ -1,7 +1,8 @@
 ﻿using KdxDesigner.Models;
+
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.MnemonicDevice
 {
     /// <summary>
     /// ニーモニックデバイスのデータ操作を行うサービスインターフェース
@@ -13,7 +14,7 @@ namespace KdxDesigner.Services
         /// </summary>
         /// <param name="plcId">PLC ID</param>
         /// <returns>ニーモニックデバイスのリスト</returns>
-        List<MnemonicDevice> GetMnemonicDevice(int plcId);
+        List<Models.MnemonicDevice> GetMnemonicDevice(int plcId);
 
         /// <summary>
         /// 指定されたPLC IDとニーモニックIDのニーモニックデバイスを取得する
@@ -21,7 +22,7 @@ namespace KdxDesigner.Services
         /// <param name="plcId">PLC ID</param>
         /// <param name="mnemonicId">ニーモニックID</param>
         /// <returns>ニーモニックデバイスのリスト</returns>
-        List<MnemonicDevice> GetMnemonicDeviceByMnemonic(int plcId, int mnemonicId);
+        List<Models.MnemonicDevice> GetMnemonicDeviceByMnemonic(int plcId, int mnemonicId);
 
         /// <summary>
         /// 指定されたPLC IDとニーモニックIDのニーモニックデバイスを削除する

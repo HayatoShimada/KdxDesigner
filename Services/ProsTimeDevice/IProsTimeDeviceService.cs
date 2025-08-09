@@ -1,8 +1,10 @@
 ﻿using KdxDesigner.Models;
-using System.Collections.Generic;
-using static KdxDesigner.Services.ProsTimeDeviceService;
 
-namespace KdxDesigner.Services
+using System.Collections.Generic;
+
+using static KdxDesigner.Services.ProsTimeDevice.ProsTimeDeviceService;
+
+namespace KdxDesigner.Services.ProsTimeDevice
 {
     /// <summary>
     /// ProsTime（工程時間）デバイスの管理サービスインターフェース

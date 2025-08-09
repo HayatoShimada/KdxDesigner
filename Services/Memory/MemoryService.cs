@@ -11,7 +11,7 @@ using System.Text;
 
 using static Dapper.SqlMapper;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.Memory
 {
     /// <summary>
     /// メモリデータの操作を行うサービス実装
@@ -26,11 +26,11 @@ namespace KdxDesigner.Services
         }
 
         // AccessRepository.cs に以下を追加:
-        public List<Memory> GetMemories(int plcId)
+        public List<Models.Memory> GetMemories(int plcId)
         {
             using var connection = new OleDbConnection(_connectionString);
             var sql = "SELECT * FROM Memory WHERE PlcId = @PlcId";
-            return connection.Query<Memory>(sql, new { PlcId = plcId }).ToList();
+            return connection.Query<Models.Memory>(sql, new { PlcId = plcId }).ToList();
         }
 
         public List<MemoryCategory> GetMemoryCategories()
@@ -47,7 +47,7 @@ namespace KdxDesigner.Services
         /// <param name="transaction">データベースのトランザクション</param>
         /// <param name="memoryToSave">保存するデータ</param>
         /// <param name="existingRecord">保存したい場所に既にデータが存在する場合の処理</param>
-        private void ExecuteUpsertMemory(OleDbConnection connection, OleDbTransaction transaction, Memory memoryToSave, Memory? existingRecord)
+        private void ExecuteUpsertMemory(OleDbConnection connection, OleDbTransaction transaction, Models.Memory memoryToSave, Models.Memory? existingRecord)
         {
             var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             var parameters = new DynamicParameters();
@@ -134,7 +134,7 @@ namespace KdxDesigner.Services
             }
         }
 
-        private (int PlcId, string Device) GetMemoryKey(Memory memory)
+        private (int PlcId, string Device) GetMemoryKey(Models.Memory memory)
         {
            
             if (string.IsNullOrEmpty(memory.Device))
@@ -143,7 +143,7 @@ namespace KdxDesigner.Services
             return (memory.PlcId, memory.Device);
         }
 
-        public void SaveMemories(int plcId, List<Memory> memories, Action<string>? progressCallback = null)
+        public void SaveMemories(int plcId, List<Models.Memory> memories, Action<string>? progressCallback = null)
         {
             if (memories == null || !memories.Any())
             {
@@ -157,14 +157,14 @@ namespace KdxDesigner.Services
             try
             {
                 // 1. 渡された plcId を使用して、関連する既存レコードのみをDBから取得
-                var existingForThisPlcId = connection.Query<Memory>(
+                var existingForThisPlcId = connection.Query<Models.Memory>(
                     "SELECT * FROM Memory WHERE PlcId = @PlcId", // SQLクエリで直接フィルタリング
                     new { PlcId = plcId },
                     transaction
                 ).ToList();
 
                 // 2. 取得した既存レコードからルックアップ用辞書を作成
-                var existingLookup = new Dictionary<(int PlcId, string Device), Memory>();
+                var existingLookup = new Dictionary<(int PlcId, string Device), Models.Memory>();
                 foreach (var mem in existingForThisPlcId)
                 {
                     // GetMemoryKey は (mem.PlcId.Value, mem.Device) を返すことを想定
@@ -202,7 +202,7 @@ namespace KdxDesigner.Services
                     progressCallback?.Invoke($"[{i + 1}/{memories.Count}] 保存中: {memoryToSave.Device} (PlcId: {plcId})");
 
                     // GetMemoryKey を使って既存レコードを検索
-                    existingLookup.TryGetValue(GetMemoryKey(memoryToSave), out Memory? existingRecord);
+                    existingLookup.TryGetValue(GetMemoryKey(memoryToSave), out Models.Memory? existingRecord);
 
                     // ExecuteUpsertMemory ヘルパーメソッドを呼び出し
                     // memoryToSave.PlcId は検証済みなので、引数の plcId と一致している
@@ -227,9 +227,9 @@ namespace KdxDesigner.Services
         /// <summary>
         /// ★【新規】既存のトランザクション内でメモリリストを保存するための内部メソッド。
         /// </summary>
-        internal void SaveMemoriesInternal(int plcId, List<Memory> memories, OleDbConnection connection, OleDbTransaction transaction, Action<string>? progressCallback = null)
+        internal void SaveMemoriesInternal(int plcId, List<Models.Memory> memories, OleDbConnection connection, OleDbTransaction transaction, Action<string>? progressCallback = null)
         {
-            var existingForThisPlcId = connection.Query<Memory>(
+            var existingForThisPlcId = connection.Query<Models.Memory>(
                 "SELECT * FROM Memory WHERE PlcId = @PlcId",
                 new { PlcId = plcId },
                 transaction
@@ -246,25 +246,25 @@ namespace KdxDesigner.Services
 
                 progressCallback?.Invoke($"[{i + 1}/{memories.Count}] Memory保存中: {memoryToSave.Device}");
 
-                existingLookup.TryGetValue((memoryToSave.PlcId, memoryToSave.Device), out Memory? existingRecord);
+                existingLookup.TryGetValue((memoryToSave.PlcId, memoryToSave.Device), out Models.Memory? existingRecord);
                 ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
             }
         }
 
 
         // GetMemories, GetMemoryCategories は変更なし
-        public bool SaveMnemonicMemories(MnemonicDevice device)
+        public bool SaveMnemonicMemories(Models.MnemonicDevice device)
         {
             if (device?.PlcId == null) return false; // PlcId が必須
 
             using var connection = new OleDbConnection(_connectionString);
-            var difinitionsService = new DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
+            var difinitionsService = new IDifinitions.DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
 
             connection.Open();
             using var transaction = connection.BeginTransaction();
             try
             {
-                var existingForPlcIdList = connection.Query<Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
+                var existingForPlcIdList = connection.Query<Models.Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
                 var existingLookup = existingForPlcIdList.Where(m => !string.IsNullOrEmpty(m.Device))
                                                         .ToDictionary(m => m.Device!, m => m); // Deviceで検索 (PlcIdは共通)
 
@@ -302,7 +302,7 @@ namespace KdxDesigner.Services
                     var deviceNum = device.StartNum + i;
                     var deviceString = device.DeviceLabel + deviceNum.ToString();
 
-                    var memoryToSave = new Memory
+                    var memoryToSave = new Models.Memory
                     {
                         PlcId = device.PlcId,
                         MemoryCategory = deviceLabelCategoryId,
@@ -325,7 +325,7 @@ namespace KdxDesigner.Services
                         OutcoilNumber = i
                     };
 
-                    existingLookup.TryGetValue(memoryToSave.Device!, out Memory? existingRecord);
+                    existingLookup.TryGetValue(memoryToSave.Device!, out Models.Memory? existingRecord);
                     ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
                 }
                 transaction.Commit();
@@ -354,7 +354,7 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
             try
             {
-                var existingForPlcIdList = connection.Query<Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
+                var existingForPlcIdList = connection.Query<Models.Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
                 var existingLookup = existingForPlcIdList.Where(m => !string.IsNullOrEmpty(m.Device))
                                                         .ToDictionary(m => m.Device!, m => m);
 
@@ -371,7 +371,7 @@ namespace KdxDesigner.Services
                 var tDeviceNumStr = device.TimerDevice.Replace("ZR", "");
                 if (int.TryParse(tDeviceNumStr, out int tDeviceNum))
                 {
-                    var memoryToSave = new Memory
+                    var memoryToSave = new Models.Memory
                     {
                         PlcId = device.PlcId,
                         MemoryCategory = 0, // TODO: ZR用の適切なMemoryCategory IDを決定する
@@ -388,7 +388,7 @@ namespace KdxDesigner.Services
                         RecordId = device.RecordId,
                     };
 
-                    existingLookup.TryGetValue(memoryToSave.Device!, out Memory? existingRecord);
+                    existingLookup.TryGetValue(memoryToSave.Device!, out Models.Memory? existingRecord);
                     ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
 
                     transaction.Commit();
@@ -417,7 +417,7 @@ namespace KdxDesigner.Services
             using var transaction = connection.BeginTransaction();
             try
             {
-                var existingForPlcIdList = connection.Query<Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
+                var existingForPlcIdList = connection.Query<Models.Memory>("SELECT * FROM Memory WHERE PlcId = @PlcId", new { device.PlcId }, transaction).ToList();
                 var existingLookup = existingForPlcIdList.Where(m => !string.IsNullOrEmpty(m.Device))
                                                         .ToDictionary(m => m.Device!, m => m);
 
@@ -433,7 +433,7 @@ namespace KdxDesigner.Services
                 var dDeviceNumStr = device.ProcessTimerDevice.Replace("T", "");
                 if (int.TryParse(dDeviceNumStr, out int dDeviceNum))
                 {
-                    var memoryToSave = new Memory
+                    var memoryToSave = new Models.Memory
                     {
                         PlcId = device.PlcId,
                         MemoryCategory = 0, // TODO: Tデバイス用の適切なMemoryCategory IDを決定する
@@ -450,7 +450,7 @@ namespace KdxDesigner.Services
                                                                  // 他のフィールドは必要に応じて設定
                     };
 
-                    existingLookup.TryGetValue(memoryToSave.Device!, out Memory? existingRecord);
+                    existingLookup.TryGetValue(memoryToSave.Device!, out Models.Memory? existingRecord);
                     ExecuteUpsertMemory(connection, transaction, memoryToSave, existingRecord);
 
                     transaction.Commit();

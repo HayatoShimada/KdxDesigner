@@ -3,7 +3,7 @@ using KdxDesigner.Services.Access;
 using KdxDesigner.Services.Error;
 
 using KdxDesigner.Utils;
-using KdxDesigner.Services.IOSelectorService;
+using KdxDesigner.Services.IOSelector;
 using System.Diagnostics;
 using System.Text;
 

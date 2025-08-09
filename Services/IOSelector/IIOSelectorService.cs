@@ -1,6 +1,6 @@
 ﻿using KdxDesigner.Models;
 
-namespace KdxDesigner.Services.IOSelectorService
+namespace KdxDesigner.Services.IOSelector
 {
     /// <summary>
     /// 複数のIO候補からユーザーに一つを選択させるUI対話機能を提供します。

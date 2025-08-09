@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using KdxDesigner.Services;
+using KdxDesigner.Services.Memory;
 using KdxDesigner.Models;
 
 using Microsoft.Win32;
@@ -47,7 +47,7 @@ namespace KdxDesigner.ViewModels
             _plcId = plcId;
             // データベースの初期化
             // メモリカテゴリドロップダウンのリスト取得
-            var memoryService = new MemoryService(_repository);
+            var memoryService = new Services.Memory.MemoryService(_repository);
             MemoryCategories = new ObservableCollection<MemoryCategory>(memoryService.GetMemoryCategories());
             Memories = new ObservableCollection<Memory>();
 
@@ -61,7 +61,7 @@ namespace KdxDesigner.ViewModels
 
             await Task.Run(() =>
             {
-                var memoryService = new MemoryService(_repository);
+                var memoryService = new Services.Memory.MemoryService(_repository);
                 memoryService.SaveMemories(_plcId, Memories.ToList(), msg =>
                 {
                     // UIスレッドに戻してメッセージ更新
@@ -146,7 +146,7 @@ namespace KdxDesigner.ViewModels
         public void DBImport()
         {
             // DBからすべてのメモリを取得
-            var memoryService = new MemoryService(_repository);
+            var memoryService = new Services.Memory.MemoryService(_repository);
             var allMemories = memoryService.GetMemories(_plcId);
 
             // フィルタされたリストを一時変数に

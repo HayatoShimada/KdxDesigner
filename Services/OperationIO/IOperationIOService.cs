@@ -1,7 +1,8 @@
 ﻿using KdxDesigner.Models;
+
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services
+namespace KdxDesigner.Services.OperationIO
 {
     /// <summary>
     /// OperationIOテーブルのデータ操作を行うサービスインターフェース
@@ -13,7 +14,7 @@ namespace KdxDesigner.Services
         /// </summary>
         /// <param name="operationId">操作ID</param>
         /// <returns>OperationIOレコードのリスト</returns>
-        List<OperationIO> GetOperationIOs(int operationId);
+        List<Models.OperationIO> GetOperationIOs(int operationId);
 
         /// <summary>
         /// 指定されたIOに関連付けられたOperationのリストを取得
@@ -21,7 +22,7 @@ namespace KdxDesigner.Services
         /// <param name="ioAddress">IOアドレス</param>
         /// <param name="plcId">PLC ID</param>
         /// <returns>OperationIOレコードのリスト</returns>
-        List<OperationIO> GetIOOperations(string ioAddress, int plcId);
+        List<Models.OperationIO> GetIOOperations(string ioAddress, int plcId);
 
         /// <summary>
         /// OperationとIOの関連付けを追加
@@ -46,6 +47,6 @@ namespace KdxDesigner.Services
         /// </summary>
         /// <param name="plcId">PLC ID</param>
         /// <returns>OperationIOレコードのリスト</returns>
-        List<OperationIO> GetAllAssociations(int plcId);
+        List<Models.OperationIO> GetAllAssociations(int plcId);
     }
 }
