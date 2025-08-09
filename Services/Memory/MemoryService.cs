@@ -258,7 +258,7 @@ namespace KdxDesigner.Services.Memory
             if (device?.PlcId == null) return false; // PlcId が必須
 
             using var connection = new OleDbConnection(_connectionString);
-            var difinitionsService = new IDifinitions.DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
+            var difinitionsService = new Difinitions.DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
 
             connection.Open();
             using var transaction = connection.BeginTransaction();
