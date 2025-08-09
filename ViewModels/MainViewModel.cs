@@ -379,7 +379,6 @@ namespace KdxDesigner.ViewModels
         //         return;
         //     }
         //
-        //     var viewModel = new ProcessFlowViewModel(_repository);
         //     viewModel.LoadProcessDetails(SelectedCycle.Id);
         //     
         //     var view = new ProcessFlowView(viewModel);
