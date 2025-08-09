@@ -2,6 +2,7 @@
 
 using KdxDesigner.Models;
 using KdxDesigner.Services.Access;
+using KdxDesigner.Services.Difinitions;
 
 using System.Data;
 using System.Data.OleDb;
@@ -293,7 +294,7 @@ namespace KdxDesigner.Services
                     2 => difinitionsService.GetDifinitions("Detail"),
                     3 => difinitionsService.GetDifinitions("Operation"),
                     4 => difinitionsService.GetDifinitions("Cylinder"),
-                    _ => new List<Difinitions>(), // TODO: エラー処理または明確なデフォルト値
+                    _ => new List<Models.Difinitions>(), // TODO: エラー処理または明確なデフォルト値
                 };
 
                 for (int i = 0; i < device.OutCoilCount; i++)
@@ -347,7 +348,7 @@ namespace KdxDesigner.Services
 
             using var connection = new OleDbConnection(_connectionString);
             var difinitionsService = new DifinitionsService(_connectionString); // DifinitionsServiceのインスタンスを作成
-            var dinitions = new List<Difinitions>();
+            var dinitions = new List<Models.Difinitions>();
 
             connection.Open();
             using var transaction = connection.BeginTransaction();

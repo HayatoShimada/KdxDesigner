@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-namespace KdxDesigner.Services.IDifinitions
+namespace KdxDesigner.Services.Difinitions
 {
     /// <summary>
     /// 定義情報のデータ操作を行うサービスインターフェース
@@ -14,6 +14,6 @@ namespace KdxDesigner.Services.IDifinitions
         /// </summary>
         /// <param name="category">カテゴリー名</param>
         /// <returns>定義情報のリスト</returns>
-        List<Difinitions> GetDifinitions(string category);
+        List<Models.Difinitions> GetDifinitions(string category);
     }
 }
