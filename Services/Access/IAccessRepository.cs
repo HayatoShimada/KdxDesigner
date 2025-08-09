@@ -340,5 +340,73 @@ namespace KdxDesigner.Services.Access
         /// <param name="finishProcessDetailId">終了先の工程詳細ID。</param>
         void DeleteFinishesByProcessAndFinish(int processDetailId, int finishProcessDetailId);
 
+        #region ProcessStartCondition Methods
+
+        /// <summary>
+        /// 指定されたサイクルIDの全ての工程開始条件を取得します。
+        /// </summary>
+        /// <param name="cycleId">サイクルID。</param>
+        List<ProcessStartCondition> GetProcessStartConditions(int cycleId);
+
+        /// <summary>
+        /// 指定された工程IDの開始条件を取得します。
+        /// </summary>
+        /// <param name="processId">工程ID。</param>
+        List<ProcessStartCondition> GetStartConditionsByProcessId(int processId);
+
+        /// <summary>
+        /// 新しい工程開始条件を追加します。
+        /// </summary>
+        /// <param name="condition">追加する開始条件。</param>
+        void AddProcessStartCondition(ProcessStartCondition condition);
+
+        /// <summary>
+        /// 指定されたIDの工程開始条件を削除します。
+        /// </summary>
+        /// <param name="id">削除対象のID。</param>
+        void DeleteProcessStartCondition(int id);
+
+        /// <summary>
+        /// 指定された工程IDの全ての開始条件を削除します。
+        /// </summary>
+        /// <param name="processId">工程ID。</param>
+        void DeleteStartConditionsByProcess(int processId);
+
+        #endregion
+
+        #region ProcessFinishCondition Methods
+
+        /// <summary>
+        /// 指定されたサイクルIDの全ての工程終了条件を取得します。
+        /// </summary>
+        /// <param name="cycleId">サイクルID。</param>
+        List<ProcessFinishCondition> GetProcessFinishConditions(int cycleId);
+
+        /// <summary>
+        /// 指定された工程IDの終了条件を取得します。
+        /// </summary>
+        /// <param name="processId">工程ID。</param>
+        List<ProcessFinishCondition> GetFinishConditionsByProcessId(int processId);
+
+        /// <summary>
+        /// 新しい工程終了条件を追加します。
+        /// </summary>
+        /// <param name="condition">追加する終了条件。</param>
+        void AddProcessFinishCondition(ProcessFinishCondition condition);
+
+        /// <summary>
+        /// 指定されたIDの工程終了条件を削除します。
+        /// </summary>
+        /// <param name="id">削除対象のID。</param>
+        void DeleteProcessFinishCondition(int id);
+
+        /// <summary>
+        /// 指定された工程IDの全ての終了条件を削除します。
+        /// </summary>
+        /// <param name="processId">工程ID。</param>
+        void DeleteFinishConditionsByProcess(int processId);
+
+        #endregion
+
     }
 }

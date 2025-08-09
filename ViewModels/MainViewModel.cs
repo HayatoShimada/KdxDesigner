@@ -556,7 +556,9 @@ namespace KdxDesigner.ViewModels
                     DetailDeviceStartL, 
                     data.JoinedProcessList, 
                     data.JoinedProcessDetailList, 
-                    data.IoList, out var processErrors);
+                    data.IoList, 
+                    _repository!, 
+                    out var processErrors);
                 allOutputRows.AddRange(processRows);
                 allGeneratedErrors.AddRange(processErrors);
 
@@ -992,6 +994,11 @@ namespace KdxDesigner.ViewModels
             }
             return true;
         }
+
+        #endregion
+
+        #region Data Migration Commands
+
 
         #endregion
 

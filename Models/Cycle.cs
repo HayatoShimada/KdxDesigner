@@ -17,8 +17,6 @@ namespace KdxDesigner.Models
         public string? CycleName { get; set; }
         public string StartDevice { get; set; } = "L1000";
         public string ResetDevice { get; set; } = "L1001";
-        public string? ResetCondition { get; set; }
-
 
     }
 

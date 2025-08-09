@@ -86,6 +86,7 @@
                 <Separator/>
                 <MenuItem Header="工程フロー詳細" Command="{Binding OpenProcessFlowDetailCommand}" />
                 <MenuItem Header="全ての工程フロー詳細を閉じる" Command="{Binding CloseAllProcessFlowWindowsCommand}" />
+                <Separator/>
             </MenuItem>
             <MenuItem Header="_編集">
                 <MenuItem Header="操作を保存" Command="{Binding SaveOperationCommand}" />
@@ -100,15 +101,23 @@
             </Grid.RowDefinitions>
 
             <GroupBox Header="プロジェクト選択" Grid.Row="0" Margin="0,0,0,5" Padding="5">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Company:" VerticalAlignment="Center" FontWeight="Bold"/>
-                    <ComboBox ItemsSource="{Binding Companies}" SelectedItem="{Binding SelectedCompany}" DisplayMemberPath="CompanyName" Width="200" Margin="5,0,20,0"/>
-                    <TextBlock Text="Model:" VerticalAlignment="Center" FontWeight="Bold"/>
-                    <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}" DisplayMemberPath="ModelName" Width="200" Margin="5,0,20,0"/>
-                    <TextBlock Text="PLC:" VerticalAlignment="Center" FontWeight="Bold"/>
-                    <ComboBox ItemsSource="{Binding Plcs}" SelectedItem="{Binding SelectedPlc}" DisplayMemberPath="PlcName" Width="200" Margin="5,0,20,0"/>
-                    <Button Content="メモリ編集" Command="{Binding OpenMemoryEditorCommand}" Width="100" VerticalAlignment="Center"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                        <TextBlock Text="Company:" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <ComboBox ItemsSource="{Binding Companies}" SelectedItem="{Binding SelectedCompany}" DisplayMemberPath="CompanyName" Width="200" Margin="5,0,20,0"/>
+                        <TextBlock Text="Model:" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}" DisplayMemberPath="ModelName" Width="200" Margin="5,0,20,0"/>
+                        <TextBlock Text="PLC:" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <ComboBox ItemsSource="{Binding Plcs}" SelectedItem="{Binding SelectedPlc}" DisplayMemberPath="PlcName" Width="200" Margin="5,0,20,0"/>
+                        <Button Content="メモリ編集" Command="{Binding OpenMemoryEditorCommand}" Width="100" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                </Grid>
             </GroupBox>
 
             <GroupBox Header="工程一覧" Grid.Row="1">

@@ -885,5 +885,239 @@ INSERT INTO ProcessDetail (
                 throw;
             }
         }
+
+        #region ProcessStartCondition Implementation
+
+        public List<ProcessStartCondition> GetProcessStartConditions(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+
+            try
+            {
+                var sql = @"
+                    SELECT psc.*, p.CycleId
+                    FROM ProcessStartCondition AS psc
+                    INNER JOIN Process AS p ON psc.ProcessId = p.Id
+                    WHERE p.CycleId = ?";
+
+                return connection.Query<ProcessStartCondition>(sql, new { cycleId }).ToList();
+            }
+            catch (Exception ex)
+            {
+                // テーブルが存在しない場合は空のリストを返す
+                if (ex.Message.Contains("ProcessStartCondition"))
+                {
+                    return new List<ProcessStartCondition>();
+                }
+                throw;
+            }
+        }
+
+        public List<ProcessStartCondition> GetStartConditionsByProcessId(int processId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+
+            try
+            {
+                var sql = "SELECT * FROM ProcessStartCondition WHERE ProcessId = ?";
+                return connection.Query<ProcessStartCondition>(sql, new { processId }).ToList();
+            }
+            catch (Exception ex)
+            {
+                // テーブルが存在しない場合は空のリストを返す
+                if (ex.Message.Contains("ProcessStartCondition"))
+                {
+                    return new List<ProcessStartCondition>();
+                }
+                throw;
+            }
+        }
+
+        public void AddProcessStartCondition(ProcessStartCondition condition)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var sql = @"
+                    INSERT INTO ProcessStartCondition (ProcessId, StartProcessDetailId, StartSensor)
+                    VALUES (?, ?, ?)";
+
+                connection.Execute(sql, new
+                {
+                    condition.ProcessId,
+                    condition.StartProcessDetailId,
+                    condition.StartSensor
+                }, transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessStartCondition(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var sql = "DELETE FROM ProcessStartCondition WHERE Id = ?";
+                connection.Execute(sql, new { id }, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteStartConditionsByProcess(int processId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var sql = "DELETE FROM ProcessStartCondition WHERE ProcessId = ?";
+                connection.Execute(sql, new { processId }, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region ProcessFinishCondition Implementation
+
+        public List<ProcessFinishCondition> GetProcessFinishConditions(int cycleId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+
+            try
+            {
+                var sql = @"
+                    SELECT pfc.*, p.CycleId
+                    FROM ProcessFinishCondition AS pfc
+                    INNER JOIN Process AS p ON pfc.ProcessId = p.Id
+                    WHERE p.CycleId = ?";
+
+                return connection.Query<ProcessFinishCondition>(sql, new { cycleId }).ToList();
+            }
+            catch (Exception ex)
+            {
+                // テーブルが存在しない場合は空のリストを返す
+                if (ex.Message.Contains("ProcessFinishCondition"))
+                {
+                    return new List<ProcessFinishCondition>();
+                }
+                throw;
+            }
+        }
+
+        public List<ProcessFinishCondition> GetFinishConditionsByProcessId(int processId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+
+            try
+            {
+                var sql = "SELECT * FROM ProcessFinishCondition WHERE ProcessId = ?";
+                return connection.Query<ProcessFinishCondition>(sql, new { processId }).ToList();
+            }
+            catch (Exception ex)
+            {
+                // テーブルが存在しない場合は空のリストを返す
+                if (ex.Message.Contains("ProcessFinishCondition"))
+                {
+                    return new List<ProcessFinishCondition>();
+                }
+                throw;
+            }
+        }
+
+        public void AddProcessFinishCondition(ProcessFinishCondition condition)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var sql = @"
+                    INSERT INTO ProcessFinishCondition (ProcessId, FinishProcessDetailId, FinishSensor)
+                    VALUES (?, ?, ?)";
+
+                connection.Execute(sql, new
+                {
+                    condition.ProcessId,
+                    condition.FinishProcessDetailId,
+                    condition.FinishSensor
+                }, transaction);
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteProcessFinishCondition(int id)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var sql = "DELETE FROM ProcessFinishCondition WHERE Id = ?";
+                connection.Execute(sql, new { id }, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public void DeleteFinishConditionsByProcess(int processId)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                var sql = "DELETE FROM ProcessFinishCondition WHERE ProcessId = ?";
+                connection.Execute(sql, new { processId }, transaction);
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        #endregion
     }
 }
