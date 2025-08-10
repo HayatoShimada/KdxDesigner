@@ -291,6 +291,21 @@ WHERE Id = @Id";
             return connection.Query<ProcessDetail>(sql).ToList();
         }
 
+        public List<ProcessCategory> GetProcessCategories()
+        {
+            try
+            {
+                using var connection = new OleDbConnection(ConnectionString);
+                var sql = "SELECT * FROM ProcessCategory";
+                return connection.Query<ProcessCategory>(sql).ToList();
+            }
+            catch (Exception)
+            {
+                // テーブルが存在しない場合は空のリストを返す
+                return new List<ProcessCategory>();
+            }
+        }
+
         public List<ProcessDetailCategory> GetProcessDetailCategories()
         {
             using var connection = new OleDbConnection(ConnectionString);
@@ -359,6 +374,53 @@ WHERE Id = ?Id?";
         }
 
 
+        public void InsertOperation(Operation operation)
+        {
+            AddOperation(operation);
+        }
+        
+        public void UpdateProcess(Process process)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+UPDATE Process SET
+    ProcessName = @ProcessName,
+    CycleId = @CycleId,
+    TestStart = @TestStart,
+    TestCondition = @TestCondition,
+    TestMode = @TestMode,
+    AutoMode = @AutoMode,
+    AutoStart = @AutoStart,
+    ProcessCategoryId = @ProcessCategoryId,
+    ILStart = @ILStart,
+    Comment1 = @Comment1,
+    Comment2 = @Comment2,
+    SortNumber = @SortNumber
+WHERE Id = @Id";
+            connection.Execute(sql, process);
+        }
+        
+        public void InsertProcess(Process process)
+        {
+            using var connection = new OleDbConnection(ConnectionString);
+            var sql = @"
+INSERT INTO Process (
+    ProcessName, CycleId, TestStart, TestCondition, 
+    TestMode, AutoMode, AutoStart, ProcessCategoryId,
+    ILStart, Comment1, Comment2, SortNumber
+) VALUES (
+    @ProcessName, @CycleId, @TestStart, @TestCondition,
+    @TestMode, @AutoMode, @AutoStart, @ProcessCategoryId,
+    @ILStart, @Comment1, @Comment2, @SortNumber
+)";
+            connection.Execute(sql, process);
+        }
+        
+        public void InsertProcessDetail(ProcessDetail processDetail)
+        {
+            AddProcessDetail(processDetail);
+        }
+        
         public int AddProcessDetail(ProcessDetail processDetail)
         {
             using var connection = new OleDbConnection(ConnectionString);

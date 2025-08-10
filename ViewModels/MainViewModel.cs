@@ -48,12 +48,15 @@ namespace KdxDesigner.ViewModels
         [ObservableProperty] private ObservableCollection<Models.Process> processes = new();
         [ObservableProperty] private ObservableCollection<ProcessDetail> processDetails = new();
         [ObservableProperty] private ObservableCollection<Operation> selectedOperations = new();
+        [ObservableProperty] private ObservableCollection<ProcessCategory> processCategories = new();
+        [ObservableProperty] private ObservableCollection<ProcessDetailCategory> processDetailCategories = new();
 
         [ObservableProperty] private Company? selectedCompany;
         [ObservableProperty] private Model? selectedModel;
         [ObservableProperty] private PLC? selectedPlc;
         [ObservableProperty] private Cycle? selectedCycle;
         [ObservableProperty] private Models.Process? selectedProcess;
+        [ObservableProperty] private ProcessDetail? selectedProcessDetail;
 
         // ﾗｲﾝ
         //[ObservableProperty] private int processDeviceStartL = 14000;
@@ -148,6 +151,11 @@ namespace KdxDesigner.ViewModels
         private List<ProcessDetail> allDetails = new();
         private List<Models.Process> allProcesses = new();
         public List<Servo> selectedServo = new(); // 選択されたサーボのリスト
+        
+        // 変更追跡用のバックアップ
+        private List<Models.Process> originalProcesses = new();
+        private List<ProcessDetail> originalProcessDetails = new();
+        private List<Operation> originalOperations = new();
 
         public MainViewModel()
         {
@@ -178,6 +186,9 @@ namespace KdxDesigner.ViewModels
 
                 // 4. 全ての初期化が成功した後に、データをロード
                 LoadInitialData();
+                
+                // DataGridの編集完了イベントを処理するためのコマンドを初期化
+                InitializeEditCommands();
             }
             catch (Exception ex)
             {
@@ -185,6 +196,179 @@ namespace KdxDesigner.ViewModels
                 MessageBox.Show(ex.Message, "初期化エラー", MessageBoxButton.OK, MessageBoxImage.Error);
                 Application.Current.Shutdown();
                 // この時点でフィールドはnullのままなので、後続の処理はガード句で保護される
+            }
+        }
+        
+        private void InitializeEditCommands()
+        {
+            // 編集完了時の自動保存を有効化
+            Processes.CollectionChanged += (s, e) => SaveProcessChanges();
+            ProcessDetails.CollectionChanged += (s, e) => SaveProcessDetailChanges();
+            SelectedOperations.CollectionChanged += (s, e) => SaveOperationChanges();
+        }
+        
+        private void SaveProcessChanges()
+        {
+            if (_repository == null) return;
+            // 変更されたProcessを保存
+            foreach (var process in Processes)
+            {
+                try
+                {
+                    if (process.Id == 0)
+                    {
+                        // 新規追加
+                        _repository.InsertProcess(process);
+                    }
+                    else
+                    {
+                        // 更新
+                        _repository.UpdateProcess(process);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Process保存エラー: {ex.Message}");
+                }
+            }
+        }
+        
+        private void SaveProcessDetailChanges()
+        {
+            if (_repository == null) return;
+            // 変更されたProcessDetailを保存
+            foreach (var detail in ProcessDetails)
+            {
+                try
+                {
+                    if (detail.Id == 0)
+                    {
+                        // 新規追加
+                        _repository.InsertProcessDetail(detail);
+                    }
+                    else
+                    {
+                        // 更新
+                        _repository.UpdateProcessDetail(detail);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"ProcessDetail保存エラー: {ex.Message}");
+                }
+            }
+        }
+        
+        private void SaveOperationChanges()
+        {
+            if (_repository == null) return;
+            // 変更されたOperationを保存
+            foreach (var operation in SelectedOperations)
+            {
+                try
+                {
+                    if (operation.Id == 0)
+                    {
+                        // 新規追加
+                        _repository.InsertOperation(operation);
+                    }
+                    else
+                    {
+                        // 更新
+                        _repository.UpdateOperation(operation);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Operation保存エラー: {ex.Message}");
+                }
+            }
+        }
+        
+        // 個別行の保存メソッド
+        public void SaveProcessRow(Models.Process? process)
+        {
+            if (_repository == null || process == null) return;
+            try
+            {
+                if (process.Id == 0)
+                {
+                    // 新規追加
+                    _repository.InsertProcess(process);
+                    // データを再読み込み
+                    if (SelectedCycle != null)
+                    {
+                        Processes = new ObservableCollection<Models.Process>(
+                            _repository.GetProcesses().Where(p => p.CycleId == SelectedCycle.Id).OrderBy(p => p.SortNumber));
+                    }
+                }
+                else
+                {
+                    // 更新
+                    _repository.UpdateProcess(process);
+                }
+                MessageBox.Show("工程を保存しました。", "保存完了", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Process保存エラー: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        public void SaveProcessDetailRow(ProcessDetail? detail)
+        {
+            if (_repository == null || detail == null) return;
+            try
+            {
+                if (detail.Id == 0)
+                {
+                    // 新規追加
+                    _repository.InsertProcessDetail(detail);
+                    // データを再読み込み
+                    allDetails = _repository.GetProcessDetails();
+                    if (SelectedProcess != null)
+                    {
+                        UpdateSelectedProcesses(new List<Models.Process> { SelectedProcess });
+                    }
+                }
+                else
+                {
+                    // 更新
+                    _repository.UpdateProcessDetail(detail);
+                }
+                MessageBox.Show("工程詳細を保存しました。", "保存完了", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"ProcessDetail保存エラー: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        public void SaveOperationRow(Operation? operation)
+        {
+            if (_repository == null || operation == null) return;
+            try
+            {
+                if (operation.Id == 0)
+                {
+                    // 新規追加
+                    _repository.InsertOperation(operation);
+                    // 選択されたOperationsを再読み込み
+                    if (SelectedProcessDetail != null)
+                    {
+                        OnProcessDetailSelected(SelectedProcessDetail);
+                    }
+                }
+                else
+                {
+                    // 更新
+                    _repository.UpdateOperation(operation);
+                }
+                MessageBox.Show("操作を保存しました。", "保存完了", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Operation保存エラー: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -211,6 +395,23 @@ namespace KdxDesigner.ViewModels
             Companies = new ObservableCollection<Company>(_repository.GetCompanies());
             allProcesses = _repository.GetProcesses();
             allDetails = _repository.GetProcessDetails();
+            
+            // カテゴリを読み込む
+            var processCategories = _repository.GetProcessCategories();
+            if (processCategories.Count == 0)
+            {
+                // ProcessCategoryテーブルが存在しないか空の場合、デフォルトのカテゴリを作成
+                processCategories = new List<ProcessCategory>
+                {
+                    new ProcessCategory { Id = 1, ProcessCategoryName = "標準工程" },
+                    new ProcessCategory { Id = 2, ProcessCategoryName = "準備工程" },
+                    new ProcessCategory { Id = 3, ProcessCategoryName = "加工工程" },
+                    new ProcessCategory { Id = 4, ProcessCategoryName = "検査工程" },
+                    new ProcessCategory { Id = 5, ProcessCategoryName = "その他" }
+                };
+            }
+            ProcessCategories = new ObservableCollection<ProcessCategory>(processCategories);
+            ProcessDetailCategories = new ObservableCollection<ProcessDetailCategory>(_repository.GetProcessDetailCategories());
 
             // 設定ファイルを読み込む
             SettingsManager.Load();
@@ -292,6 +493,9 @@ namespace KdxDesigner.ViewModels
             Processes = new ObservableCollection<Models.Process>(
                 allProcesses.Where(p => p.CycleId == value.Id).OrderBy(p => p.SortNumber));
 
+            // バックアップコレクションを更新
+            UpdateBackupCollections();
+            
             // 選択したサイクルIDを保存
             SettingsManager.Settings.LastSelectedCycleId = value.Id;
             SettingsManager.Save();
@@ -313,9 +517,257 @@ namespace KdxDesigner.ViewModels
                     SelectedOperations.Add(op);
                 }
             }
+            
+            // SelectedOperationsが更新されたらバックアップも更新
+            UpdateBackupCollections();
         }
 
         #endregion
+
+        // 一括保存コマンド
+        [RelayCommand]
+        private void SaveAllChanges()
+        {
+            if (_repository == null)
+            {
+                MessageBox.Show("リポジトリが初期化されていません。", "エラー");
+                return;
+            }
+
+            try
+            {
+                int savedCount = 0;
+                
+                // Processの保存
+                foreach (var process in Processes)
+                {
+                    if (process.Id == 0)
+                    {
+                        _repository.InsertProcess(process);
+                        savedCount++;
+                    }
+                    else if (HasChanges(process, originalProcesses))
+                    {
+                        _repository.UpdateProcess(process);
+                        savedCount++;
+                    }
+                }
+                
+                // ProcessDetailの保存
+                foreach (var detail in ProcessDetails)
+                {
+                    if (detail.Id == 0)
+                    {
+                        _repository.InsertProcessDetail(detail);
+                        savedCount++;
+                    }
+                    else if (HasChanges(detail, originalProcessDetails))
+                    {
+                        _repository.UpdateProcessDetail(detail);
+                        savedCount++;
+                    }
+                }
+                
+                // Operationの保存
+                foreach (var operation in SelectedOperations)
+                {
+                    if (operation.Id == 0)
+                    {
+                        _repository.InsertOperation(operation);
+                        savedCount++;
+                    }
+                    else if (HasChanges(operation, originalOperations))
+                    {
+                        _repository.UpdateOperation(operation);
+                        savedCount++;
+                    }
+                }
+                
+                // 保存後、バックアップを更新
+                UpdateBackupCollections();
+                
+                MessageBox.Show($"{savedCount}件のデータを保存しました。", "保存完了", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"保存中にエラーが発生しました：{ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        [RelayCommand]
+        private void ResetChanges()
+        {
+            if (MessageBox.Show("編集内容を破棄してリセットしますか？", "確認", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                // データを再読み込み
+                if (_repository != null && SelectedCycle != null)
+                {
+                    // Processesを再読み込み
+                    allProcesses = _repository.GetProcesses();
+                    Processes = new ObservableCollection<Models.Process>(
+                        allProcesses.Where(p => p.CycleId == SelectedCycle.Id).OrderBy(p => p.SortNumber));
+                    
+                    // ProcessDetailsを再読み込み  
+                    allDetails = _repository.GetProcessDetails();
+                    ProcessDetails.Clear();
+                    
+                    // SelectedOperationsをクリア
+                    SelectedOperations.Clear();
+                    
+                    // バックアップコレクションを更新
+                    UpdateBackupCollections();
+                }
+            }
+        }
+        
+        private bool HasChanges<T>(T current, List<T> original) where T : class
+        {
+            if (current is Models.Process process)
+            {
+                var originalProcess = original.OfType<Models.Process>().FirstOrDefault(p => p.Id == process.Id);
+                if (originalProcess == null) return true;
+                return !AreProcessesEqual(process, originalProcess);
+            }
+            else if (current is ProcessDetail detail)
+            {
+                var originalDetail = original.OfType<ProcessDetail>().FirstOrDefault(d => d.Id == detail.Id);
+                if (originalDetail == null) return true;
+                return !AreProcessDetailsEqual(detail, originalDetail);
+            }
+            else if (current is Operation operation)
+            {
+                var originalOperation = original.OfType<Operation>().FirstOrDefault(o => o.Id == operation.Id);
+                if (originalOperation == null) return true;
+                return !AreOperationsEqual(operation, originalOperation);
+            }
+            return false;
+        }
+        
+        private bool AreProcessesEqual(Models.Process p1, Models.Process p2)
+        {
+            return p1.ProcessName == p2.ProcessName &&
+                   p1.CycleId == p2.CycleId &&
+                   p1.TestStart == p2.TestStart &&
+                   p1.TestCondition == p2.TestCondition &&
+                   p1.TestMode == p2.TestMode &&
+                   p1.AutoMode == p2.AutoMode &&
+                   p1.AutoStart == p2.AutoStart &&
+                   p1.ProcessCategoryId == p2.ProcessCategoryId &&
+                   p1.ILStart == p2.ILStart &&
+                   p1.Comment1 == p2.Comment1 &&
+                   p1.Comment2 == p2.Comment2 &&
+                   p1.SortNumber == p2.SortNumber;
+        }
+        
+        private bool AreProcessDetailsEqual(ProcessDetail d1, ProcessDetail d2)
+        {
+            return d1.DetailName == d2.DetailName &&
+                   d1.ProcessId == d2.ProcessId &&
+                   d1.OperationId == d2.OperationId &&
+                   d1.StartSensor == d2.StartSensor &&
+                   d1.CategoryId == d2.CategoryId &&
+                   d1.FinishSensor == d2.FinishSensor &&
+                   d1.BlockNumber == d2.BlockNumber &&
+                   d1.SkipMode == d2.SkipMode &&
+                   d1.CycleId == d2.CycleId &&
+                   d1.SortNumber == d2.SortNumber &&
+                   d1.Comment == d2.Comment &&
+                   d1.ILStart == d2.ILStart &&
+                   d1.StartTimerId == d2.StartTimerId;
+        }
+        
+        private bool AreOperationsEqual(Operation o1, Operation o2)
+        {
+            return o1.OperationName == o2.OperationName &&
+                   o1.CYId == o2.CYId &&
+                   o1.CategoryId == o2.CategoryId &&
+                   o1.Stay == o2.Stay &&
+                   o1.GoBack == o2.GoBack &&
+                   o1.Start == o2.Start &&
+                   o1.Finish == o2.Finish &&
+                   o1.Valve1 == o2.Valve1 &&
+                   o1.S1 == o2.S1 &&
+                   o1.S2 == o2.S2 &&
+                   o1.S3 == o2.S3 &&
+                   o1.S4 == o2.S4 &&
+                   o1.S5 == o2.S5 &&
+                   o1.SS1 == o2.SS1 &&
+                   o1.SS2 == o2.SS2 &&
+                   o1.SS3 == o2.SS3 &&
+                   o1.SS4 == o2.SS4 &&
+                   o1.PIL == o2.PIL &&
+                   o1.SC == o2.SC &&
+                   o1.FC == o2.FC &&
+                   o1.CycleId == o2.CycleId &&
+                   o1.SortNumber == o2.SortNumber &&
+                   o1.Con == o2.Con;
+        }
+        
+        private void UpdateBackupCollections()
+        {
+            originalProcesses = Processes.Select(p => new Models.Process
+            {
+                Id = p.Id,
+                ProcessName = p.ProcessName,
+                CycleId = p.CycleId,
+                TestStart = p.TestStart,
+                TestCondition = p.TestCondition,
+                TestMode = p.TestMode,
+                AutoMode = p.AutoMode,
+                AutoStart = p.AutoStart,
+                ProcessCategoryId = p.ProcessCategoryId,
+                ILStart = p.ILStart,
+                Comment1 = p.Comment1,
+                Comment2 = p.Comment2,
+                SortNumber = p.SortNumber
+            }).ToList();
+            
+            originalProcessDetails = ProcessDetails.Select(d => new ProcessDetail
+            {
+                Id = d.Id,
+                DetailName = d.DetailName,
+                ProcessId = d.ProcessId,
+                OperationId = d.OperationId,
+                StartSensor = d.StartSensor,
+                CategoryId = d.CategoryId,
+                FinishSensor = d.FinishSensor,
+                BlockNumber = d.BlockNumber,
+                SkipMode = d.SkipMode,
+                CycleId = d.CycleId,
+                SortNumber = d.SortNumber,
+                Comment = d.Comment,
+                ILStart = d.ILStart,
+                StartTimerId = d.StartTimerId
+            }).ToList();
+            
+            originalOperations = SelectedOperations.Select(o => new Operation
+            {
+                Id = o.Id,
+                OperationName = o.OperationName,
+                CYId = o.CYId,
+                CategoryId = o.CategoryId,
+                Stay = o.Stay,
+                GoBack = o.GoBack,
+                Start = o.Start,
+                Finish = o.Finish,
+                Valve1 = o.Valve1,
+                S1 = o.S1,
+                S2 = o.S2,
+                S3 = o.S3,
+                S4 = o.S4,
+                S5 = o.S5,
+                SS1 = o.SS1,
+                SS2 = o.SS2,
+                SS3 = o.SS3,
+                SS4 = o.SS4,
+                PIL = o.PIL,
+                SC = o.SC,
+                FC = o.FC,
+                CycleId = o.CycleId,
+                SortNumber = o.SortNumber,
+                Con = o.Con
+            }).ToList();
+        }
 
         // その他ボタン処理
         #region Properties for Process Details
@@ -328,6 +780,9 @@ namespace KdxDesigner.ViewModels
                 .ToList();
 
             ProcessDetails = new ObservableCollection<ProcessDetail>(filtered);
+            
+            // ProcessDetailsが更新されたらバックアップも更新
+            UpdateBackupCollections();
         }
 
         [RelayCommand]

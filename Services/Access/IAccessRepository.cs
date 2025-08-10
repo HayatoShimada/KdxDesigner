@@ -178,6 +178,24 @@ namespace KdxDesigner.Services.Access
         /// </summary>
         /// <param name="operation">更新するOperationオブジェクト。</param>
         void UpdateOperation(Operation operation);
+        
+        /// <summary>
+        /// 新しい操作情報を追加します。
+        /// </summary>
+        /// <param name="operation">追加するOperationオブジェクト。</param>
+        void InsertOperation(Operation operation);
+        
+        /// <summary>
+        /// 指定された工程情報を更新します。
+        /// </summary>
+        /// <param name="process">更新するProcessオブジェクト。</param>
+        void UpdateProcess(Process process);
+        
+        /// <summary>
+        /// 新しい工程情報を追加します。
+        /// </summary>
+        /// <param name="process">追加するProcessオブジェクト。</param>
+        void InsertProcess(Process process);
 
         /// <summary>
         /// 全ての工程詳細情報を取得します。
@@ -196,12 +214,23 @@ namespace KdxDesigner.Services.Access
         /// <param name="processDetail">追加するProcessDetailオブジェクト。</param>
         /// <returns>追加されたレコードのID。</returns>
         int AddProcessDetail(ProcessDetail processDetail);
+        
+        /// <summary>
+        /// 新しい工程詳細情報を追加します（void版）。
+        /// </summary>
+        /// <param name="processDetail">追加するProcessDetailオブジェクト。</param>
+        void InsertProcessDetail(ProcessDetail processDetail);
 
         /// <summary>
         /// 指定されたIDの工程詳細情報を削除します。
         /// </summary>
         /// <param name="id">削除対象の工程詳細ID。</param>
         void DeleteProcessDetail(int id);
+
+        /// <summary>
+        /// 全ての工程カテゴリを取得します。
+        /// </summary>
+        List<ProcessCategory> GetProcessCategories();
 
         /// <summary>
         /// 全ての工程詳細カテゴリを取得します。

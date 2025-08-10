@@ -24,7 +24,10 @@ namespace KdxDesigner.Views
         {
             if (DataContext is MainViewModel vm)
             {
-                var selected = ProcessGrid.SelectedItems.Cast<Process>().ToList();
+                // 新規行のプレースホルダーを除外してProcessオブジェクトのみを取得
+                var selected = ProcessGrid.SelectedItems
+                    .OfType<Process>()  // Cast<Process>()の代わりにOfType<Process>()を使用
+                    .ToList();
                 vm.UpdateSelectedProcesses(selected);
             }
         }

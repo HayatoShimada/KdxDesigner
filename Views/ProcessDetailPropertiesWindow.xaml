@@ -50,10 +50,11 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
-                <!-- 詳細名 -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="詳細名:" VerticalAlignment="Center" Margin="0,5"/>
+                <!-- DetailName (詳細名) -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="DetailName:" VerticalAlignment="Center" Margin="0,5" FontWeight="Bold"/>
                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedNodeDetailName, UpdateSourceTrigger=PropertyChanged}" Margin="0,5"/>
                 
                 <!-- ProcessID -->
@@ -77,14 +78,26 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
                 
-                <!-- 操作ID -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="操作:" VerticalAlignment="Center" Margin="0,5"/>
+                <!-- OperationID (操作) -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Operation:" VerticalAlignment="Center" Margin="0,5" ToolTip="現在のサイクルの操作のみ表示"/>
                 <ComboBox Grid.Row="2" Grid.Column="1" 
                           ItemsSource="{Binding FilteredOperations}"
                           SelectedValue="{Binding SelectedNodeOperationId, UpdateSourceTrigger=PropertyChanged}"
                           SelectedValuePath="Id"
-                          DisplayMemberPath="OperationName"
-                          Margin="0,5">
+                          Margin="0,5"
+                          ToolTip="現在のサイクルに関連する操作のみが表示されます">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0} - {1}">
+                                        <Binding Path="Id"/>
+                                        <Binding Path="OperationName"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
                     <ComboBox.ItemContainerStyle>
                         <Style TargetType="ComboBoxItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -202,6 +215,14 @@
                 <TextBlock Grid.Row="12" Grid.Column="0" Text="ID:" VerticalAlignment="Center" Margin="0,5"/>
                 <TextBox Grid.Row="12" Grid.Column="1" 
                          Text="{Binding SelectedNodeId}" 
+                         IsReadOnly="True" 
+                         Background="LightGray"
+                         Margin="0,5"/>
+                
+                <!-- CycleId (読み取り専用) -->
+                <TextBlock Grid.Row="13" Grid.Column="0" Text="CycleId:" VerticalAlignment="Center" Margin="0,5"/>
+                <TextBox Grid.Row="13" Grid.Column="1" 
+                         Text="{Binding SelectedNode.ProcessDetail.CycleId}" 
                          IsReadOnly="True" 
                          Background="LightGray"
                          Margin="0,5"/>

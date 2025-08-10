@@ -125,6 +125,8 @@
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
                         <TextBlock Text="Cycle:" VerticalAlignment="Center" FontWeight="Bold"/>
                         <ComboBox ItemsSource="{Binding Cycles}" SelectedItem="{Binding SelectedCycle}" DisplayMemberPath="CycleName" Width="200" Margin="5,0"/>
+                        <Button Content="保存" Command="{Binding SaveAllChangesCommand}" Width="80" Height="25" Margin="20,0,5,0" FontWeight="Bold" Background="LightGreen"/>
+                        <Button Content="リセット" Command="{Binding ResetChangesCommand}" Width="80" Height="25" Margin="5,0" Background="LightYellow"/>
                     </StackPanel>
 
                     <Grid>
@@ -134,15 +136,105 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <DataGrid Grid.Column="0" Margin="5" x:Name="ProcessGrid" ItemsSource="{Binding Processes}" AutoGenerateColumns="True"
-                                  SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False" IsReadOnly="True"
-                                  SelectionChanged="ProcessGrid_SelectionChanged"/>
+                        <DataGrid Grid.Column="0" Margin="5" x:Name="ProcessGrid" ItemsSource="{Binding Processes}" AutoGenerateColumns="False"
+                                  SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="True" CanUserDeleteRows="True" IsReadOnly="False"
+                                  SelectionChanged="ProcessGrid_SelectionChanged">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="40" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="工程名" Binding="{Binding ProcessName}" Width="120"/>
+                                <DataGridTextColumn Header="CycleId" Binding="{Binding CycleId}" Width="50"/>
+                                <DataGridTextColumn Header="TestStart" Binding="{Binding TestStart}" Width="60"/>
+                                <DataGridTextColumn Header="TestCondition" Binding="{Binding TestCondition}" Width="80"/>
+                                <DataGridTextColumn Header="TestMode" Binding="{Binding TestMode}" Width="60"/>
+                                <DataGridTextColumn Header="AutoMode" Binding="{Binding AutoMode}" Width="60"/>
+                                <DataGridTextColumn Header="AutoStart" Binding="{Binding AutoStart}" Width="60"/>
+                                <DataGridComboBoxColumn Header="カテゴリ" 
+                                                        SelectedValueBinding="{Binding ProcessCategoryId}" 
+                                                        SelectedValuePath="Id"
+                                                        DisplayMemberPath="ProcessCategoryName"
+                                                        Width="100">
+                                    <DataGridComboBoxColumn.ElementStyle>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="ItemsSource" Value="{Binding DataContext.ProcessCategories, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        </Style>
+                                    </DataGridComboBoxColumn.ElementStyle>
+                                    <DataGridComboBoxColumn.EditingElementStyle>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="ItemsSource" Value="{Binding DataContext.ProcessCategories, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        </Style>
+                                    </DataGridComboBoxColumn.EditingElementStyle>
+                                </DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="ILStart" Binding="{Binding ILStart}" Width="50"/>
+                                <DataGridTextColumn Header="コメント1" Binding="{Binding Comment1}" Width="100"/>
+                                <DataGridTextColumn Header="コメント2" Binding="{Binding Comment2}" Width="100"/>
+                                <DataGridTextColumn Header="ソート" Binding="{Binding SortNumber}" Width="40"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
 
-                        <DataGrid Grid.Column="1" Margin="5" ItemsSource="{Binding ProcessDetails}" SelectedItem="{Binding SelectedProcessDetail}" AutoGenerateColumns="True"
-                                  SelectionChanged="DetailGrid_SelectionChanged" CanUserAddRows="False" IsReadOnly="True"/>
+                        <DataGrid Grid.Column="1" Margin="5" x:Name="ProcessDetailGrid" ItemsSource="{Binding ProcessDetails}" SelectedItem="{Binding SelectedProcessDetail}" AutoGenerateColumns="False"
+                                  SelectionChanged="DetailGrid_SelectionChanged" CanUserAddRows="True" CanUserDeleteRows="True" IsReadOnly="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="40" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="詳細名" Binding="{Binding DetailName}" Width="100"/>
+                                <DataGridTextColumn Header="ProcessId" Binding="{Binding ProcessId}" Width="60"/>
+                                <DataGridTextColumn Header="OperationId" Binding="{Binding OperationId}" Width="70"/>
+                                <DataGridTextColumn Header="開始センサー" Binding="{Binding StartSensor}" Width="80"/>
+                                <DataGridComboBoxColumn Header="カテゴリ" 
+                                                        SelectedValueBinding="{Binding CategoryId}" 
+                                                        SelectedValuePath="Id"
+                                                        DisplayMemberPath="CategoryName"
+                                                        Width="100">
+                                    <DataGridComboBoxColumn.ElementStyle>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="ItemsSource" Value="{Binding DataContext.ProcessDetailCategories, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        </Style>
+                                    </DataGridComboBoxColumn.ElementStyle>
+                                    <DataGridComboBoxColumn.EditingElementStyle>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="ItemsSource" Value="{Binding DataContext.ProcessDetailCategories, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        </Style>
+                                    </DataGridComboBoxColumn.EditingElementStyle>
+                                </DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="終了センサー" Binding="{Binding FinishSensor}" Width="80"/>
+                                <DataGridTextColumn Header="BlockNo" Binding="{Binding BlockNumber}" Width="50"/>
+                                <DataGridTextColumn Header="SkipMode" Binding="{Binding SkipMode}" Width="60"/>
+                                <DataGridTextColumn Header="CycleId" Binding="{Binding CycleId}" Width="50"/>
+                                <DataGridTextColumn Header="ソート" Binding="{Binding SortNumber}" Width="40"/>
+                                <DataGridTextColumn Header="コメント" Binding="{Binding Comment}" Width="100"/>
+                                <DataGridTextColumn Header="ILStart" Binding="{Binding ILStart}" Width="50"/>
+                                <DataGridTextColumn Header="TimerId" Binding="{Binding StartTimerId}" Width="50"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
 
-                        <DataGrid Grid.Column="2" Margin="5" ItemsSource="{Binding SelectedOperations}" AutoGenerateColumns="True" 
-                                  CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"/>
+                        <DataGrid Grid.Column="2" Margin="5" x:Name="OperationGrid" ItemsSource="{Binding SelectedOperations}" AutoGenerateColumns="False" 
+                                  CanUserAddRows="True" CanUserDeleteRows="True" IsReadOnly="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="40" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="操作名" Binding="{Binding OperationName}" Width="100"/>
+                                <DataGridTextColumn Header="CYId" Binding="{Binding CYId}" Width="50"/>
+                                <DataGridTextColumn Header="カテゴリ" Binding="{Binding CategoryId}" Width="60"/>
+                                <DataGridTextColumn Header="Stay" Binding="{Binding Stay}" Width="50"/>
+                                <DataGridTextColumn Header="GoBack" Binding="{Binding GoBack}" Width="60"/>
+                                <DataGridTextColumn Header="Start" Binding="{Binding Start}" Width="50"/>
+                                <DataGridTextColumn Header="Finish" Binding="{Binding Finish}" Width="50"/>
+                                <DataGridTextColumn Header="Valve1" Binding="{Binding Valve1}" Width="50"/>
+                                <DataGridTextColumn Header="S1" Binding="{Binding S1}" Width="40"/>
+                                <DataGridTextColumn Header="S2" Binding="{Binding S2}" Width="40"/>
+                                <DataGridTextColumn Header="S3" Binding="{Binding S3}" Width="40"/>
+                                <DataGridTextColumn Header="S4" Binding="{Binding S4}" Width="40"/>
+                                <DataGridTextColumn Header="S5" Binding="{Binding S5}" Width="40"/>
+                                <DataGridTextColumn Header="SS1" Binding="{Binding SS1}" Width="40"/>
+                                <DataGridTextColumn Header="SS2" Binding="{Binding SS2}" Width="40"/>
+                                <DataGridTextColumn Header="SS3" Binding="{Binding SS3}" Width="40"/>
+                                <DataGridTextColumn Header="SS4" Binding="{Binding SS4}" Width="40"/>
+                                <DataGridTextColumn Header="PIL" Binding="{Binding PIL}" Width="40"/>
+                                <DataGridTextColumn Header="SC" Binding="{Binding SC}" Width="40"/>
+                                <DataGridTextColumn Header="FC" Binding="{Binding FC}" Width="40"/>
+                                <DataGridTextColumn Header="CycleId" Binding="{Binding CycleId}" Width="50"/>
+                                <DataGridTextColumn Header="ソート" Binding="{Binding SortNumber}" Width="40"/>
+                                <DataGridTextColumn Header="Con" Binding="{Binding Con}" Width="50"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </DockPanel>
             </GroupBox>

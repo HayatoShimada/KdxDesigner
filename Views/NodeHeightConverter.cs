@@ -10,14 +10,15 @@ namespace KdxDesigner.Views
         {
             if (values.Length >= 2 && values[0] is bool showId && values[1] is bool showBlockNumber)
             {
+                // ProcessIDも表示されるため、より大きな高さが必要
                 if (showId && showBlockNumber)
-                    return 60.0; // 両方表示
+                    return 70.0; // ID、ProcessID、BlockNumber すべて表示
                 else if (showId || showBlockNumber)
-                    return 55.0; // どちらか一方を表示
+                    return 65.0; // どちらか一方を表示（ProcessIDは常に表示される可能性）
                 else
-                    return 45.0; // 両方非表示
+                    return 60.0; // ID・BlockNumber非表示（ProcessIDは表示される可能性）
             }
-            return 45.0; // デフォルト
+            return 60.0; // デフォルト（ProcessID表示を考慮）
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

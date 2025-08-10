@@ -111,11 +111,12 @@ namespace KdxDesigner.ViewModels
 
         private void UpdateNodeHeights()
         {
-            double height = 45;
+            // ProcessIDも表示されるため、より大きな高さが必要
+            double height = 60; // デフォルト（ProcessID表示を考慮）
             if (ShowNodeId && ShowBlockNumber)
-                height = 60;
+                height = 70; // ID、ProcessID、BlockNumber すべて表示
             else if (ShowNodeId || ShowBlockNumber)
-                height = 55;
+                height = 65; // どちらか一方を表示（ProcessIDは常に表示される可能性）
 
             foreach (var node in AllNodes)
             {
@@ -184,9 +185,10 @@ namespace KdxDesigner.ViewModels
                 Operations.Add(operation);
             }
 
-            // フィルタされたOperationsを初期化
+            // CycleIdでフィルタされたOperationsを初期化
             FilteredOperations.Clear();
-            foreach (var operation in operations)
+            // 現在のCycleIdと一致するOperationのみ、またはCycleIdがnullのものを含める
+            foreach (var operation in operations.Where(o => o.CycleId == _cycleId || o.CycleId == null))
             {
                 FilteredOperations.Add(operation);
             }
@@ -306,9 +308,9 @@ namespace KdxDesigner.ViewModels
 
                 currentLevelCounts[level]++;
 
-                // キャンバスサイズを更新
-                maxX = Math.Max(maxX, x + 150);
-                maxY = Math.Max(maxY, y + 50);
+                // キャンバスサイズを更新（ノード幅180を考慮）
+                maxX = Math.Max(maxX, x + 180);
+                maxY = Math.Max(maxY, y + 70);
             }
 
             // キャンバスサイズを設定（余白を追加）
@@ -663,7 +665,7 @@ namespace KdxDesigner.ViewModels
                         _selectedNodes.Clear();
                         foreach (var node in Nodes)
                         {
-                            var nodeRect = new Rect(node.Position.X, node.Position.Y, 140, 40);
+                            var nodeRect = new Rect(node.Position.X, node.Position.Y, 180, 70);
                             node.IsSelected = SelectionRectangle.IntersectsWith(nodeRect);
                             if (node.IsSelected)
                             {
@@ -1227,7 +1229,7 @@ namespace KdxDesigner.ViewModels
                         SelectedNodeOperationId = operationId;
                     }
 
-                    // ProcessDetailのプロパティを更新
+                    // ProcessDetailのプロパティを更新（すべてのプロパティ）
                     SelectedNode.ProcessDetail.DetailName = SelectedNodeDetailName;
                     SelectedNode.ProcessDetail.ProcessId = SelectedNodeProcessId ?? 0;
                     SelectedNode.ProcessDetail.OperationId = operationId;
@@ -1240,6 +1242,8 @@ namespace KdxDesigner.ViewModels
                     SelectedNode.ProcessDetail.Comment = SelectedNodeComment;
                     SelectedNode.ProcessDetail.ILStart = SelectedNodeILStart;
                     SelectedNode.ProcessDetail.StartTimerId = SelectedNodeStartTimerId;
+                    // CycleIdは変更しない（現在のサイクルを維持）
+                    // SelectedNode.ProcessDetail.CycleId = _cycleId;
 
                     // データベースに保存
                     await Task.Run(() => _repository.UpdateProcessDetail(SelectedNode.ProcessDetail));
@@ -1279,7 +1283,8 @@ namespace KdxDesigner.ViewModels
                     var updatedDetail = allDetails.FirstOrDefault(d => d.Id == SelectedNode.ProcessDetail.Id);
                     if (updatedDetail != null)
                     {
-                        // ProcessDetailオブジェクトの値を更新
+                        // ProcessDetailオブジェクトの値を更新（すべてのプロパティ）
+                        SelectedNode.ProcessDetail.Id = updatedDetail.Id;
                         SelectedNode.ProcessDetail.DetailName = updatedDetail.DetailName;
                         SelectedNode.ProcessDetail.ProcessId = updatedDetail.ProcessId;
                         SelectedNode.ProcessDetail.OperationId = updatedDetail.OperationId;
@@ -1288,6 +1293,7 @@ namespace KdxDesigner.ViewModels
                         SelectedNode.ProcessDetail.CategoryId = updatedDetail.CategoryId;
                         SelectedNode.ProcessDetail.BlockNumber = updatedDetail.BlockNumber;
                         SelectedNode.ProcessDetail.SkipMode = updatedDetail.SkipMode;
+                        SelectedNode.ProcessDetail.CycleId = updatedDetail.CycleId;
                         SelectedNode.ProcessDetail.SortNumber = updatedDetail.SortNumber;
                         SelectedNode.ProcessDetail.Comment = updatedDetail.Comment;
                         SelectedNode.ProcessDetail.ILStart = updatedDetail.ILStart;

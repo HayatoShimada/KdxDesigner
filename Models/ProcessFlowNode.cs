@@ -57,7 +57,7 @@ namespace KdxDesigner.Models
         // ノードの現在の高さ（表示オプションに応じて変動）
         [ObservableProperty] private double _nodeHeight = 45;
         
-        // ノードの幅（固定）
-        public double NodeWidth => 160;
+        // ノードの幅（固定）- ProcessID表示のため幅を拡張
+        public double NodeWidth => 180;
     }
 }

@@ -446,7 +446,7 @@
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="160" 
+                                <Border Width="180" 
                                         CornerRadius="5"
                                         Opacity="{Binding Opacity}">
                                     <Border.Height>
@@ -541,6 +541,29 @@
                                                 <Style TargetType="TextBlock">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding DataContext.ShowNodeId, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        
+                                        <!-- ProcessID表示（中央上） -->
+                                        <TextBlock Grid.Row="0" 
+                                                   Text="{Binding ProcessDetail.ProcessId, StringFormat='P:{0}'}" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Top"
+                                                   FontWeight="Bold"
+                                                   FontSize="10"
+                                                   Foreground="DarkBlue"
+                                                   Margin="0,1,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ProcessDetail.ProcessId}" Value="0">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ProcessDetail.ProcessId}" Value="{x:Null}">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
